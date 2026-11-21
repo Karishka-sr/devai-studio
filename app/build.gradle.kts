@@ -12,8 +12,8 @@ android {
         applicationId = "com.devai.studio"
         minSdk = 31
         targetSdk = 34
-        versionCode = 8
-        versionName = "2.4.0"
+        versionCode = 9
+        versionName = "2.4.1"
         vectorDrawables.useSupportLibrary = true
         ndk {
             abiFilters += listOf("arm64-v8a")
@@ -22,12 +22,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 

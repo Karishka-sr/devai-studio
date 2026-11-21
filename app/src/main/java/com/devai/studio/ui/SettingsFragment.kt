@@ -9,7 +9,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
 import androidx.appcompat.app.AlertDialog
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import com.devai.studio.R
@@ -37,11 +36,6 @@ class SettingsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val ctx = requireContext()
-
-        binding.authorArt.setViewCompositionStrategy(
-            ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
-        )
-        binding.authorArt.setContent { AuthorArtBanner() }
 
         binding.temperatureBar.max = 20
         binding.temperatureBar.progress = (AppPrefs.temperature(ctx) * 20f).toInt().coerceIn(0, 20)
@@ -88,7 +82,7 @@ class SettingsFragment : Fragment() {
         binding.btnAuthorSite.setOnClickListener {
             openUrl(getString(R.string.author_site_url))
         }
-        binding.authorCredit.setOnClickListener {
+        binding.authorCredit?.setOnClickListener {
             openUrl(getString(R.string.author_vexel_url))
         }
         binding.btnPremium.setOnClickListener {

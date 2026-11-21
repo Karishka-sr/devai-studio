@@ -134,11 +134,84 @@
             android:layout_marginTop="8dp"
             android:text="@string/settings_theme_current" />
 
-        <androidx.compose.ui.platform.ComposeView
+        <com.google.android.material.card.MaterialCardView
             android:id="@+id/author_art"
             android:layout_width="match_parent"
             android:layout_height="220dp"
-            android:layout_marginTop="20dp" />
+            android:layout_marginTop="20dp"
+            app:cardBackgroundColor="#0D4F1D"
+            app:cardCornerRadius="20dp"
+            app:strokeWidth="0dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|start"
+                    android:layout_marginStart="18dp"
+                    android:layout_marginTop="8dp"
+                    android:alpha="0.55"
+                    android:rotation="-15"
+                    android:text="✦"
+                    android:textColor="#2E7A3A"
+                    android:textSize="96sp" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="NeonBeat"
+                        android:textColor="#EAF7E6"
+                        android:textSize="28sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="DevAI Studio"
+                        android:textColor="#8FE3A0"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="t.me/NeonBeat"
+                        android:textColor="#8FE3A0"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_gravity="bottom|end"
+                    android:layout_marginEnd="18dp"
+                    android:layout_marginBottom="14dp"
+                    android:contentDescription="@string/settings_author"
+                    android:src="@drawable/ic_android_logo" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|start"
+                    android:layout_marginStart="22dp"
+                    android:layout_marginBottom="18dp"
+                    android:alpha="0.7"
+                    android:rotation="12"
+                    android:text="★"
+                    android:textColor="#8FE3A0"
+                    android:textSize="34sp" />
+            </FrameLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <TextView
             android:layout_width="match_parent"
@@ -218,12 +291,11 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:background="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true"
                     android:padding="4dp"
                     android:text="@string/settings_author_credit"
-                    android:textColor="?attr/colorPrimary"
+                    android:textColor="#8FE3A0"
                     android:textSize="12sp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
