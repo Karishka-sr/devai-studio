@@ -88,6 +88,9 @@ class SettingsFragment : Fragment() {
         binding.btnAuthorSite.setOnClickListener {
             openUrl(getString(R.string.author_site_url))
         }
+        binding.authorCredit.setOnClickListener {
+            openUrl(getString(R.string.author_vexel_url))
+        }
         binding.btnPremium.setOnClickListener {
             startActivity(Intent(requireContext(), PremiumActivity::class.java))
         }

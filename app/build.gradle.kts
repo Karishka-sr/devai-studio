@@ -12,8 +12,8 @@ android {
         applicationId = "com.devai.studio"
         minSdk = 31
         targetSdk = 34
-        versionCode = 7
-        versionName = "2.3.2"
+        versionCode = 8
+        versionName = "2.4.0"
         vectorDrawables.useSupportLibrary = true
         ndk {
             abiFilters += listOf("arm64-v8a")
@@ -59,11 +59,13 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.ai.edge.litertlm:litertlm:0.0.0-alpha05")
 
-    implementation(platform("androidx.compose:compose-bom:2025.10.01"))
+    implementation(platform("androidx.compose:compose-bom:2026.03.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.animation:animation")
     implementation("androidx.compose.material3:material3")
-    implementation("androidx.graphics:graphics-shapes:1.0.1")
+    implementation("androidx.activity:activity-compose:1.10.1")
+    implementation("androidx.graphics:graphics-shapes:1.1.0")
 
     testImplementation("junit:junit:4.13.2")
 }

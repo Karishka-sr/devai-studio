@@ -38,10 +38,12 @@
 - Импорт своего `.task` и добавление модели по прямой ссылке.
 - Выбор формата промпта: ChatML, Zephyr, Gemma, универсальный.
 
-### 🏗 Генерация проектов
-- Описание идеи → структура Android-проекта и готовые файлы.
-- AI-генерация или шаблоны.
-- Сохранение в рабочее пространство, просмотр и редактирование файлов.
+### 🏗 Конструктор Vexel
+- Полноценный визуальный редактор интерфейсов в стиле Material 3 Expressive.
+- Проекты, слои, фигуры MD3, компоненты, маски, градиенты, тени и режим «Играть».
+- Экспорт PNG/SVG, импорт SVG и генерация Compose-кода.
+- Открывается из вкладки «Конструктор» на весь экран.
+- Конструктор — Vexel, автор [@cheburek_dev](https://t.me/cheburek_dev), используется с разрешения.
 
 ### 🎨 Оформление
 - **Material Design 3** — бесплатно, с dynamic color на Android 12+.
@@ -60,6 +62,8 @@
 2. Разрешите установку из неизвестных источников.
 3. Требования: Android 12+ (minSdk 31), процессор arm64-v8a.
 
+Текущая сборка: **2.4.0** с конструктором Vexel (`devai-studio-2.4.0.apk`).
+
 APK подписан самоподписанным ключом, поэтому Play Protect может показать предупреждение.
 
 ## Сборка
@@ -71,8 +75,8 @@ export ANDROID_HOME=/path/to/android-sdk
 ./gradlew :app:assembleRelease
 ```
 
-Требования: JDK 21, Android SDK 35, Gradle 8.9, AGP 8.6, Kotlin 2.1.0.
-Compose: BOM 2025.10.01, Material3 1.4.0, `androidx.graphics:graphics-shapes:1.0.1`.
+Требования: JDK 21, Android SDK 35, Gradle 8.9, AGP 8.6, Kotlin 2.2.20.
+Compose: BOM 2026.03.01 (UI 1.10.6), Material3 1.4.0, activity-compose 1.10.1, `androidx.graphics:graphics-shapes:1.1.0`.
 
 Подпись release-сборки:
 ```bash
@@ -84,14 +88,16 @@ apksigner sign --ks release.jks --ks-key-alias devai \
 ```
 app/src/main/java/com/devai/studio/
 ├── ai/          # клиенты провайдеров, LiteRT-LM, форматы промптов
-├── builder/     # генерация Android-проектов
 ├── data/        # настройки, ключи, сессии, каталог моделей, Premium
 ├── ui/          # экраны и адаптеры
 └── util/        # темы, диалоги, вспомогательные классы
+
+app/src/main/kotlin/com/qwenz/qwel/   # Vexel: проекты, редактор, рендер, фигуры
 ```
 
 ## Технологии
-- Kotlin 2.1, AndroidX, Material 3, ViewBinding
+- Kotlin 2.2, AndroidX, Material 3, ViewBinding + Jetpack Compose
+- Compose BOM 2026.03.01, Vexel/Qwel constructor
 - Kotlin Coroutines, OkHttp
 - LiteRT-LM (инференс на устройстве)
 - minSdk 31, targetSdk 34, arm64-v8a
@@ -116,7 +122,13 @@ app/src/main/java/com/devai/studio/
 
 Новости, обновления и поддержка — в Telegram-канале [@NeonBeatt](https://t.me/NeonBeatt). Сайт: [rytmix-live.pplx-2.app](https://rytmix-live.pplx-2.app).
 
+## Благодарности
+- Конструктор Vexel — [@cheburek_dev](https://t.me/cheburek_dev). Используется с разрешения автора. Оригинал: https://t.me/cheburek_dev
+
 ## Лицензии
 - Модели: Apache-2.0 (HuggingFace `litert-community`).
 - LiteRT-LM: лицензия Google AI Edge.
+- Конструктор Vexel (Qwel): © @cheburek_dev, используется с разрешения.
+- Шрифт Figtree: SIL OFL (`assets/fonts/Figtree-OFL.txt`).
+- Шрифт Inter SA: SIL OFL; файл лицензии нужно положить в `assets/fonts` перед публикацией.
 - Код приложения: © DevAI Studio.

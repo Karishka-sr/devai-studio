@@ -35,6 +35,14 @@
             android:exported="false"
             android:label="@string/premium_title" />
 
+        <activity
+            android:name="com.qwenz.qwel.MainActivity"
+            android:exported="false"
+            android:label="Vexel"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode|density|fontScale"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.Qwel" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

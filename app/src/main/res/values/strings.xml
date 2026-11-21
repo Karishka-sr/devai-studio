@@ -76,7 +76,6 @@
     <string name="common_ok">OK</string>
     <string name="common_github">GitHub</string>
 
-    <string name="tab_projects">Проекты</string>
 
     <string name="workspace_title">Мои проекты</string>
     <string name="workspace_subtitle">Проекты из конструктора и сгенерированные ИИ. Откройте проект, чтобы править файлы и экспортировать ZIP.</string>
@@ -204,6 +203,8 @@
     <string name="settings_author_role">Разработчик DevAI Studio</string>
     <string name="settings_author_telegram">Telegram</string>
     <string name="settings_author_site">Сайт</string>
+    <string name="settings_author_credit">Конструктор — Vexel (@cheburek_dev). Используется с разрешения.\nОригинал: t.me/cheburek_dev</string>
+    <string name="author_vexel_url">https://t.me/cheburek_dev</string>
     <string name="settings_author_link_error">Не удалось открыть ссылку</string>
     <string name="author_telegram_url" translatable="false">https://t.me/NeonBeatt</string>
     <string name="author_site_url" translatable="false">https://rytmix-live.pplx-2.app</string>

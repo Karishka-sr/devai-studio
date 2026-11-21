@@ -1,14 +1,13 @@
 package com.devai.studio
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.devai.studio.databinding.ActivityMainBinding
-import com.devai.studio.ui.BuilderFragment
 import com.devai.studio.ui.ChatFragment
 import com.devai.studio.ui.ProvidersFragment
 import com.devai.studio.ui.SettingsFragment
-import com.devai.studio.ui.WorkspaceFragment
 import com.devai.studio.util.ThemeManager
 
 class MainActivity : AppCompatActivity() {
@@ -28,13 +27,15 @@ class MainActivity : AppCompatActivity() {
 
         binding.bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.nav_chat -> show(ChatFragment())
-                R.id.nav_providers -> show(ProvidersFragment())
-                R.id.nav_builder -> show(BuilderFragment())
-                R.id.nav_projects -> show(WorkspaceFragment())
-                R.id.nav_settings -> show(SettingsFragment())
+                R.id.nav_chat -> { show(ChatFragment()); true }
+                R.id.nav_providers -> { show(ProvidersFragment()); true }
+                R.id.nav_builder -> {
+                    startActivity(Intent(this, com.qwenz.qwel.MainActivity::class.java))
+                    false
+                }
+                R.id.nav_settings -> { show(SettingsFragment()); true }
+                else -> false
             }
-            true
         }
     }
 
