@@ -198,4 +198,13 @@
     <string name="premium_export_chat">Экспорт чата</string>
     <string name="premium_export_empty">Чат пуст</string>
     <string name="premium_export_chooser">Экспорт чата</string>
+
+    <string name="settings_author">Автор</string>
+    <string name="settings_author_name">NeonBeatt</string>
+    <string name="settings_author_role">Разработчик DevAI Studio</string>
+    <string name="settings_author_telegram">Telegram</string>
+    <string name="settings_author_site">Сайт</string>
+    <string name="settings_author_link_error">Не удалось открыть ссылку</string>
+    <string name="author_telegram_url" translatable="false">https://t.me/NeonBeatt</string>
+    <string name="author_site_url" translatable="false">https://rytmix-live.pplx-2.app</string>
 </resources>

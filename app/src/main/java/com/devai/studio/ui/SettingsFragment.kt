@@ -1,6 +1,8 @@
 package com.devai.studio.ui
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -74,6 +76,12 @@ class SettingsFragment : Fragment() {
             getString(ThemeManager.labelRes(AppPrefs.theme(ctx)))
         )
         binding.btnTheme.setOnClickListener { showThemeDialog() }
+        binding.btnAuthorTelegram.setOnClickListener {
+            openUrl(getString(R.string.author_telegram_url))
+        }
+        binding.btnAuthorSite.setOnClickListener {
+            openUrl(getString(R.string.author_site_url))
+        }
         binding.btnPremium.setOnClickListener {
             startActivity(Intent(requireContext(), PremiumActivity::class.java))
         }
@@ -125,6 +133,14 @@ class SettingsFragment : Fragment() {
             if (PremiumStore.isPremium(requireContext())) R.string.premium_status_button_active
             else R.string.premium_status_button_free
         )
+    }
+
+    private fun openUrl(url: String) {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        } catch (e: ActivityNotFoundException) {
+            AndroidUtils.toast(requireContext(), getString(R.string.settings_author_link_error))
+        }
     }
 
     private fun updateTemperatureLabel() {

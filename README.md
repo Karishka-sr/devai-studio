@@ -11,6 +11,9 @@
   <a href="https://github.com/Karishka-sr/devai-studio/releases">
     <img src="https://img.shields.io/badge/Download_APK-v2.3-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
   </a>
+  <a href="https://rytmix-live.pplx-2.app">
+    <img src="https://img.shields.io/badge/Site-rytmix--live-0A66C2?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Сайт">
+  </a>
 </p>
 
 ## Возможности
@@ -105,9 +108,12 @@ app/src/main/java/com/devai/studio/
   <a href="https://t.me/NeonBeatt">
     <img src="https://img.shields.io/badge/Telegram-@NeonBeatt-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram @NeonBeatt">
   </a>
+  <a href="https://rytmix-live.pplx-2.app">
+    <img src="https://img.shields.io/badge/Site-rytmix--live-0A66C2?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Сайт">
+  </a>
 </p>
 
-Новости, обновления и поддержка — в Telegram-канале [@NeonBeatt](https://t.me/NeonBeatt).
+Новости, обновления и поддержка — в Telegram-канале [@NeonBeatt](https://t.me/NeonBeatt). Сайт: [rytmix-live.pplx-2.app](https://rytmix-live.pplx-2.app).
 
 ## Лицензии
 - Модели: Apache-2.0 (HuggingFace `litert-community`).
