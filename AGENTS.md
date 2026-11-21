@@ -15,7 +15,7 @@
 
 ## Themes & Premium
 - `util/ThemeManager.kt`: M3 (free, dynamic color), Expressive/Retro (premium).
-- `data/PremiumStore.kt`: local entitlement; promo codes `DEVAI-PRO`, `DEVAI-2025`, `DEVAI-PRO-2025`, `PREMIUM`.
+- `data/PremiumStore.kt`: local entitlement and promo codes (client-side validation; use a server for production).
 - Premium UI: `ui/PremiumActivity.kt`; gates: themes, large models, chat export.
 
 ## Notes
