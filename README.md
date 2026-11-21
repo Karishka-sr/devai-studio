@@ -80,8 +80,6 @@ apksigner sign --ks release.jks --ks-key-alias devai \
   --out devai-studio.apk app/build/outputs/apk/release/app-release-unsigned.apk
 ```
 
-Требования: JDK 21, Android SDK 34, Kotlin 2.1.
-
 ## Структура проекта
 ```
 app/src/main/java/com/devai/studio/
