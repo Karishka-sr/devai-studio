@@ -106,6 +106,7 @@ object ChatSessionsStore {
             )
             saveAll(ctx, all + s)
             setCurrent(ctx, s.id)
+            ChatHistoryStore.clear(ctx)
             return s
         }
         if (all.isNotEmpty()) {

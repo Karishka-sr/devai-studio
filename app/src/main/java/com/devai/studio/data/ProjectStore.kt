@@ -59,7 +59,8 @@ object ProjectStore {
 
     fun create(ctx: Context, name: String, type: String): Project {
         val id = "p" + System.currentTimeMillis().toString(36) + (1000..9999).random()
-        val p = Project(id, name.ifBlank { "Проект" }, type, System.currentTimeMillis())
+        val clean = name.replace(Regex("\\s+"), " ").trim().ifBlank { "Проект" }.take(60)
+        val p = Project(id, clean, type, System.currentTimeMillis())
         saveList(ctx, list(ctx) + p)
         filesDir(ctx, id)
         return p
