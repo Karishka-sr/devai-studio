@@ -71,6 +71,9 @@ export ANDROID_HOME=/path/to/android-sdk
 ./gradlew :app:assembleRelease
 ```
 
+Требования: JDK 21, Android SDK 35, Gradle 8.9, AGP 8.6, Kotlin 2.1.0.
+Compose: BOM 2025.10.01, Material3 1.4.0, `androidx.graphics:graphics-shapes:1.0.1`.
+
 Подпись release-сборки:
 ```bash
 apksigner sign --ks release.jks --ks-key-alias devai \

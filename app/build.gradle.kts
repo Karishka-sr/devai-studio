@@ -1,18 +1,19 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
     namespace = "com.devai.studio"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.devai.studio"
         minSdk = 31
         targetSdk = 34
-        versionCode = 6
-        versionName = "2.3.1"
+        versionCode = 7
+        versionName = "2.3.2"
         vectorDrawables.useSupportLibrary = true
         ndk {
             abiFilters += listOf("arm64-v8a")
@@ -41,6 +42,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        compose = true
     }
 }
 
@@ -56,6 +58,12 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.ai.edge.litertlm:litertlm:0.0.0-alpha05")
+
+    implementation(platform("androidx.compose:compose-bom:2025.10.01"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.graphics:graphics-shapes:1.0.1")
 
     testImplementation("junit:junit:4.13.2")
 }

@@ -134,10 +134,16 @@
             android:layout_marginTop="8dp"
             android:text="@string/settings_theme_current" />
 
+        <androidx.compose.ui.platform.ComposeView
+            android:id="@+id/author_art"
+            android:layout_width="match_parent"
+            android:layout_height="220dp"
+            android:layout_marginTop="20dp" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="12dp"
             android:text="@string/settings_author"
             android:textColor="?attr/colorOnSurface"
             android:textSize="15sp"
