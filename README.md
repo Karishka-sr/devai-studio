@@ -4,6 +4,15 @@
 
 [Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v2.3** · Android 12+ · arm64-v8a
 
+<p align="center">
+  <a href="https://t.me/NeonBeatt">
+    <img src="https://img.shields.io/badge/Telegram-@NeonBeatt-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram @NeonBeatt">
+  </a>
+  <a href="https://github.com/Karishka-sr/devai-studio/releases">
+    <img src="https://img.shields.io/badge/Download_APK-v2.3-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
+  </a>
+</p>
+
 ## Возможности
 
 ### 💬 Чат с ИИ
@@ -88,6 +97,17 @@ app/src/main/java/com/devai/studio/
 - Небольшие офлайн-модели подходят для простых задач; для сложного кода лучше облачные модели.
 - Для Qwen2.5 1.5B рекомендуется 6 ГБ RAM.
 - Premium и промокоды проверяются локально. Для продакшена нужен сервер или Google Play Billing.
+
+
+## 💬 Сообщество
+
+<p>
+  <a href="https://t.me/NeonBeatt">
+    <img src="https://img.shields.io/badge/Telegram-@NeonBeatt-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram @NeonBeatt">
+  </a>
+</p>
+
+Новости, обновления и поддержка — в Telegram-канале [@NeonBeatt](https://t.me/NeonBeatt).
 
 ## Лицензии
 - Модели: Apache-2.0 (HuggingFace `litert-community`).
