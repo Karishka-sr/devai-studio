@@ -8,6 +8,7 @@ import com.devai.studio.ui.BuilderFragment
 import com.devai.studio.ui.ChatFragment
 import com.devai.studio.ui.ProvidersFragment
 import com.devai.studio.ui.SettingsFragment
+import com.devai.studio.ui.WorkspaceFragment
 
 class MainActivity : AppCompatActivity() {
 
@@ -27,6 +28,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_chat -> show(ChatFragment())
                 R.id.nav_providers -> show(ProvidersFragment())
                 R.id.nav_builder -> show(BuilderFragment())
+                R.id.nav_projects -> show(WorkspaceFragment())
                 R.id.nav_settings -> show(SettingsFragment())
             }
             true

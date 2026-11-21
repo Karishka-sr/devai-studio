@@ -9,6 +9,7 @@ import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.ScrollView
 import androidx.appcompat.app.AlertDialog
+import com.devai.studio.R
 import com.devai.studio.data.ApiKeyStore
 import com.devai.studio.data.ProviderInfo
 import com.devai.studio.util.AndroidUtils
@@ -36,14 +37,22 @@ object CommonDialogs {
             .show()
     }
 
-    fun modelDialog(ctx: Context, provider: ProviderInfo, current: String, onChosen: (String) -> Unit) {
+    fun modelDialog(
+        ctx: Context,
+        provider: ProviderInfo,
+        current: String,
+        extra: List<String> = emptyList(),
+        onFetch: (() -> Unit)? = null,
+        onChosen: (String) -> Unit
+    ) {
+        val models = (provider.models + extra).distinct()
         val container = LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(ctx, 20), dp(ctx, 8), dp(ctx, 20), dp(ctx, 8))
         }
         val group = RadioGroup(ctx).apply { orientation = RadioGroup.VERTICAL }
         val buttons = mutableListOf<RadioButton>()
-        provider.models.forEachIndexed { i, m ->
+        models.forEachIndexed { i, m ->
             val rb = RadioButton(ctx).apply {
                 id = i + 1
                 text = m
@@ -56,13 +65,13 @@ object CommonDialogs {
 
         val custom = EditText(ctx).apply {
             hint = "Своя модель"
-            setText(if (provider.models.contains(current)) "" else current)
+            setText(if (models.contains(current)) "" else current)
         }
         container.addView(custom)
 
         val scroll = ScrollView(ctx).apply { addView(container) }
 
-        AlertDialog.Builder(ctx)
+        val builder = AlertDialog.Builder(ctx)
             .setTitle("Модель — " + provider.name)
             .setView(scroll)
             .setPositiveButton("Выбрать") { _, _ ->
@@ -71,7 +80,10 @@ object CommonDialogs {
                 if (chosen.isNotBlank()) onChosen(chosen)
             }
             .setNegativeButton("Отмена", null)
-            .show()
+        if (onFetch != null) {
+            builder.setNeutralButton(R.string.model_fetch) { _, _ -> onFetch() }
+        }
+        builder.show()
     }
 
     fun resultDialog(ctx: Context, title: String, message: String, uri: Uri?, mime: String) {

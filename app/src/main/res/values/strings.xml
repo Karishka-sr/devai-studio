@@ -75,4 +75,53 @@
     <string name="common_cancel">Отмена</string>
     <string name="common_ok">OK</string>
     <string name="common_github">GitHub</string>
+
+    <string name="tab_projects">Проекты</string>
+
+    <string name="workspace_title">Мои проекты</string>
+    <string name="workspace_subtitle">Проекты из конструктора и сгенерированные ИИ. Откройте проект, чтобы править файлы и экспортировать ZIP.</string>
+    <string name="workspace_new">+ Новый проект</string>
+    <string name="workspace_empty">Пока нет проектов. Нажмите «Новый проект».</string>
+
+    <string name="project_open">Открыть</string>
+    <string name="project_export">ZIP</string>
+    <string name="project_delete">Удалить</string>
+    <string name="project_delete_confirm">Удалить проект «%1$s»?</string>
+    <string name="project_delete_btn">Удалить</string>
+    <string name="project_add_file">+ Файл</string>
+    <string name="project_export_zip">Экспорт ZIP</string>
+    <string name="project_files_empty">В проекте нет файлов. Добавьте файл или сгенерируйте проект через ИИ.</string>
+    <string name="project_meta">%1$s · %2$s</string>
+
+    <string name="editor_save">Сохранить</string>
+    <string name="editor_saved">Файл сохранён</string>
+    <string name="file_delete_confirm">Удалить файл «%1$s»?</string>
+
+    <string name="new_project_title">Новый проект</string>
+    <string name="new_project_name">Название проекта</string>
+    <string name="new_project_desc">Описание для ИИ (необязательно)</string>
+    <string name="new_project_ai">Сгенерировать код через ИИ</string>
+    <string name="new_project_create">Создать</string>
+    <string name="new_file_title">Новый файл</string>
+    <string name="new_file_path">Путь, например app/src/main/java/com/devai/app/Main.kt</string>
+
+    <string name="chat_sessions">Диалоги</string>
+    <string name="chat_new_session">Новый</string>
+    <string name="chat_delete_session">Удалить</string>
+    <string name="chat_delete_session_confirm">Удалить текущий диалог?</string>
+    <string name="chat_session_deleted">Диалог удалён</string>
+    <string name="chat_regenerate">Повторить</string>
+    <string name="chat_copy">Копировать</string>
+    <string name="chat_copied">Скопировано</string>
+
+    <string name="model_fetch">Загрузить</string>
+    <string name="model_fetched">Загружено моделей: %1$d</string>
+    <string name="model_fetch_empty">Модели не найдены</string>
+    <string name="model_fetch_error">Ошибка: %1$s</string>
+
+    <string name="settings_system_prompt">Системный промпт:</string>
+
+    <string name="builder_saved_project">Проект сохранён в разделе «Проекты»</string>
+    <string name="builder_ai_used">Код сгенерирован ИИ</string>
+    <string name="builder_template_used">Использован шаблон</string>
 </resources>

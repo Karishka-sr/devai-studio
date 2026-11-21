@@ -91,6 +91,26 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/settings_system_prompt"
+            android:textColor="@color/on_surface"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/system_prompt_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_input"
+            android:gravity="top|start"
+            android:inputType="textMultiLine"
+            android:minLines="3"
+            android:padding="10dp"
+            android:textColor="@color/on_surface"
+            android:textSize="13sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:padding="12dp"
             android:background="@drawable/bg_input"

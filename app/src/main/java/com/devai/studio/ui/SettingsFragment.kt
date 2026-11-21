@@ -60,6 +60,11 @@ class SettingsFragment : Fragment() {
             AppPrefs.setCustomModel(ctx, it?.toString().orEmpty())
         }
 
+        binding.systemPromptInput.setText(AppPrefs.systemPrompt(ctx))
+        binding.systemPromptInput.doAfterTextChanged {
+            AppPrefs.setSystemPrompt(ctx, it?.toString().orEmpty())
+        }
+
         binding.btnClearKeys.setOnClickListener {
             AlertDialog.Builder(ctx)
                 .setTitle("Сбросить все ключи?")

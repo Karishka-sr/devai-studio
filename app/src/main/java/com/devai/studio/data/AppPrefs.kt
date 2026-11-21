@@ -10,6 +10,10 @@ object AppPrefs {
     private const val KEY_MAX_TOKENS = "max_tokens"
     private const val KEY_CUSTOM_BASE = "custom_base"
     private const val KEY_CUSTOM_MODEL = "custom_model"
+    private const val KEY_SYSTEM_PROMPT = "system_prompt"
+
+    const val DEFAULT_SYSTEM_PROMPT =
+        "Ты — DevAI, полезный ИИ-ассистент разработчика. Отвечай по делу, давай рабочие примеры кода."
 
     private fun p(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -36,4 +40,31 @@ object AppPrefs {
 
     fun customModel(ctx: Context): String = p(ctx).getString(KEY_CUSTOM_MODEL, "") ?: ""
     fun setCustomModel(ctx: Context, v: String) = p(ctx).edit().putString(KEY_CUSTOM_MODEL, v).apply()
+
+    fun systemPrompt(ctx: Context): String {
+        val v = p(ctx).getString(KEY_SYSTEM_PROMPT, null)
+        return if (v.isNullOrBlank()) DEFAULT_SYSTEM_PROMPT else v
+    }
+
+    fun setSystemPrompt(ctx: Context, v: String) =
+        p(ctx).edit().putString(KEY_SYSTEM_PROMPT, v).apply()
+
+    fun modelsFor(ctx: Context, providerId: String): List<String> {
+        val raw = p(ctx).getString("models_" + providerId, null) ?: return emptyList()
+        val out = mutableListOf<String>()
+        try {
+            val arr = org.json.JSONArray(raw)
+            for (i in 0 until arr.length()) {
+                arr.optString(i).takeIf { it.isNotBlank() }?.let { out.add(it) }
+            }
+        } catch (_: Exception) {
+        }
+        return out
+    }
+
+    fun setModelsFor(ctx: Context, providerId: String, models: List<String>) {
+        p(ctx).edit()
+            .putString("models_" + providerId, org.json.JSONArray(models).toString())
+            .apply()
+    }
 }

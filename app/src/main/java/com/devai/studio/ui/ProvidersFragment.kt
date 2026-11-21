@@ -5,7 +5,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.devai.studio.R
+import com.devai.studio.ai.ModelFetcher
 import com.devai.studio.data.ApiKeyStore
 import com.devai.studio.data.AppPrefs
 import com.devai.studio.data.Category
@@ -13,6 +16,7 @@ import com.devai.studio.data.ProviderCatalog
 import com.devai.studio.data.ProviderInfo
 import com.devai.studio.databinding.FragmentProvidersBinding
 import com.devai.studio.util.AndroidUtils
+import kotlinx.coroutines.launch
 
 class ProvidersFragment : Fragment(), ProviderAdapter.Listener {
 
@@ -77,12 +81,50 @@ class ProvidersFragment : Fragment(), ProviderAdapter.Listener {
     }
 
     override fun onModel(p: ProviderInfo) {
+        openModelDialog(p)
+    }
+
+    private fun openModelDialog(p: ProviderInfo) {
         val ctx = requireContext()
         val current = AppPrefs.modelFor(ctx, p.id) ?: p.models.firstOrNull().orEmpty()
-        CommonDialogs.modelDialog(ctx, p, current) { model ->
+        val extra = AppPrefs.modelsFor(ctx, p.id)
+        CommonDialogs.modelDialog(
+            ctx,
+            p,
+            current,
+            extra,
+            onFetch = { fetchModels(p) }
+        ) { model ->
             AppPrefs.setModelFor(ctx, p.id, model)
             AndroidUtils.toast(ctx, "Модель: " + model)
             refresh()
+        }
+    }
+
+    private fun fetchModels(p: ProviderInfo) {
+        val ctx = requireContext()
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val key = ApiKeyStore.get(ctx, p.id).orEmpty()
+                val base = if (p.id == "custom") AppPrefs.customBase(ctx) else p.baseUrl
+                if (base.isBlank()) {
+                    AndroidUtils.toast(ctx, getString(R.string.model_fetch_error, "base URL пуст"))
+                    return@launch
+                }
+                val models = ModelFetcher.fetch(p, key, base)
+                if (models.isEmpty()) {
+                    AndroidUtils.toast(ctx, getString(R.string.model_fetch_empty))
+                } else {
+                    AppPrefs.setModelsFor(ctx, p.id, models)
+                    AndroidUtils.toast(ctx, getString(R.string.model_fetched, models.size))
+                    if (isAdded) openModelDialog(p)
+                }
+            } catch (e: Exception) {
+                AndroidUtils.toast(
+                    ctx,
+                    getString(R.string.model_fetch_error, e.message ?: "network")
+                )
+            }
         }
     }
 

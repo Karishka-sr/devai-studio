@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import androidx.appcompat.app.AlertDialog
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -12,10 +13,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.devai.studio.R
 import com.devai.studio.ai.AiClientFactory
 import com.devai.studio.ai.AiMessage
-import com.devai.studio.data.ChatHistoryStore
+import com.devai.studio.data.AppPrefs
+import com.devai.studio.data.ChatSession
+import com.devai.studio.data.ChatSessionsStore
 import com.devai.studio.databinding.FragmentChatBinding
 import com.devai.studio.util.AiSupport
 import com.devai.studio.util.AndroidUtils
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -28,12 +32,10 @@ class ChatFragment : Fragment() {
     private val messages = mutableListOf<AiMessage>()
     private var job: Job? = null
     private var streaming = false
+    private var sessionId: String = ""
 
     @Volatile
     private var cancelled = false
-
-    private val systemPrompt = "Ты — DevAI, полезный ИИ-ассистент разработчика. " +
-        "Отвечай по делу, давай рабочие примеры кода."
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -49,12 +51,16 @@ class ChatFragment : Fragment() {
         binding.chatList.layoutManager = LinearLayoutManager(requireContext()).apply { stackFromEnd = true }
         binding.chatList.adapter = adapter
 
+        val session = ChatSessionsStore.getOrCreateCurrent(requireContext())
+        sessionId = session.id
         messages.clear()
-        messages.addAll(ChatHistoryStore.load(requireContext()))
+        messages.addAll(session.messages)
         adapter.submit(messages)
         scrollToBottom()
 
         binding.btnSend.setOnClickListener { onSendOrStop() }
+        binding.btnSessions.setOnClickListener { showSessions() }
+        binding.btnRegenerate.setOnClickListener { regenerate() }
         binding.inputText.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEND) {
                 onSendOrStop()
@@ -138,7 +144,7 @@ class ChatFragment : Fragment() {
             try {
                 val client = AiClientFactory.create(cfg)
                 val apiMessages = ArrayList<AiMessage>()
-                apiMessages.add(AiMessage("system", systemPrompt))
+                apiMessages.add(AiMessage("system", AppPrefs.systemPrompt(ctx)))
                 apiMessages.addAll(messages.take(assistantIndex))
 
                 val full = client.chat(apiMessages) { delta ->
@@ -161,9 +167,11 @@ class ChatFragment : Fragment() {
                 if (!cancelled) {
                     messages[assistantIndex] = AiMessage("assistant", full.ifBlank { sb.toString() })
                     adapter.submit(messages)
-                    ChatHistoryStore.save(ctx, messages)
+                    persist()
                     scrollToBottom()
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 if (!cancelled) {
                     messages[assistantIndex] = AiMessage(
@@ -171,13 +179,69 @@ class ChatFragment : Fragment() {
                         ctx.getString(R.string.chat_error, e.message ?: e.javaClass.simpleName)
                     )
                     adapter.submit(messages)
-                    ChatHistoryStore.save(ctx, messages)
+                    persist()
                 }
             } finally {
                 setStreamingUi(false)
                 job = null
             }
         }
+    }
+
+    private fun persist() {
+        if (sessionId.isBlank() || !isAdded) return
+        ChatSessionsStore.updateMessages(requireContext(), sessionId, messages)
+    }
+
+    private fun regenerate() {
+        if (streaming) return
+        val lastUser = messages.indexOfLast { it.role == "user" }
+        if (lastUser < 0) return
+        val text = messages[lastUser].content
+        while (messages.size > lastUser) messages.removeAt(messages.size - 1)
+        adapter.submit(messages)
+        persist()
+        binding.inputText.setText(text)
+        send()
+    }
+
+    private fun loadSession(s: ChatSession) {
+        sessionId = s.id
+        ChatSessionsStore.setCurrent(requireContext(), s.id)
+        messages.clear()
+        messages.addAll(s.messages)
+        adapter.submit(messages)
+        scrollToBottom()
+        updateModelLabel()
+    }
+
+    private fun showSessions() {
+        val ctx = requireContext()
+        persist()
+        val all = ChatSessionsStore.list(ctx)
+        val titles = all.map { it.title }.toTypedArray()
+        AlertDialog.Builder(ctx)
+            .setTitle(R.string.chat_sessions)
+            .setItems(titles) { _, i -> loadSession(all[i]) }
+            .setPositiveButton(R.string.chat_new_session) { _, _ ->
+                loadSession(ChatSessionsStore.create(ctx))
+            }
+            .setNeutralButton(R.string.chat_delete_session) { _, _ -> deleteCurrent() }
+            .show()
+    }
+
+    private fun deleteCurrent() {
+        val ctx = requireContext()
+        AlertDialog.Builder(ctx)
+            .setTitle(R.string.chat_delete_session)
+            .setMessage(R.string.chat_delete_session_confirm)
+            .setPositiveButton(R.string.common_ok) { _, _ ->
+                ChatSessionsStore.delete(ctx, sessionId)
+                loadSession(ChatSessionsStore.getOrCreateCurrent(ctx))
+                AndroidUtils.toast(ctx, getString(R.string.chat_session_deleted))
+            }
+            .setNegativeButton(R.string.common_cancel, null)
+            .show()
     }
 
     private fun scrollToBottom() {

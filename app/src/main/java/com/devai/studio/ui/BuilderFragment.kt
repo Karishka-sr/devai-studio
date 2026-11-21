@@ -7,12 +7,10 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.devai.studio.R
-import com.devai.studio.ai.AiClientFactory
-import com.devai.studio.ai.AiMessage
-import com.devai.studio.builder.ProjectGenerator
+import com.devai.studio.builder.AiProjectGenerator
 import com.devai.studio.builder.ZipSaver
+import com.devai.studio.data.ProjectStore
 import com.devai.studio.databinding.FragmentBuilderBinding
-import com.devai.studio.util.AiSupport
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -47,32 +45,44 @@ class BuilderFragment : Fragment() {
         val ctx = requireContext()
         val desc = binding.builderDesc.text.toString().trim()
         val kind = when (binding.typeGroup.checkedRadioButtonId) {
-            R.id.type_web -> Kind.WEB
-            R.id.type_python -> Kind.PYTHON
-            R.id.type_kotlin -> Kind.KOTLIN
-            R.id.type_ai -> Kind.AI
-            else -> Kind.ANDROID
+            R.id.type_web -> "web"
+            R.id.type_python -> "python"
+            R.id.type_kotlin -> "kotlin"
+            else -> "android"
         }
 
         setBusy(true, getString(R.string.builder_busy))
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val files = withContext(Dispatchers.IO) { generateFiles(kind, desc) }
-                val bytes = withContext(Dispatchers.IO) { ZipSaver.buildZip(files) }
+                val result = AiProjectGenerator.generate(ctx, kind, desc)
+                val projectName = desc.ifBlank { defaultName(kind) }.take(40)
+                val project = withContext(Dispatchers.IO) {
+                    ProjectStore.create(ctx, projectName, kind).also {
+                        ProjectStore.import(ctx, it.id, result.files)
+                    }
+                }
+                val bytes = withContext(Dispatchers.IO) { ZipSaver.buildZip(result.files) }
                 val safe = desc.ifBlank { "project" }.take(20).replace(Regex("[^A-Za-z0-9_-]"), "_")
                 val name = safe + "_" + System.currentTimeMillis() + ".zip"
                 val uri = withContext(Dispatchers.IO) { ZipSaver.save(ctx, name, bytes) }
 
-                setBusy(false, getString(R.string.builder_done, name))
+                val source = getString(
+                    if (result.usedAi) R.string.builder_ai_used else R.string.builder_template_used
+                )
+                val status = getString(R.string.builder_saved_project) + " · " + source
+                setBusy(false, status)
+
+                val details = "Файлов: " + result.files.size + "\n" + status + "\n" + name +
+                    "\n\nПроект: " + project.name
                 if (zipOnly) {
-                    CommonDialogs.resultDialog(
-                        ctx, "ZIP готов",
-                        "Файлов: " + files.size + "\n" + name, uri, "application/zip"
-                    )
+                    CommonDialogs.resultDialog(ctx, "ZIP готов", details, uri, "application/zip")
                 } else {
                     CommonDialogs.resultDialog(
-                        ctx, "APK-заготовка",
-                        getString(R.string.builder_apk_instructions), uri, "application/zip"
+                        ctx,
+                        "APK-заготовка",
+                        getString(R.string.builder_apk_instructions) + "\n\n" + details,
+                        uri,
+                        "application/zip"
                     )
                 }
             } catch (e: Exception) {
@@ -81,52 +91,11 @@ class BuilderFragment : Fragment() {
         }
     }
 
-    private suspend fun generateFiles(kind: Kind, desc: String): Map<String, String> = when (kind) {
-        Kind.ANDROID -> ProjectGenerator.android("MyApp", "com.devai.app", aiCodeOrNull(desc, "android"), desc)
-        Kind.WEB -> ProjectGenerator.web("MyApp", aiCodeOrNull(desc, "html"))
-        Kind.PYTHON -> ProjectGenerator.python("script", aiCodeOrNull(desc, "python"))
-        Kind.KOTLIN -> ProjectGenerator.kotlinCli("cli", aiCodeOrNull(desc, "kotlin"))
-        Kind.AI -> ProjectGenerator.android("MyApp", "com.devai.app", aiCodeOrNull(desc, "android"), desc)
-    }
-
-    private suspend fun aiCodeOrNull(desc: String, target: String): String? {
-        if (desc.isBlank()) return null
-        val cfg = try {
-            AiSupport.config(requireContext())
-        } catch (e: Exception) {
-            return null
-        }
-        return try {
-            val client = AiClientFactory.create(cfg)
-            val sys = "Ты — генератор кода. Верни ТОЛЬКО код файла, без пояснений и без markdown-разметки."
-            val raw = client.chat(
-                listOf(AiMessage("system", sys), AiMessage("user", buildPrompt(target, desc)))
-            ) {}
-            stripFences(raw)
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    private fun buildPrompt(target: String, desc: String): String = when (target) {
-        "android" ->
-            "Сгенерируй файл MainActivity.kt (Kotlin, package com.devai.app, AndroidX AppCompatActivity) для приложения: " + desc
-        "html" ->
-            "Сгенерируй полный файл index.html (HTML+CSS+JS в одном файле) для приложения: " + desc
-        "python" ->
-            "Сгенерируй файл main.py (Python 3) для задачи: " + desc
-        else ->
-            "Сгенерируй файл Main.kt (Kotlin, fun main) для задачи: " + desc
-    }
-
-    private fun stripFences(s: String): String {
-        var t = s.trim()
-        if (t.startsWith("```")) {
-            val nl = t.indexOf('\n')
-            if (nl >= 0) t = t.substring(nl + 1)
-            if (t.endsWith("```")) t = t.substring(0, t.length - 3)
-        }
-        return t.trim()
+    private fun defaultName(kind: String): String = when (kind) {
+        "web" -> "WebApp"
+        "python" -> "PythonApp"
+        "kotlin" -> "KotlinCLI"
+        else -> "AndroidApp"
     }
 
     private fun setBusy(b: Boolean, status: String) {
@@ -137,6 +106,4 @@ class BuilderFragment : Fragment() {
         bd.builderStatus.text = status
         bd.builderStatus.visibility = View.VISIBLE
     }
-
-    private enum class Kind { ANDROID, WEB, PYTHON, KOTLIN, AI }
 }
