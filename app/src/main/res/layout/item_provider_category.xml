@@ -11,7 +11,7 @@
         android:id="@+id/cat_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@color/primary_dark"
+        android:textColor="?attr/colorPrimary"
         android:textSize="13sp"
         android:textStyle="bold" />
 
@@ -19,7 +19,7 @@
         android:id="@+id/cat_sub"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@color/secondary"
+        android:textColor="?attr/colorOnSurfaceVariant"
         android:textSize="12sp" />
 
 </LinearLayout>

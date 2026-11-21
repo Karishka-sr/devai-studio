@@ -8,7 +8,8 @@ data class AiMessage(
 enum class AiFormat {
     OPENAI_COMPAT,
     ANTHROPIC,
-    GEMINI
+    GEMINI,
+    LOCAL
 }
 
 data class AiConfig(

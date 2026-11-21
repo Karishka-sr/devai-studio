@@ -11,11 +11,15 @@ object AppPrefs {
     private const val KEY_CUSTOM_BASE = "custom_base"
     private const val KEY_CUSTOM_MODEL = "custom_model"
     private const val KEY_SYSTEM_PROMPT = "system_prompt"
+    private const val KEY_THEME = "theme"
 
     const val DEFAULT_SYSTEM_PROMPT =
         "Ты — DevAI, полезный ИИ-ассистент разработчика. Отвечай по делу, давай рабочие примеры кода."
 
     private fun p(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
+    fun theme(ctx: Context): String = p(ctx).getString(KEY_THEME, "m3") ?: "m3"
+    fun setTheme(ctx: Context, id: String) = p(ctx).edit().putString(KEY_THEME, id).apply()
 
     fun activeProvider(ctx: Context): String? = p(ctx).getString(KEY_PROVIDER, null)
     fun setActiveProvider(ctx: Context, id: String) = p(ctx).edit().putString(KEY_PROVIDER, id).apply()

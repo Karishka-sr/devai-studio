@@ -18,7 +18,7 @@ object AiProjectGenerator {
             return Result(templates(kind, desc), false)
         }
         val raw = try {
-            val client = AiClientFactory.create(cfg)
+            val client = AiClientFactory.create(cfg, ctx)
             client.chat(
                 listOf(AiMessage("system", SYSTEM), AiMessage("user", prompt(kind, desc)))
             ) {}

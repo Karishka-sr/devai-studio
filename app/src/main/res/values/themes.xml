@@ -37,4 +37,82 @@
         <item name="android:minHeight">0dp</item>
         <item name="android:minWidth">0dp</item>
     </style>
+
+    <style name="ShapeAppearance.DevAI.Expressive" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">28dp</item>
+    </style>
+
+    <style name="ShapeAppearance.DevAI.Retro" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">0dp</item>
+    </style>
+
+    <style name="Theme.DevAIStudio.Expressive" parent="Theme.DevAIStudio">
+        <item name="colorPrimary">@color/expressive_primary</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/expressive_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/expressive_on_primary_container</item>
+        <item name="colorSecondary">@color/expressive_secondary</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorSecondaryContainer">#FFD9E2</item>
+        <item name="colorOnSecondaryContainer">#3E001D</item>
+        <item name="colorTertiary">@color/expressive_tertiary</item>
+        <item name="colorOnTertiary">@color/white</item>
+        <item name="colorSurface">@color/expressive_surface</item>
+        <item name="colorOnSurface">@color/expressive_on_surface</item>
+        <item name="colorSurfaceVariant">#E7E0EC</item>
+        <item name="colorOnSurfaceVariant">#49454F</item>
+        <item name="colorOutline">#79747E</item>
+        <item name="colorOutlineVariant">#CAC4D0</item>
+        <item name="colorSurfaceContainerLowest">#FFFFFF</item>
+        <item name="colorSurfaceContainerLow">#F7F2FA</item>
+        <item name="colorSurfaceContainer">#F3EDF7</item>
+        <item name="colorSurfaceContainerHigh">#ECE6F0</item>
+        <item name="colorSurfaceContainerHighest">#E6E0E9</item>
+        <item name="android:colorBackground">@color/expressive_background</item>
+        <item name="android:windowBackground">@color/expressive_background</item>
+        <item name="android:statusBarColor">@color/expressive_primary_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="shapeAppearanceCornerExtraSmall">@style/ShapeAppearance.DevAI.Expressive</item>
+        <item name="shapeAppearanceCornerSmall">@style/ShapeAppearance.DevAI.Expressive</item>
+        <item name="shapeAppearanceCornerMedium">@style/ShapeAppearance.DevAI.Expressive</item>
+        <item name="shapeAppearanceCornerLarge">@style/ShapeAppearance.DevAI.Expressive</item>
+        <item name="shapeAppearanceCornerExtraLarge">@style/ShapeAppearance.DevAI.Expressive</item>
+    </style>
+
+    <style name="Theme.DevAIStudio.Retro" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/retro_primary</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/retro_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/retro_on_primary_container</item>
+        <item name="colorSecondary">@color/retro_secondary</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorSecondaryContainer">@color/retro_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/retro_on_secondary_container</item>
+        <item name="colorTertiary">#00897B</item>
+        <item name="colorOnTertiary">@color/white</item>
+        <item name="colorSurface">@color/retro_surface</item>
+        <item name="colorOnSurface">@color/retro_on_surface</item>
+        <item name="colorSurfaceVariant">#ECEFF1</item>
+        <item name="colorOnSurfaceVariant">#546E7A</item>
+        <item name="colorOutline">@color/retro_outline</item>
+        <item name="colorOutlineVariant">#CFD8DC</item>
+        <item name="colorSurfaceContainerLowest">#FFFFFF</item>
+        <item name="colorSurfaceContainerLow">#F7F9FA</item>
+        <item name="colorSurfaceContainer">#F1F4F6</item>
+        <item name="colorSurfaceContainerHigh">#E8EDF0</item>
+        <item name="colorSurfaceContainerHighest">#DDE4E8</item>
+        <item name="android:colorBackground">@color/retro_background</item>
+        <item name="android:windowBackground">@color/retro_background</item>
+        <item name="android:statusBarColor">@color/retro_primary_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">@color/retro_background</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="shapeAppearanceCornerExtraSmall">@style/ShapeAppearance.DevAI.Retro</item>
+        <item name="shapeAppearanceCornerSmall">@style/ShapeAppearance.DevAI.Retro</item>
+        <item name="shapeAppearanceCornerMedium">@style/ShapeAppearance.DevAI.Retro</item>
+        <item name="shapeAppearanceCornerLarge">@style/ShapeAppearance.DevAI.Retro</item>
+        <item name="shapeAppearanceCornerExtraLarge">@style/ShapeAppearance.DevAI.Retro</item>
+    </style>
 </resources>

@@ -9,13 +9,16 @@ import com.devai.studio.ui.ChatFragment
 import com.devai.studio.ui.ProvidersFragment
 import com.devai.studio.ui.SettingsFragment
 import com.devai.studio.ui.WorkspaceFragment
+import com.devai.studio.util.ThemeManager
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        ThemeManager.apply(this)
         super.onCreate(savedInstanceState)
+        ThemeManager.applyDynamicIfAvailable(this)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 

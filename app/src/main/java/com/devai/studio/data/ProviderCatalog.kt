@@ -14,6 +14,19 @@ object ProviderCatalog {
         // ===================== ПОЛНОСТЬЮ БЕСПЛАТНЫЕ (локальные) =====================
 
         ProviderInfo(
+            id = "local",
+            name = "Локальная модель (офлайн)",
+            category = Category.FULLY_FREE,
+            description = "Модель скачивается в приложение и работает без интернета. Данные не покидают телефон.",
+            format = AiFormat.LOCAL,
+            baseUrl = "",
+            models = listOf("модель из раздела «Локальные модели»"),
+            getKeyUrl = "",
+            website = "https://huggingface.co/litert-community",
+            freeNote = "Откройте «Локальные модели» и скачайте модель. Работает офлайн."
+        ),
+
+        ProviderInfo(
             id = "ollama",
             name = "Ollama (локально)",
             category = Category.FULLY_FREE,

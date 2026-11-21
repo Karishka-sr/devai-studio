@@ -1,5 +1,6 @@
 package com.devai.studio.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,10 +9,12 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.devai.studio.R
+import com.devai.studio.ai.AiFormat
 import com.devai.studio.ai.ModelFetcher
 import com.devai.studio.data.ApiKeyStore
 import com.devai.studio.data.AppPrefs
 import com.devai.studio.data.Category
+import com.devai.studio.data.LocalModelStore
 import com.devai.studio.data.ProviderCatalog
 import com.devai.studio.data.ProviderInfo
 import com.devai.studio.databinding.FragmentProvidersBinding
@@ -39,7 +42,12 @@ class ProvidersFragment : Fragment(), ProviderAdapter.Listener {
         adapter = ProviderAdapter(this)
         binding.providerList.layoutManager = LinearLayoutManager(requireContext())
         binding.providerList.adapter = adapter
+        binding.btnLocalModels.setOnClickListener { openLocalModels() }
         refresh()
+    }
+
+    private fun openLocalModels() {
+        startActivity(Intent(requireContext(), LocalModelsActivity::class.java))
     }
 
     override fun onResume() {
@@ -77,10 +85,18 @@ class ProvidersFragment : Fragment(), ProviderAdapter.Listener {
     }
 
     override fun onKey(p: ProviderInfo) {
+        if (p.format == AiFormat.LOCAL) {
+            openLocalModels()
+            return
+        }
         CommonDialogs.keyDialog(requireContext(), p) { refresh() }
     }
 
     override fun onModel(p: ProviderInfo) {
+        if (p.format == AiFormat.LOCAL) {
+            openLocalModels()
+            return
+        }
         openModelDialog(p)
     }
 
@@ -141,6 +157,11 @@ class ProvidersFragment : Fragment(), ProviderAdapter.Listener {
         AppPrefs.setActiveProvider(ctx, p.id)
         adapter.activeId = p.id
         AndroidUtils.toast(ctx, "Активен: " + p.name)
+
+        if (p.format == AiFormat.LOCAL) {
+            if (LocalModelStore.active(ctx) == null) openLocalModels()
+            return
+        }
 
         val needsKey = p.id != "custom" &&
             (p.category != Category.FULLY_FREE || p.id == "openrouter-free") &&

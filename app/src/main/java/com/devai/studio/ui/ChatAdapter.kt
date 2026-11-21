@@ -12,6 +12,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import com.google.android.material.color.MaterialColors
 import androidx.recyclerview.widget.RecyclerView
 import com.devai.studio.R
 import com.devai.studio.ai.AiMessage
@@ -87,7 +88,13 @@ class ChatAdapter : RecyclerView.Adapter<ChatAdapter.VH>() {
         TextView(ctx).apply {
             this.text = text
             setTextIsSelectable(true)
-            setTextColor(ContextCompat.getColor(ctx, if (isUser) R.color.white else R.color.on_surface))
+            setTextColor(
+                MaterialColors.getColor(
+                    this,
+                    if (isUser) com.google.android.material.R.attr.colorOnPrimary
+                    else com.google.android.material.R.attr.colorOnSurfaceVariant
+                )
+            )
             textSize = 15f
             setLineSpacing(0f, 1.1f)
             this.maxWidth = maxWidth

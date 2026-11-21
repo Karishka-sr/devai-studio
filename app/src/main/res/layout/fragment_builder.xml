@@ -16,7 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/builder_title"
-            android:textColor="@color/on_surface"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="22sp"
             android:textStyle="bold" />
 
@@ -25,7 +25,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:text="@string/builder_subtitle"
-            android:textColor="@color/secondary"
+            android:textColor="?attr/colorOnSurfaceVariant"
             android:textSize="14sp" />
 
         <TextView
@@ -33,7 +33,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Тип проекта:"
-            android:textColor="@color/on_surface"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="15sp"
             android:textStyle="bold" />
 
@@ -49,35 +49,35 @@
                 android:layout_height="wrap_content"
                 android:checked="true"
                 android:text="@string/builder_type_android"
-                android:textColor="@color/on_surface" />
+                android:textColor="?attr/colorOnSurface" />
 
             <RadioButton
                 android:id="@+id/type_web"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/builder_type_web"
-                android:textColor="@color/on_surface" />
+                android:textColor="?attr/colorOnSurface" />
 
             <RadioButton
                 android:id="@+id/type_python"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/builder_type_python"
-                android:textColor="@color/on_surface" />
+                android:textColor="?attr/colorOnSurface" />
 
             <RadioButton
                 android:id="@+id/type_kotlin"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/builder_type_kotlin_cli"
-                android:textColor="@color/on_surface" />
+                android:textColor="?attr/colorOnSurface" />
 
             <RadioButton
                 android:id="@+id/type_ai"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/builder_type_ai"
-                android:textColor="@color/on_surface" />
+                android:textColor="?attr/colorOnSurface" />
         </RadioGroup>
 
         <EditText
@@ -91,7 +91,7 @@
             android:maxLines="4"
             android:minLines="2"
             android:padding="12dp"
-            android:textColor="@color/on_surface"
+            android:textColor="?attr/colorOnSurface"
             android:background="@drawable/bg_input"
             android:textSize="15sp" />
 
@@ -118,7 +118,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:textColor="@color/secondary"
+            android:textColor="?attr/colorOnSurfaceVariant"
             android:textSize="14sp"
             android:visibility="gone" />
 

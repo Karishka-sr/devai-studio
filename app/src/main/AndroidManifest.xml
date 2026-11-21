@@ -6,6 +6,8 @@
 
     <application
         android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher"
@@ -21,6 +23,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ui.LocalModelsActivity"
+            android:exported="false"
+            android:label="@string/local_models_title"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".ui.PremiumActivity"
+            android:exported="false"
+            android:label="@string/premium_title" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

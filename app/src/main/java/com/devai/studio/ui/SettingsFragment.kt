@@ -1,5 +1,6 @@
 package com.devai.studio.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,8 +12,11 @@ import androidx.fragment.app.Fragment
 import com.devai.studio.R
 import com.devai.studio.data.ApiKeyStore
 import com.devai.studio.data.AppPrefs
+import com.devai.studio.data.PremiumStore
 import com.devai.studio.databinding.FragmentSettingsBinding
 import com.devai.studio.util.AndroidUtils
+import com.devai.studio.util.PremiumDialogs
+import com.devai.studio.util.ThemeManager
 
 class SettingsFragment : Fragment() {
 
@@ -65,6 +69,16 @@ class SettingsFragment : Fragment() {
             AppPrefs.setSystemPrompt(ctx, it?.toString().orEmpty())
         }
 
+        binding.btnTheme.text = getString(
+            R.string.settings_theme_current,
+            getString(ThemeManager.labelRes(AppPrefs.theme(ctx)))
+        )
+        binding.btnTheme.setOnClickListener { showThemeDialog() }
+        binding.btnPremium.setOnClickListener {
+            startActivity(Intent(requireContext(), PremiumActivity::class.java))
+        }
+        refreshPremium()
+
         binding.btnClearKeys.setOnClickListener {
             AlertDialog.Builder(ctx)
                 .setTitle("Сбросить все ключи?")
@@ -76,6 +90,41 @@ class SettingsFragment : Fragment() {
                 .setNegativeButton("Отмена", null)
                 .show()
         }
+    }
+
+    private fun showThemeDialog() {
+        val ctx = requireContext()
+        val ids = ThemeManager.all
+        val labels = ids.map { getString(ThemeManager.labelRes(it)) }.toTypedArray()
+        val current = ids.indexOf(AppPrefs.theme(ctx)).coerceAtLeast(0)
+        AlertDialog.Builder(ctx)
+            .setTitle(R.string.settings_appearance)
+            .setSingleChoiceItems(labels, current) { dialog, which ->
+                val id = ids[which]
+                if (ThemeManager.isPremium(id) && !PremiumStore.isPremium(ctx)) {
+                    dialog.dismiss()
+                    PremiumDialogs.show(ctx, getString(R.string.premium_feature_themes))
+                    return@setSingleChoiceItems
+                }
+                AppPrefs.setTheme(ctx, id)
+                dialog.dismiss()
+                requireActivity().recreate()
+            }
+            .setNegativeButton(R.string.common_cancel, null)
+            .show()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshPremium()
+    }
+
+    private fun refreshPremium() {
+        val b = _binding ?: return
+        b.btnPremium.text = getString(
+            if (PremiumStore.isPremium(requireContext())) R.string.premium_status_button_active
+            else R.string.premium_status_button_free
+        )
     }
 
     private fun updateTemperatureLabel() {

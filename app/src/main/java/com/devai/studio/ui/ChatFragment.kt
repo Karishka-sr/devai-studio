@@ -1,5 +1,6 @@
 package com.devai.studio.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,13 +13,17 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.devai.studio.R
 import com.devai.studio.ai.AiClientFactory
+import com.devai.studio.ai.AiFormat
 import com.devai.studio.ai.AiMessage
 import com.devai.studio.data.AppPrefs
 import com.devai.studio.data.ChatSession
 import com.devai.studio.data.ChatSessionsStore
+import com.devai.studio.data.LocalModelStore
+import com.devai.studio.data.PremiumStore
 import com.devai.studio.databinding.FragmentChatBinding
 import com.devai.studio.util.AiSupport
 import com.devai.studio.util.AndroidUtils
+import com.devai.studio.util.PremiumDialogs
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -61,6 +66,7 @@ class ChatFragment : Fragment() {
         binding.btnSend.setOnClickListener { onSendOrStop() }
         binding.btnSessions.setOnClickListener { showSessions() }
         binding.btnRegenerate.setOnClickListener { regenerate() }
+        binding.btnExport.setOnClickListener { exportChat() }
         binding.inputText.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEND) {
                 onSendOrStop()
@@ -85,12 +91,40 @@ class ChatFragment : Fragment() {
         super.onDestroyView()
     }
 
+    private fun exportChat() {
+        val ctx = requireContext()
+        if (!PremiumStore.isPremium(ctx)) {
+            PremiumDialogs.show(ctx, getString(R.string.premium_feature_export))
+            return
+        }
+        val visible = messages.filter { it.content.isNotBlank() }
+        if (visible.isEmpty()) {
+            AndroidUtils.toast(ctx, getString(R.string.premium_export_empty))
+            return
+        }
+        val sb = StringBuilder("# DevAI Studio — чат\n\n")
+        visible.forEach { m ->
+            sb.append(if (m.role == "user") "## Пользователь\n\n" else "## DevAI\n\n")
+            sb.append(m.content).append("\n\n")
+        }
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/markdown"
+            putExtra(Intent.EXTRA_SUBJECT, "DevAI Studio — чат")
+            putExtra(Intent.EXTRA_TEXT, sb.toString())
+        }
+        startActivity(Intent.createChooser(intent, getString(R.string.premium_export_chooser)))
+    }
+
     private fun updateModelLabel() {
         val b = _binding ?: return
-        val p = AiSupport.provider(requireContext())
-        b.modelLabel.text =
-            if (p == null) getString(R.string.chat_no_provider)
-            else p.name + " · " + AiSupport.model(requireContext(), p)
+        val ctx = requireContext()
+        val p = AiSupport.provider(ctx)
+        b.modelLabel.text = when {
+            p == null -> getString(R.string.chat_no_provider)
+            p.format == AiFormat.LOCAL ->
+                p.name + " · " + LocalModelStore.activeName(ctx).ifBlank { "модель не выбрана" }
+            else -> p.name + " · " + AiSupport.model(ctx, p)
+        }
     }
 
     private fun updateSendEnabled() {
@@ -142,7 +176,7 @@ class ChatFragment : Fragment() {
             val sb = StringBuilder()
             var lastUi = 0L
             try {
-                val client = AiClientFactory.create(cfg)
+                val client = AiClientFactory.create(cfg, ctx)
                 val apiMessages = ArrayList<AiMessage>()
                 apiMessages.add(AiMessage("system", AppPrefs.systemPrompt(ctx)))
                 apiMessages.addAll(messages.take(assistantIndex))

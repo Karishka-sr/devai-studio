@@ -21,6 +21,7 @@ object ModelFetcher {
                 AiFormat.OPENAI_COMPAT -> openAi(baseUrl, apiKey)
                 AiFormat.ANTHROPIC -> anthropic(baseUrl, apiKey)
                 AiFormat.GEMINI -> gemini(baseUrl, apiKey)
+                AiFormat.LOCAL -> emptyList()
             }
         }
 
