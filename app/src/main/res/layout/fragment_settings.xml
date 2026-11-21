@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_title"
+            android:textColor="@color/on_surface"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/settings_general"
+            android:textColor="@color/on_surface"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/temperature_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/secondary"
+            android:textSize="14sp" />
+
+        <SeekBar
+            android:id="@+id/temperature_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="20" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/settings_max_tokens"
+            android:textColor="@color/on_surface"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/max_tokens_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:text="4096"
+            android:textColor="@color/on_surface" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/settings_custom_base"
+            android:textColor="@color/on_surface"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/custom_base_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="https://…"
+            android:inputType="textUri"
+            android:textColor="@color/on_surface" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/settings_custom_model"
+            android:textColor="@color/on_surface"
+            android:textSize="14sp" />
+
+        <EditText
+            android:id="@+id/custom_model_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="например: mistral-7b, llama3.1:8b, gpt-4o-mini"
+            android:textColor="@color/on_surface" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:padding="12dp"
+            android:background="@drawable/bg_input"
+            android:text="@string/settings_about"
+            android:textColor="@color/secondary"
+            android:textSize="13sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_clear_keys"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/settings_clear_all"
+            android:textColor="@color/badge_paid" />
+
+    </LinearLayout>
+
+</ScrollView>

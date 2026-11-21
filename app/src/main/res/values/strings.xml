@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DevAI Studio</string>
+
+    <string name="tab_chat">Чат</string>
+    <string name="tab_providers">ИИ</string>
+    <string name="tab_builder">Конструктор</string>
+    <string name="tab_settings">Настройки</string>
+
+    <string name="chat_hint">Введите сообщение…</string>
+    <string name="chat_send">Отправить</string>
+    <string name="chat_stop">Стоп</string>
+    <string name="chat_empty">Выберите ИИ-провайдера во вкладке «ИИ» и вставьте API-ключ, затем отправьте сообщение.</string>
+    <string name="chat_current_model">Модель: %1$s</string>
+    <string name="chat_no_key">Сначала вставьте API-ключ во вкладке «ИИ» (кнопка «Ключ»).</string>
+    <string name="chat_no_provider">Сначала выберите провайдера во вкладке «ИИ».</string>
+    <string name="chat_error">Ошибка: %1$s</string>
+    <string name="chat_clear_history">Очистить историю</string>
+
+    <string name="providers_title">ИИ-провайдеры</string>
+    <string name="providers_subtitle">Подключите любого ИИ: нажмите «Ключ» и вставьте API-ключ. Локальные варианты бесплатны на 100%\nНаконец, «Модель» — выберите модель из списка.</string>
+    <string name="provider_btn_key">Ключ</string>
+    <string name="provider_btn_model">Модель</string>
+    <string name="provider_btn_site">Сайт</string>
+    <string name="provider_active">✓ Активен</string>
+    <string name="provider_use">Использовать</string>
+    <string name="provider_key_saved">API-ключ сохранён (шифрование Keystore).</string>
+    <string name="provider_key_cleared">API-ключ удалён.</string>
+    <string name="provider_key_has">Ключ: •••%1$s</string>
+
+    <string name="category_fully_free">ПОЛНОСТЬЮ БЕСПЛАТНЫЕ</string>
+    <string name="category_free">БЕСПЛАТНЫЕ (есть бесплатный тариф)</string>
+    <string name="category_paid">ПЛАТНЫЕ</string>
+
+    <string name="cat_free_desc">Есть бесплатный лимит/тариф</string>
+    <string name="cat_paid_desc">Обычно платные</string>
+    <string name="cat_fully_free_desc">Бесплатны на 100% (обычно локальные)</string>
+
+    <string name="dlg_key_title">API-ключ</string>
+    <string name="dlg_key_hint">Вставьте API-ключ</string>
+    <string name="dlg_key_save">Сохранить</string>
+    <string name="dlg_key_cancel">Отмена</string>
+    <string name="dlg_key_clear">Удалить</string>
+    <string name="dlg_key_url">Получить ключ: %1$s</string>
+
+    <string name="dlg_model_title">Выберите модель</string>
+    <string name="dlg_model_custom_hint">Своя модель (любая):</string>
+
+    <string name="builder_title">Конструктор проектов</string>
+    <string name="builder_subtitle">Создавайте проекты и упаковывайте в ZIP. Для готового APK залейте проект на GitHub — Actions соберёт APK автоматически.</string>
+    <string name="builder_type_android">Android-приложение (Kotlin)</string>
+    <string name="builder_type_web">Веб-приложение (HTML/JS)</string>
+    <string name="builder_type_python">Python-скрипт</string>
+    <string name="builder_type_kotlin_cli">Kotlin CLI</string>
+    <string name="builder_type_ai">Сгенерировать через ИИ ✨</string>
+    <string name="builder_desc_hint">Что должно делать приложение? (необязательно)</string>
+    <string name="builder_btn_zip">Создать и упаковать в ZIP</string>
+    <string name="builder_btn_apk">Собрать APK (через GitHub Actions)</string>
+    <string name="builder_busy">Работаю…</string>
+    <string name="builder_done">Проект сохранён: %1$s</string>
+    <string name="builder_share">Открыть/Поделиться</string>
+    <string name="builder_apk_instructions">Проект-заготовка для APK создан и упакован в ZIP.\n\nЧтобы получить готовый APK:\n1. Распакуйте ZIP и запушьте его в новый GitHub-репозиторий (или импортируйте в Android Studio).\n2. В ZIP уже есть .github/workflows/build_apk.yml.\n3. Откройте вкладку Actions в репозитории — после сборки APK появится в артефактах (app-debug.apk).\n\nЗалить проект в GitHub можно прямо из интерфейса GitHub (upload files) или через импорт в Android Studio.</string>
+
+    <string name="settings_title">Настройки</string>
+    <string name="settings_general">Общие</string>
+    <string name="settings_temperature">Температура (креативность):</string>
+    <string name="settings_max_tokens">Максимум токенов:</string>
+    <string name="settings_custom_base">Свой base URL (любой ИИ):</string>
+    <string name="settings_custom_model">Своя модель:</string>
+    <string name="settings_about">Совет: благодаря полю «Свой base URL» можно подключить ЛЮБОЙ OpenAI-совместимый сервер: локальные Ollama / LM Studio / llama.cpp, корпоративные шлюзы, Azure OpenAI и т.д.</string>
+    <string name="settings_clear_all">Сбросить все ключи</string>
+    <string name="settings_clear_confirmed">Все ключи удалены.</string>
+
+    <string name="common_save">Сохранить</string>
+    <string name="common_cancel">Отмена</string>
+    <string name="common_ok">OK</string>
+    <string name="common_github">GitHub</string>
+</resources>
