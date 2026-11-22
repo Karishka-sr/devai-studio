@@ -8,12 +8,18 @@ RequestExecutionLevel admin
 !include "nsDialogs.nsh"
 !include "WinVer.nsh"
 !include "x64.nsh"
+!include "Sections.nsh"
 
 Var Target
 Var Dialog
 Var Radio7
 Var Radio10
 Var Radio11
+Var CompDialog
+Var ChkVexel
+Var ChkAdb
+Var ChkDesktop
+Var ChkStart
 
 
 !define APP_NAME "DevAI Studio"
@@ -41,11 +47,14 @@ BrandingText "DevAI Studio · Android + Vexel"
 !insertmacro MUI_PAGE_WELCOME
 Page custom TargetPageCreate TargetPageLeave
 !insertmacro MUI_PAGE_DIRECTORY
+Page custom ComponentsPageCreate ComponentsPageLeave
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_LANGUAGE "Russian"
+
+
 
 Function .onInit
   SetShellVarContext all
@@ -107,12 +116,12 @@ Function TargetPageLeave
   ${EndIf}
 FunctionEnd
 
-Section "DevAI Studio" SecMain
+Section "DevAI Studio (обязательно)" SecMain
+  SectionIn RO
   SetShellVarContext all
   SetOutPath "$INSTDIR"
   File "icon.ico"
   File "README-PC.txt"
-  File "DevAI-Android.apk"
   SetOutPath "$INSTDIR\app"
   File "app\DevAIStudio-all.jar"
   SetOutPath "$INSTDIR\runtime"
@@ -122,10 +131,6 @@ Section "DevAI Studio" SecMain
   FileWrite $0 "target=$Target$\r$\n"
   FileClose $0
   WriteUninstaller "$INSTDIR\Uninstall.exe"
-
-  CreateDirectory "$SMPROGRAMS\DevAI Studio"
-  CreateShortcut "$SMPROGRAMS\DevAI Studio\DevAI Studio.lnk" "${APP_EXE}" "-jar $\"${APP_JAR}$\" --target=$Target" "$INSTDIR\icon.ico" 0
-  CreateShortcut "$DESKTOP\DevAI Studio.lnk" "${APP_EXE}" "-jar $\"${APP_JAR}$\" --target=$Target" "$INSTDIR\icon.ico" 0
 
   WriteRegStr HKLM "Software\DevAI Studio" "InstallDir" "$INSTDIR"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\DevAI Studio" "DisplayName" "${APP_NAME}"
@@ -138,20 +143,138 @@ Section "DevAI Studio" SecMain
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\DevAI Studio" "NoRepair" 1
 SectionEnd
 
+Section "Vexel APK (полная версия)" SecVexel
+  SetOutPath "$INSTDIR"
+  File "DevAI-Android.apk"
+SectionEnd
+
+Section "ADB для Vexel (полная версия)" SecAdb
+  SetOutPath "$INSTDIR\platform-tools"
+  File /r "platform-tools\*.*"
+SectionEnd
+
+Section "Ярлык на рабочем столе" SecDesktop
+  CreateShortcut "$DESKTOP\DevAI Studio.lnk" "${APP_EXE}" "-jar $\"${APP_JAR}$\" --target=$Target" "$INSTDIR\icon.ico" 0
+SectionEnd
+
+Section "Ярлык в меню Пуск" SecStart
+  CreateDirectory "$SMPROGRAMS\DevAI Studio"
+  CreateShortcut "$SMPROGRAMS\DevAI Studio\DevAI Studio.lnk" "${APP_EXE}" "-jar $\"${APP_JAR}$\" --target=$Target" "$INSTDIR\icon.ico" 0
+SectionEnd
+
+Section "Ярлык Vexel" SecVexelShortcut
+  SetOutPath "$INSTDIR"
+  File "Vexel.cmd"
+  SectionGetFlags ${SecVexel} $0
+  IntOp $0 $0 & ${SF_SELECTED}
+  SectionGetFlags ${SecAdb} $1
+  IntOp $1 $1 & ${SF_SELECTED}
+  ${If} $0 != 0
+  ${AndIf} $1 != 0
+    SectionGetFlags ${SecStart} $3
+    IntOp $3 $3 & ${SF_SELECTED}
+    ${If} $3 != 0
+      CreateDirectory "$SMPROGRAMS\DevAI Studio"
+      CreateShortcut "$SMPROGRAMS\DevAI Studio\Vexel.lnk" "$SYSDIR\cmd.exe" "/c $\"$INSTDIR\Vexel.cmd$\"" "$INSTDIR\icon.ico" 0
+    ${EndIf}
+    SectionGetFlags ${SecDesktop} $2
+    IntOp $2 $2 & ${SF_SELECTED}
+    ${If} $2 != 0
+      CreateShortcut "$DESKTOP\Vexel.lnk" "$SYSDIR\cmd.exe" "/c $\"$INSTDIR\Vexel.cmd$\"" "$INSTDIR\icon.ico" 0
+    ${EndIf}
+  ${EndIf}
+SectionEnd
+
 Section "Uninstall"
   SetShellVarContext all
   SetRegView 64
   Delete "$DESKTOP\DevAI Studio.lnk"
+  Delete "$DESKTOP\Vexel.lnk"
   Delete "$SMPROGRAMS\DevAI Studio\DevAI Studio.lnk"
+  Delete "$SMPROGRAMS\DevAI Studio\Vexel.lnk"
   RMDir "$SMPROGRAMS\DevAI Studio"
   Delete "$INSTDIR\target.ini"
   Delete "$INSTDIR\icon.ico"
   Delete "$INSTDIR\README-PC.txt"
   Delete "$INSTDIR\DevAI-Android.apk"
+  Delete "$INSTDIR\Vexel.cmd"
   Delete "$INSTDIR\Uninstall.exe"
   RMDir /r "$INSTDIR\app"
   RMDir /r "$INSTDIR\runtime"
+  RMDir /r "$INSTDIR\platform-tools"
   RMDir "$INSTDIR"
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\DevAI Studio"
   DeleteRegKey HKLM "Software\DevAI Studio"
 SectionEnd
+
+
+Function ComponentsPageCreate
+  !insertmacro MUI_HEADER_TEXT "Компоненты" "Полная или выборочная установка"
+  nsDialogs::Create 1018
+  Pop $CompDialog
+  ${If} $CompDialog == error
+    Abort
+  ${EndIf}
+  ${NSD_CreateLabel} 0 0 100% 28u "Для полной версии нажмите «Полная версия» или оставьте все галочки. Vexel и ADB уже входят в установщик."
+  Pop $0
+  ${NSD_CreateCheckbox} 0 34u 100% 13u "Vexel APK — конструктор Vexel для телефона или эмулятора"
+  Pop $ChkVexel
+  ${NSD_CreateCheckbox} 0 54u 100% 13u "ADB — установка Vexel в эмулятор без Android SDK"
+  Pop $ChkAdb
+  ${NSD_CreateCheckbox} 0 74u 100% 13u "Ярлык на рабочем столе"
+  Pop $ChkDesktop
+  ${NSD_CreateCheckbox} 0 94u 100% 13u "Ярлык в меню «Пуск»"
+  Pop $ChkStart
+  ${NSD_SetState} $ChkVexel ${BST_CHECKED}
+  ${NSD_SetState} $ChkAdb ${BST_CHECKED}
+  ${NSD_SetState} $ChkDesktop ${BST_CHECKED}
+  ${NSD_SetState} $ChkStart ${BST_CHECKED}
+  ${NSD_CreateButton} 0 122u 92u 17u "Полная версия"
+  Pop $0
+  ${NSD_OnClick} $0 FullComponents
+  ${NSD_CreateButton} 100u 122u 92u 17u "Только программа"
+  Pop $0
+  ${NSD_OnClick} $0 MinComponents
+  nsDialogs::Show
+FunctionEnd
+
+Function ComponentsPageLeave
+  ${NSD_GetState} $ChkVexel $0
+  ${If} $0 == ${BST_CHECKED}
+    SectionSetFlags ${SecVexel} ${SF_SELECTED}
+  ${Else}
+    SectionSetFlags ${SecVexel} 0
+  ${EndIf}
+  ${NSD_GetState} $ChkAdb $0
+  ${If} $0 == ${BST_CHECKED}
+    SectionSetFlags ${SecAdb} ${SF_SELECTED}
+  ${Else}
+    SectionSetFlags ${SecAdb} 0
+  ${EndIf}
+  ${NSD_GetState} $ChkDesktop $0
+  ${If} $0 == ${BST_CHECKED}
+    SectionSetFlags ${SecDesktop} ${SF_SELECTED}
+  ${Else}
+    SectionSetFlags ${SecDesktop} 0
+  ${EndIf}
+  ${NSD_GetState} $ChkStart $0
+  ${If} $0 == ${BST_CHECKED}
+    SectionSetFlags ${SecStart} ${SF_SELECTED}
+  ${Else}
+    SectionSetFlags ${SecStart} 0
+  ${EndIf}
+FunctionEnd
+
+Function FullComponents
+  ${NSD_SetState} $ChkVexel ${BST_CHECKED}
+  ${NSD_SetState} $ChkAdb ${BST_CHECKED}
+  ${NSD_SetState} $ChkDesktop ${BST_CHECKED}
+  ${NSD_SetState} $ChkStart ${BST_CHECKED}
+FunctionEnd
+
+Function MinComponents
+  ${NSD_SetState} $ChkVexel ${BST_UNCHECKED}
+  ${NSD_SetState} $ChkAdb ${BST_UNCHECKED}
+  ${NSD_SetState} $ChkDesktop ${BST_UNCHECKED}
+  ${NSD_SetState} $ChkStart ${BST_CHECKED}
+FunctionEnd

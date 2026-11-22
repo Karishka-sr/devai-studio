@@ -59,6 +59,15 @@ object AppPaths {
         Files.createDirectories(home)
     }
 
+    fun adb(): Path? {
+        val exe = if (System.getProperty("os.name").lowercase().contains("windows")) "adb.exe" else "adb"
+        return listOf(
+            appDir.parent.resolve("platform-tools").resolve(exe),
+            appDir.resolve("platform-tools").resolve(exe),
+            Paths.get(System.getProperty("user.dir"), "platform-tools", exe),
+        ).firstOrNull { Files.isRegularFile(it) }
+    }
+
     fun installedApk(): Path {
         val candidates = listOf(
             appDir.parent.resolve("DevAI-Android.apk"),

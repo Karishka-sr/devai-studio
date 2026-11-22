@@ -18,6 +18,7 @@ import javax.swing.SwingUtilities
 
 class VexelPanel : JPanel(BorderLayout(0, 10)) {
     private val apk: File = AppPaths.installedApk().toFile()
+    private val adbFile: File? = AppPaths.adb()?.toFile()
     private val output = Theme.area(12)
     private val statusLabel = Theme.label("", 12, Theme.muted)
     init {
@@ -34,6 +35,8 @@ class VexelPanel : JPanel(BorderLayout(0, 10)) {
 
             На Windows Vexel запускается как Android-приложение: установите APK на телефон
             или в Android-эмулятор (BlueStacks, LDPlayer, Android Studio Emulator).
+            ADB уже входит в полную версию установщика, поэтому кнопка «Установить Vexel»
+            работает без отдельной установки Android SDK.
 
             Автор: Конструктор взят у https://t.me/cheburek_dev, Разрешение есть,
             оригинальный конструктор Vexel скачивать с этого тгк.
@@ -45,19 +48,22 @@ class VexelPanel : JPanel(BorderLayout(0, 10)) {
             preferredSize = java.awt.Dimension(100, 210)
         }
         val buttons = JPanel(FlowLayout(FlowLayout.LEFT, 6, 0)).apply { background = Theme.bg }
-        val folder = Theme.button("Открыть папку с APK")
-        val install = Theme.button("Установить через ADB", true)
+        val folder = Theme.button("Папка Vexel")
+        val install = Theme.button("Установить Vexel", true)
+        val launch = Theme.button("Открыть Vexel")
         val adb = Theme.button("Проверить ADB")
         val guide = Theme.button("Инструкция")
         val download = Theme.button("Скачать APK")
         folder.addActionListener { openFolder() }
-        install.addActionListener { installApk() }
+        install.addActionListener { installVexel() }
+        launch.addActionListener { launchVexel() }
         adb.addActionListener { checkAdb() }
         guide.addActionListener { showGuide() }
         download.addActionListener { browse("https://github.com/Karishka-sr/devai-studio/releases/latest") }
-        buttons.add(folder)
         buttons.add(install)
+        buttons.add(launch)
         buttons.add(adb)
+        buttons.add(folder)
         buttons.add(guide)
         buttons.add(download)
         val center = JPanel(BorderLayout(0, 8)).apply { background = Theme.bg }
@@ -72,11 +78,13 @@ class VexelPanel : JPanel(BorderLayout(0, 10)) {
         updateStatus()
     }
     private fun updateStatus() {
-        statusLabel.text = if (apk.isFile) {
-            "APK найден: ${apk.name} · ${apk.length() / 1024 / 1024} МБ"
+        val apkStatus = if (apk.isFile) {
+            "APK: ${apk.name} · ${apk.length() / 1024 / 1024} МБ"
         } else {
-            "APK не найден. Нажмите «Скачать APK» или положите DevAI-Android.apk рядом с программой."
+            "APK не найден"
         }
+        val adbStatus = if (adbFile != null) "ADB: встроен" else "ADB: не найден (нужен для установки в эмулятор)"
+        statusLabel.text = "$apkStatus · $adbStatus"
     }
 
     private fun openFolder() {
@@ -92,12 +100,30 @@ class VexelPanel : JPanel(BorderLayout(0, 10)) {
         runAsync("Проверяю ADB…") { runAdb("devices") }
     }
 
-    private fun installApk() {
+    private fun installVexel() {
         if (!apk.isFile) {
             JOptionPane.showMessageDialog(this, "APK не найден:\n${apk.absolutePath}", "Vexel", JOptionPane.WARNING_MESSAGE)
             return
         }
-        runAsync("Устанавливаю APK…") { runAdb("install", "-r", apk.absolutePath) }
+        runAsync("Устанавливаю Vexel в эмулятор…") {
+            val install = runAdb("install", "-r", apk.absolutePath)
+            if (!install.contains("Success", ignoreCase = true)) {
+                return@runAsync install
+            }
+            install + "\n\n" + startVexel()
+        }
+    }
+
+    private fun launchVexel() {
+        runAsync("Запускаю Vexel…") { startVexel() }
+    }
+
+    private fun startVexel(): String {
+        val direct = runAdb("shell", "am", "start", "-n", "com.devai.studio/com.qwenz.qwel.MainActivity")
+        val failed = listOf("Error", "Exception", "Permission Denial").any { direct.contains(it, ignoreCase = true) }
+        if (!failed) return direct
+        val fallback = runAdb("shell", "monkey", "-p", "com.devai.studio", "-c", "android.intent.category.LAUNCHER", "1")
+        return direct + "\n\n" + fallback + "\nОткройте Vexel в приложении DevAI Studio."
     }
 
     private fun runAsync(label: String, block: () -> String) {
@@ -118,7 +144,8 @@ class VexelPanel : JPanel(BorderLayout(0, 10)) {
     }
 
     private fun runAdb(vararg args: String): String {
-        val exe = if (System.getProperty("os.name").lowercase().contains("windows")) "adb.exe" else "adb"
+        val exe = adbFile?.absolutePath
+            ?: if (System.getProperty("os.name").lowercase().contains("windows")) "adb.exe" else "adb"
         val process = ProcessBuilder(listOf(exe) + args).redirectErrorStream(true).start()
         val text = process.inputStream.bufferedReader(StandardCharsets.UTF_8).use { it.readText() }
         if (!process.waitFor(90, TimeUnit.SECONDS)) {
@@ -134,8 +161,8 @@ class VexelPanel : JPanel(BorderLayout(0, 10)) {
             1. Установите Android-эмулятор: BlueStacks, LDPlayer или Android Studio Emulator.
             2. Включите в эмуляторе отладку по USB (ADB).
             3. Нажмите «Проверить ADB» — в списке должно появиться устройство.
-            4. Нажмите «Установить через ADB» — APK установится в эмулятор.
-            5. Запустите Vexel из меню приложений эмулятора.
+            4. Нажмите «Установить Vexel» — APK установится и откроется в эмуляторе.
+            5. Если Vexel не открылся, нажмите «Открыть Vexel» или запустите его из меню эмулятора.
 
             Можно также перекинуть DevAI-Android.apk на телефон и установить вручную.
             Vexel остаётся Android-конструктором; в PC-версии он не удалён и не изменён.
