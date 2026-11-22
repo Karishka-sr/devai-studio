@@ -17,6 +17,8 @@ data class AiConfig(
     val baseUrl: String,
     val model: String,
     val temperature: Double = 0.7,
+    val topP: Double = 0.95,
     val maxTokens: Int = 4096,
+    val timeoutSeconds: Int = 180,
     val format: AiFormat
 )

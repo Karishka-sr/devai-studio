@@ -18,10 +18,11 @@ import java.util.concurrent.TimeUnit
  */
 class OpenAiCompatClient(private val cfg: AiConfig) : AiClient {
 
+    private val timeoutSeconds = cfg.timeoutSeconds.coerceIn(15, 600).toLong()
     private val client = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(180, TimeUnit.SECONDS)
-        .writeTimeout(60, TimeUnit.SECONDS)
+        .connectTimeout(minOf(30L, timeoutSeconds), TimeUnit.SECONDS)
+        .readTimeout(timeoutSeconds, TimeUnit.SECONDS)
+        .writeTimeout(minOf(60L, timeoutSeconds), TimeUnit.SECONDS)
         .build()
 
     override suspend fun chat(messages: List<AiMessage>, onDelta: (String) -> Unit): String =
@@ -32,6 +33,7 @@ class OpenAiCompatClient(private val cfg: AiConfig) : AiClient {
                 put("model", cfg.model)
                 put("stream", true)
                 put("temperature", cfg.temperature)
+                put("top_p", cfg.topP)
                 put("max_tokens", cfg.maxTokens)
                 put("messages", JSONArray().apply {
                     messages.forEach {

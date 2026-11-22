@@ -1,6 +1,7 @@
 package com.devai.studio.ai
 
 import android.content.Context
+import com.devai.studio.data.AppPrefs
 import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
@@ -18,34 +19,48 @@ import kotlinx.coroutines.withTimeout
 
 object LocalLlmEngine {
 
-    private const val MAX_TOKENS = 1280
+    private const val MIN_CONTEXT = 512
+    private const val MAX_CONTEXT = 1280
     private const val TIMEOUT_MS = 15 * 60 * 1000L
 
     private val mutex = Mutex()
     private var engine: Engine? = null
     private var session: Session? = null
-    private var loadedPath: String? = null
+    private var loadedKey: String? = null
 
     @Synchronized
     private fun ensure(ctx: Context, path: String): Session {
+        val contextTokens = AppPrefs.localContextTokens(ctx).coerceIn(MIN_CONTEXT, MAX_CONTEXT)
+        val topK = AppPrefs.localTopK(ctx).coerceIn(1, 100)
+        val topP = AppPrefs.topP(ctx).toDouble().coerceIn(0.05, 1.0)
+        val temperature = AppPrefs.temperature(ctx).toDouble().coerceIn(0.0, 1.0)
+        val key = "$path|$contextTokens|$topK|$topP|$temperature"
+
         val current = session
-        if (current != null && loadedPath == path) return current
+        if (current != null && loadedKey == key) return current
         closeLocked()
         // Text-only .task models have no vision/audio encoder. Enabling these
         // backends makes LiteRT-LM look for TF_LITE_VISION_ENCODER and fail.
         val config = EngineConfig(
             modelPath = path,
             backend = Backend.CPU,
-            maxNumTokens = MAX_TOKENS,
+            maxNumTokens = contextTokens,
             cacheDir = ctx.cacheDir.absolutePath
         )
         val created = Engine(config)
         created.initialize()
         engine = created
         session = created.createSession(
-            SessionConfig(SamplerConfig(topK = 40, topP = 0.95, temperature = 0.7, seed = 0))
+            SessionConfig(
+                SamplerConfig(
+                    topK = topK,
+                    topP = topP,
+                    temperature = temperature,
+                    seed = 0
+                )
+            )
         )
-        loadedPath = path
+        loadedKey = key
         return session!!
     }
 
@@ -57,7 +72,7 @@ object LocalLlmEngine {
         runCatching { engine?.close() }
         session = null
         engine = null
-        loadedPath = null
+        loadedKey = null
     }
 
     suspend fun generate(

@@ -18,7 +18,7 @@ object ThemeManager {
     }
 
     fun applyDynamicIfAvailable(activity: Activity) {
-        if (current(activity) == M3) {
+        if (current(activity) == M3 && AppPrefs.dynamicColor(activity)) {
             runCatching { DynamicColors.applyToActivityIfAvailable(activity) }
         }
     }

@@ -135,6 +135,11 @@ object ChatSessionsStore {
         if (currentId(ctx) == id) prefs(ctx).edit().remove(KEY_CURRENT).apply()
     }
 
+    fun clearAll(ctx: Context) {
+        prefs(ctx).edit().remove(KEY_LIST).remove(KEY_CURRENT).apply()
+        ChatHistoryStore.clear(ctx)
+    }
+
     private fun titleFrom(messages: List<AiMessage>): String {
         val first = messages.firstOrNull { it.role == "user" }?.content ?: return DEFAULT_TITLE
         val line = first.lineSequence().firstOrNull { it.isNotBlank() }?.trim().orEmpty()

@@ -12,6 +12,16 @@ object AppPrefs {
     private const val KEY_CUSTOM_MODEL = "custom_model"
     private const val KEY_SYSTEM_PROMPT = "system_prompt"
     private const val KEY_THEME = "theme"
+    private const val KEY_TOP_P = "top_p"
+    private const val KEY_HISTORY_LIMIT = "history_limit"
+    private const val KEY_TIMEOUT = "timeout_seconds"
+    private const val KEY_LOCAL_CONTEXT = "local_context_tokens"
+    private const val KEY_LOCAL_TOP_K = "local_top_k"
+    private const val KEY_CHAT_FONT = "chat_font_size"
+    private const val KEY_CODE_WRAP = "code_wrap"
+    private const val KEY_SEND_ON_ENTER = "send_on_enter"
+    private const val KEY_AUTO_SCROLL = "auto_scroll"
+    private const val KEY_DYNAMIC_COLOR = "dynamic_color"
 
     const val DEFAULT_SYSTEM_PROMPT =
         "Ты — DevAI, полезный ИИ-ассистент разработчика. Отвечай по делу, давай рабочие примеры кода."
@@ -52,6 +62,62 @@ object AppPrefs {
 
     fun setSystemPrompt(ctx: Context, v: String) =
         p(ctx).edit().putString(KEY_SYSTEM_PROMPT, v).apply()
+
+    fun topP(ctx: Context): Float = p(ctx).getFloat(KEY_TOP_P, 0.95f)
+    fun setTopP(ctx: Context, v: Float) = p(ctx).edit().putFloat(KEY_TOP_P, v).apply()
+
+    fun historyLimit(ctx: Context): Int = p(ctx).getInt(KEY_HISTORY_LIMIT, 40)
+    fun setHistoryLimit(ctx: Context, v: Int) = p(ctx).edit().putInt(KEY_HISTORY_LIMIT, v).apply()
+
+    fun timeoutSeconds(ctx: Context): Int = p(ctx).getInt(KEY_TIMEOUT, 180)
+    fun setTimeoutSeconds(ctx: Context, v: Int) = p(ctx).edit().putInt(KEY_TIMEOUT, v).apply()
+
+    fun localContextTokens(ctx: Context): Int = p(ctx).getInt(KEY_LOCAL_CONTEXT, 1280)
+    fun setLocalContextTokens(ctx: Context, v: Int) =
+        p(ctx).edit().putInt(KEY_LOCAL_CONTEXT, v).apply()
+
+    fun localTopK(ctx: Context): Int = p(ctx).getInt(KEY_LOCAL_TOP_K, 40)
+    fun setLocalTopK(ctx: Context, v: Int) = p(ctx).edit().putInt(KEY_LOCAL_TOP_K, v).apply()
+
+    fun chatFontSize(ctx: Context): Float = p(ctx).getFloat(KEY_CHAT_FONT, 15f)
+    fun setChatFontSize(ctx: Context, v: Float) = p(ctx).edit().putFloat(KEY_CHAT_FONT, v).apply()
+
+    fun codeWrap(ctx: Context): Boolean = p(ctx).getBoolean(KEY_CODE_WRAP, false)
+    fun setCodeWrap(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean(KEY_CODE_WRAP, v).apply()
+
+    fun sendOnEnter(ctx: Context): Boolean = p(ctx).getBoolean(KEY_SEND_ON_ENTER, true)
+    fun setSendOnEnter(ctx: Context, v: Boolean) =
+        p(ctx).edit().putBoolean(KEY_SEND_ON_ENTER, v).apply()
+
+    fun autoScroll(ctx: Context): Boolean = p(ctx).getBoolean(KEY_AUTO_SCROLL, true)
+    fun setAutoScroll(ctx: Context, v: Boolean) = p(ctx).edit().putBoolean(KEY_AUTO_SCROLL, v).apply()
+
+    fun dynamicColor(ctx: Context): Boolean = p(ctx).getBoolean(KEY_DYNAMIC_COLOR, true)
+    fun setDynamicColor(ctx: Context, v: Boolean) =
+        p(ctx).edit().putBoolean(KEY_DYNAMIC_COLOR, v).apply()
+
+    fun reset(ctx: Context) {
+        p(ctx).edit().clear().apply()
+    }
+
+    fun exportJson(ctx: Context): String = org.json.JSONObject().apply {
+        put("temperature", temperature(ctx))
+        put("topP", topP(ctx))
+        put("maxTokens", maxTokens(ctx))
+        put("historyLimit", historyLimit(ctx))
+        put("timeoutSeconds", timeoutSeconds(ctx))
+        put("localContextTokens", localContextTokens(ctx))
+        put("localTopK", localTopK(ctx))
+        put("chatFontSize", chatFontSize(ctx))
+        put("codeWrap", codeWrap(ctx))
+        put("sendOnEnter", sendOnEnter(ctx))
+        put("autoScroll", autoScroll(ctx))
+        put("dynamicColor", dynamicColor(ctx))
+        put("theme", theme(ctx))
+        put("systemPrompt", systemPrompt(ctx))
+        put("provider", activeProvider(ctx).orEmpty())
+        put("model", activeModel(ctx).orEmpty())
+    }.toString(2)
 
     fun modelsFor(ctx: Context, providerId: String): List<String> {
         val raw = p(ctx).getString("models_" + providerId, null) ?: return emptyList()

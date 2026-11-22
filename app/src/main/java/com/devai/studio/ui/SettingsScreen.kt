@@ -5,8 +5,10 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,9 +23,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -32,6 +38,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -53,11 +60,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.devai.studio.R
+import com.devai.studio.ai.LocalLlmEngine
 import com.devai.studio.data.ApiKeyStore
 import com.devai.studio.data.AppPrefs
+import com.devai.studio.data.ChatSessionsStore
 import com.devai.studio.data.PremiumStore
 import com.devai.studio.util.PremiumDialogs
 import com.devai.studio.util.ThemeManager
+import kotlin.math.roundToInt
 
 @Composable
 fun SettingsScreen() {
@@ -66,14 +76,26 @@ fun SettingsScreen() {
     val lifecycleOwner = LocalLifecycleOwner.current
 
     var temperature by remember { mutableFloatStateOf(AppPrefs.temperature(context)) }
+    var topP by remember { mutableFloatStateOf(AppPrefs.topP(context)) }
     var maxTokens by remember { mutableStateOf(AppPrefs.maxTokens(context).toString()) }
+    var historyLimit by remember { mutableStateOf(AppPrefs.historyLimit(context).toString()) }
+    var timeout by remember { mutableStateOf(AppPrefs.timeoutSeconds(context).toString()) }
+    var localContext by remember { mutableFloatStateOf(AppPrefs.localContextTokens(context).toFloat()) }
+    var localTopK by remember { mutableStateOf(AppPrefs.localTopK(context).toString()) }
+    var chatFont by remember { mutableFloatStateOf(AppPrefs.chatFontSize(context)) }
+    var codeWrap by remember { mutableStateOf(AppPrefs.codeWrap(context)) }
+    var sendOnEnter by remember { mutableStateOf(AppPrefs.sendOnEnter(context)) }
+    var autoScroll by remember { mutableStateOf(AppPrefs.autoScroll(context)) }
+    var dynamicColor by remember { mutableStateOf(AppPrefs.dynamicColor(context)) }
     var customBase by remember { mutableStateOf(AppPrefs.customBase(context)) }
     var customModel by remember { mutableStateOf(AppPrefs.customModel(context)) }
     var systemPrompt by remember { mutableStateOf(AppPrefs.systemPrompt(context)) }
     var themeId by remember { mutableStateOf(AppPrefs.theme(context)) }
     var premium by remember { mutableStateOf(PremiumStore.isPremium(context)) }
     var showTheme by remember { mutableStateOf(false) }
-    var showClear by remember { mutableStateOf(false) }
+    var showClearKeys by remember { mutableStateOf(false) }
+    var showClearHistory by remember { mutableStateOf(false) }
+    var showReset by remember { mutableStateOf(false) }
 
     fun toast(message: String) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
@@ -103,6 +125,23 @@ fun SettingsScreen() {
         activity?.recreate()
     }
 
+    fun shareSettings() {
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "application/json"
+            putExtra(Intent.EXTRA_SUBJECT, "DevAI Studio — настройки")
+            putExtra(Intent.EXTRA_TEXT, AppPrefs.exportJson(context))
+        }
+        context.startActivity(Intent.createChooser(intent, "Поделиться настройками"))
+    }
+
+    val promptPresets = listOf(
+        "Разработчик" to (AppPrefs.DEFAULT_SYSTEM_PROMPT +
+            " Сначала уточняй требования, потом предлагай решение."),
+        "Кратко" to "Отвечай максимально кратко, без вступлений и повторов. Только суть.",
+        "Код" to "Давай готовый рабочий код. Комментарии — только по делу. Указывай язык и зависимости.",
+        "Ревью" to "Ищи баги, риски и проблемы безопасности. Предлагай конкретные исправления с кодом.",
+    )
+
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -131,134 +170,351 @@ fun SettingsScreen() {
             Text("Настройки", style = MaterialTheme.typography.headlineMedium)
         }
 
-        Text(
-            text = "Температура: " + "%.2f".format(temperature),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        Slider(
-            value = temperature,
-            onValueChange = {
+        SettingsSection("Генерация") {
+            SliderSetting(
+                title = "Температура",
+                valueLabel = "%.2f".format(temperature),
+                value = temperature,
+                range = 0f..1f,
+                steps = 19,
+            ) {
                 temperature = it
                 AppPrefs.setTemperature(context, it)
-            },
-            valueRange = 0f..1f,
-            steps = 19,
-        )
+            }
 
-        OutlinedTextField(
-            value = maxTokens,
-            onValueChange = {
-                maxTokens = it
-                it.toIntOrNull()?.let { value ->
-                    if (value in 1..100000) AppPrefs.setMaxTokens(context, value)
-                }
-            },
-            label = { Text("Макс. токенов") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        OutlinedTextField(
-            value = customBase,
-            onValueChange = {
-                customBase = it
-                AppPrefs.setCustomBase(context, it)
-            },
-            label = { Text("Свой base URL") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        OutlinedTextField(
-            value = customModel,
-            onValueChange = {
-                customModel = it
-                AppPrefs.setCustomModel(context, it)
-            },
-            label = { Text("Своя модель") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        OutlinedTextField(
-            value = systemPrompt,
-            onValueChange = {
-                systemPrompt = it
-                AppPrefs.setSystemPrompt(context, it)
-            },
-            label = { Text("Системный промпт") },
-            minLines = 3,
-            maxLines = 6,
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        OutlinedButton(
-            onClick = { showTheme = true },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Icon(Icons.Default.Settings, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text("Оформление: " + stringResource(ThemeManager.labelRes(themeId)))
-        }
-
-        Button(
-            onClick = {
-                context.startActivity(Intent(context, PremiumActivity::class.java))
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Icon(Icons.Default.Star, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text(if (premium) "Premium активен" else "Premium")
-        }
-
-        Card(Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+            SliderSetting(
+                title = "Top-P",
+                valueLabel = "%.2f".format(topP),
+                value = topP,
+                range = 0.1f..1f,
+                steps = 17,
             ) {
-                Text("Автор", style = MaterialTheme.typography.titleMedium)
-                Text(
-                    "Miko",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    "Vexel / DevAI Studio",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Row {
-                    TextButton(onClick = { openUrl(context.getString(R.string.author_telegram_url)) }) {
-                        Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text("Telegram")
+                topP = it
+                AppPrefs.setTopP(context, it)
+            }
+
+            NumberSetting(
+                label = "Макс. токенов",
+                value = maxTokens,
+                supporting = "1–100000",
+                onChange = {
+                    maxTokens = it
+                    it.toIntOrNull()?.let { value ->
+                        if (value in 1..100000) AppPrefs.setMaxTokens(context, value)
                     }
-                    TextButton(onClick = { openUrl(context.getString(R.string.author_site_url)) }) {
-                        Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text("Сайт")
+                },
+            )
+
+            NumberSetting(
+                label = "Лимит истории",
+                value = historyLimit,
+                supporting = "Сколько последних сообщений отправлять. 0 — вся история",
+                onChange = {
+                    historyLimit = it
+                    it.toIntOrNull()?.let { value ->
+                        if (value in 0..500) AppPrefs.setHistoryLimit(context, value)
                     }
+                },
+            )
+
+            NumberSetting(
+                label = "Таймаут запроса, сек",
+                value = timeout,
+                supporting = "15–600",
+                onChange = {
+                    timeout = it
+                    it.toIntOrNull()?.let { value ->
+                        if (value in 15..600) AppPrefs.setTimeoutSeconds(context, value)
+                    }
+                },
+            )
+
+            OutlinedTextField(
+                value = customBase,
+                onValueChange = {
+                    customBase = it
+                    AppPrefs.setCustomBase(context, it)
+                },
+                label = { Text("Свой base URL") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            OutlinedTextField(
+                value = customModel,
+                onValueChange = {
+                    customModel = it
+                    AppPrefs.setCustomModel(context, it)
+                },
+                label = { Text("Своя модель") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            OutlinedTextField(
+                value = systemPrompt,
+                onValueChange = {
+                    systemPrompt = it
+                    AppPrefs.setSystemPrompt(context, it)
+                },
+                label = { Text("Системный промпт") },
+                minLines = 3,
+                maxLines = 6,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Text(
+                "Пресеты промпта",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                promptPresets.forEach { (label, prompt) ->
+                    AssistChip(
+                        onClick = {
+                            systemPrompt = prompt
+                            AppPrefs.setSystemPrompt(context, prompt)
+                        },
+                        label = { Text(label) },
+                    )
                 }
-                Text(
-                    text = stringResource(R.string.settings_author_credit),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.clickable {
-                        openUrl(context.getString(R.string.author_vexel_url))
-                    },
-                )
             }
         }
 
-        OutlinedButton(
-            onClick = { showClear = true },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Icon(Icons.Default.Delete, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text("Сбросить все ключи")
+        SettingsSection("Локальные модели") {
+            SliderSetting(
+                title = "Контекст, токенов",
+                valueLabel = localContext.roundToInt().toString(),
+                value = localContext,
+                range = 512f..1280f,
+                steps = 2,
+            ) {
+                val rounded = (it / 256f).roundToInt() * 256
+                localContext = rounded.toFloat()
+                AppPrefs.setLocalContextTokens(context, rounded)
+            }
+
+            NumberSetting(
+                label = "Top-K",
+                value = localTopK,
+                supporting = "1–100. Меньше — стабильнее, больше — разнообразнее",
+                onChange = {
+                    localTopK = it
+                    it.toIntOrNull()?.let { value ->
+                        if (value in 1..100) AppPrefs.setLocalTopK(context, value)
+                    }
+                },
+            )
+
+            Text(
+                "Изменения применятся при следующем запросе: движок перезагрузит модель.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = {
+                        context.startActivity(Intent(context, LocalModelsActivity::class.java))
+                    },
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text("Локальные модели")
+                }
+                OutlinedButton(
+                    onClick = {
+                        LocalLlmEngine.close()
+                        toast("Модель выгружена")
+                    },
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text("Выгрузить")
+                }
+            }
+        }
+
+        SettingsSection("Чат") {
+            SliderSetting(
+                title = "Размер текста",
+                valueLabel = "%.0f sp".format(chatFont),
+                value = chatFont,
+                range = 12f..22f,
+                steps = 9,
+            ) {
+                chatFont = it
+                AppPrefs.setChatFontSize(context, it)
+            }
+
+            SwitchSetting(
+                title = "Перенос длинных строк кода",
+                subtitle = "Если выключено, код прокручивается по горизонтали",
+                checked = codeWrap,
+                onCheckedChange = {
+                    codeWrap = it
+                    AppPrefs.setCodeWrap(context, it)
+                },
+            )
+
+            SwitchSetting(
+                title = "Отправлять по Enter",
+                subtitle = "Если выключено, Enter переносит строку",
+                checked = sendOnEnter,
+                onCheckedChange = {
+                    sendOnEnter = it
+                    AppPrefs.setSendOnEnter(context, it)
+                },
+            )
+
+            SwitchSetting(
+                title = "Автопрокрутка",
+                subtitle = "Прокручивать к последнему сообщению",
+                checked = autoScroll,
+                onCheckedChange = {
+                    autoScroll = it
+                    AppPrefs.setAutoScroll(context, it)
+                },
+            )
+        }
+
+        SettingsSection("Оформление") {
+            OutlinedButton(
+                onClick = { showTheme = true },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Default.Settings, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Оформление: " + stringResource(ThemeManager.labelRes(themeId)))
+            }
+
+            SwitchSetting(
+                title = "Dynamic color",
+                subtitle = "Цвета системы на Android 12+. Работает для Material Design 3",
+                checked = dynamicColor,
+                onCheckedChange = {
+                    dynamicColor = it
+                    AppPrefs.setDynamicColor(context, it)
+                    activity?.recreate()
+                },
+            )
+        }
+
+        SettingsSection("Premium") {
+            Button(
+                onClick = {
+                    context.startActivity(Intent(context, PremiumActivity::class.java))
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Default.Star, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(if (premium) "Premium активен" else "Открыть Premium")
+            }
+            Text(
+                if (premium) "Премиум-темы, большие офлайн-модели и экспорт чата доступны."
+                else "Премиум-темы, большие офлайн-модели и экспорт чата в Markdown.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        SettingsSection("Данные") {
+            OutlinedButton(
+                onClick = { showClearHistory = true },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Default.Delete, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Очистить историю чатов")
+            }
+
+            OutlinedButton(
+                onClick = { shareSettings() },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Default.Share, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Поделиться настройками")
+            }
+
+            OutlinedButton(
+                onClick = { showClearKeys = true },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Default.Lock, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Сбросить API-ключи")
+            }
+
+            OutlinedButton(
+                onClick = { showReset = true },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Default.Refresh, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Сбросить настройки")
+            }
+        }
+
+        SettingsSection("О приложении") {
+            Text(
+                "DevAI Studio " + appVersion(),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Row {
+                TextButton(onClick = {
+                    openUrl("https://github.com/Karishka-sr/devai-studio/releases")
+                }) {
+                    Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Обновления")
+                }
+                TextButton(onClick = { openUrl(context.getString(R.string.author_telegram_url)) }) {
+                    Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Telegram")
+                }
+                TextButton(onClick = { openUrl(context.getString(R.string.author_site_url)) }) {
+                    Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Сайт")
+                }
+            }
+
+            Card(Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text("Автор", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Miko",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        "Vexel / DevAI Studio",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = stringResource(R.string.settings_author_credit),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable {
+                            openUrl(context.getString(R.string.author_vexel_url))
+                        },
+                    )
+                }
+            }
+
+            Text(
+                "Конструктор Vexel не изменялся. Оригинал: t.me/cheburek_dev",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
 
         Text(
@@ -299,21 +555,154 @@ fun SettingsScreen() {
         )
     }
 
-    if (showClear) {
+    if (showClearKeys) {
         AlertDialog(
-            onDismissRequest = { showClear = false },
+            onDismissRequest = { showClearKeys = false },
             title = { Text("Сбросить все ключи?") },
             text = { Text("API-ключи будут удалены с устройства.") },
             confirmButton = {
                 TextButton(onClick = {
                     ApiKeyStore.clearAll(context)
-                    showClear = false
+                    showClearKeys = false
                     toast(context.getString(R.string.settings_clear_confirmed))
                 }) { Text("Да") }
             },
             dismissButton = {
-                TextButton(onClick = { showClear = false }) { Text("Отмена") }
+                TextButton(onClick = { showClearKeys = false }) { Text("Отмена") }
             },
         )
+    }
+
+    if (showClearHistory) {
+        AlertDialog(
+            onDismissRequest = { showClearHistory = false },
+            title = { Text("Очистить историю чатов?") },
+            text = { Text("Все сессии и сообщения будут удалены с устройства.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    ChatSessionsStore.clearAll(context)
+                    showClearHistory = false
+                    toast("История чатов очищена")
+                }) { Text("Очистить") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearHistory = false }) { Text("Отмена") }
+            },
+        )
+    }
+
+    if (showReset) {
+        AlertDialog(
+            onDismissRequest = { showReset = false },
+            title = { Text("Сбросить настройки?") },
+            text = { Text("Параметры генерации, чата и оформления вернутся к значениям по умолчанию. API-ключи и чаты останутся.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    AppPrefs.reset(context)
+                    showReset = false
+                    activity?.recreate()
+                }) { Text("Сбросить") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showReset = false }) { Text("Отмена") }
+            },
+        )
+    }
+}
+
+@Composable
+private fun SettingsSection(
+    title: String,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            content()
+        }
+    }
+}
+
+@Composable
+private fun SliderSetting(
+    title: String,
+    valueLabel: String,
+    value: Float,
+    range: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    onValueChange: (Float) -> Unit,
+) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                title,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                valueLabel,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Slider(
+            value = value,
+            onValueChange = onValueChange,
+            valueRange = range,
+            steps = steps,
+        )
+    }
+}
+
+@Composable
+private fun NumberSetting(
+    label: String,
+    value: String,
+    supporting: String,
+    onChange: (String) -> Unit,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onChange,
+        label = { Text(label) },
+        supportingText = { Text(supporting) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun SwitchSetting(
+    title: String,
+    subtitle: String? = null,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            if (subtitle != null) {
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }

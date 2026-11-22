@@ -32,7 +32,9 @@ object AiSupport {
                 baseUrl = LocalModelStore.file(ctx, model).absolutePath,
                 model = model.name,
                 temperature = AppPrefs.temperature(ctx).toDouble(),
+                topP = AppPrefs.topP(ctx).toDouble(),
                 maxTokens = AppPrefs.maxTokens(ctx),
+                timeoutSeconds = AppPrefs.timeoutSeconds(ctx),
                 format = AiFormat.LOCAL
             )
         }
@@ -53,7 +55,9 @@ object AiSupport {
             baseUrl = base,
             model = model,
             temperature = AppPrefs.temperature(ctx).toDouble(),
+            topP = AppPrefs.topP(ctx).toDouble(),
             maxTokens = AppPrefs.maxTokens(ctx),
+            timeoutSeconds = AppPrefs.timeoutSeconds(ctx),
             format = p.format
         )
     }

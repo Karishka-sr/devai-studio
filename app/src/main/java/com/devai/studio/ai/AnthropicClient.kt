@@ -16,10 +16,11 @@ import java.util.concurrent.TimeUnit
  */
 class AnthropicClient(private val cfg: AiConfig) : AiClient {
 
+    private val timeoutSeconds = cfg.timeoutSeconds.coerceIn(15, 600).toLong()
     private val client = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(180, TimeUnit.SECONDS)
-        .writeTimeout(60, TimeUnit.SECONDS)
+        .connectTimeout(minOf(30L, timeoutSeconds), TimeUnit.SECONDS)
+        .readTimeout(timeoutSeconds, TimeUnit.SECONDS)
+        .writeTimeout(minOf(60L, timeoutSeconds), TimeUnit.SECONDS)
         .build()
 
     override suspend fun chat(messages: List<AiMessage>, onDelta: (String) -> Unit): String =
@@ -34,6 +35,7 @@ class AnthropicClient(private val cfg: AiConfig) : AiClient {
                 put("model", cfg.model)
                 put("max_tokens", cfg.maxTokens)
                 put("temperature", cfg.temperature)
+                put("top_p", cfg.topP)
                 if (system.isNotBlank()) put("system", system)
                 put("messages", JSONArray().apply { turns.forEach(::put) })
             }

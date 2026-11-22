@@ -76,6 +76,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.devai.studio.R
@@ -102,6 +103,11 @@ fun ChatScreen() {
     val handler = remember { Handler(Looper.getMainLooper()) }
     val listState = rememberLazyListState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val historyLimit = AppPrefs.historyLimit(context)
+    val chatFontSize = AppPrefs.chatFontSize(context).sp
+    val codeWrap = AppPrefs.codeWrap(context)
+    val sendOnEnter = AppPrefs.sendOnEnter(context)
+    val autoScroll = AppPrefs.autoScroll(context)
 
     var sessionId by remember { mutableStateOf("") }
     var messages by remember { mutableStateOf<List<AiMessage>>(emptyList()) }
@@ -182,7 +188,10 @@ fun ChatScreen() {
                 val client = AiClientFactory.create(cfg, context)
                 val apiMessages = ArrayList<AiMessage>()
                 apiMessages.add(AiMessage("system", AppPrefs.systemPrompt(context)))
-                apiMessages.addAll(snapshot.take(assistantIndex))
+                val history = snapshot.take(assistantIndex)
+                apiMessages.addAll(
+                    if (historyLimit > 0) history.takeLast(historyLimit) else history
+                )
 
                 val full = client.chat(apiMessages) { delta ->
                     synchronized(sb) { sb.append(delta) }
@@ -278,7 +287,7 @@ fun ChatScreen() {
     }
 
     LaunchedEffect(messages.size, messages.lastOrNull()?.content) {
-        if (messages.isNotEmpty()) {
+        if (autoScroll && messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.lastIndex)
         }
     }
@@ -334,7 +343,7 @@ fun ChatScreen() {
                 items(messages.size) { index ->
                     val message = messages[index]
                     if (!(streaming && index == messages.lastIndex && message.content.isBlank())) {
-                        MessageBubble(message)
+                        MessageBubble(message, chatFontSize, codeWrap)
                     }
                 }
                 if (streaming) {
@@ -361,8 +370,14 @@ fun ChatScreen() {
                     placeholder = { Text("Сообщение…") },
                     maxLines = 4,
                     shape = RoundedCornerShape(20.dp),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                    keyboardActions = KeyboardActions(onSend = { if (!streaming) send() }),
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = if (sendOnEnter) ImeAction.Send else ImeAction.Default
+                    ),
+                    keyboardActions = if (sendOnEnter) {
+                        KeyboardActions(onSend = { if (!streaming) send() })
+                    } else {
+                        KeyboardActions()
+                    },
                 )
                 Spacer(Modifier.width(4.dp))
                 FilledIconButton(
@@ -509,7 +524,7 @@ private fun TypingIndicator() {
 }
 
 @Composable
-private fun MessageBubble(message: AiMessage) {
+private fun MessageBubble(message: AiMessage, fontSize: TextUnit, codeWrap: Boolean) {
     val isUser = message.role == "user"
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -543,7 +558,7 @@ private fun MessageBubble(message: AiMessage) {
                         Text(
                             text = message.content,
                             color = MaterialTheme.colorScheme.onPrimary,
-                            fontSize = 15.sp,
+                            fontSize = fontSize,
                         )
                     }
                 } else if (message.content.isBlank()) {
@@ -554,18 +569,23 @@ private fun MessageBubble(message: AiMessage) {
                         Text(
                             message.content,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 15.sp,
+                            fontSize = fontSize,
                         )
                     } else {
                         segments.forEach { segment ->
                             if (segment.code) {
-                                CodeBlock(segment.lang, segment.text)
+                                CodeBlock(
+                                    segment.lang,
+                                    segment.text,
+                                    fontSize = (fontSize.value * 0.83f).sp,
+                                    wrap = codeWrap,
+                                )
                             } else {
                                 SelectionContainer {
                                     Text(
                                         text = segment.text,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontSize = 15.sp,
+                                        fontSize = fontSize,
                                     )
                                 }
                             }
@@ -606,7 +626,7 @@ private fun Avatar(isUser: Boolean) {
 }
 
 @Composable
-private fun CodeBlock(lang: String, code: String) {
+private fun CodeBlock(lang: String, code: String, fontSize: TextUnit, wrap: Boolean) {
     val clipboard = LocalClipboardManager.current
     var copied by remember { mutableStateOf(false) }
     Surface(color = Color(0xFF1E1E1E), shape = RoundedCornerShape(8.dp)) {
@@ -644,10 +664,14 @@ private fun CodeBlock(lang: String, code: String) {
             Text(
                 text = code,
                 color = Color(0xFFE6E6E6),
-                fontSize = 12.5.sp,
+                fontSize = fontSize,
                 fontFamily = FontFamily.Monospace,
-                softWrap = false,
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                softWrap = wrap,
+                modifier = if (wrap) {
+                    Modifier.fillMaxWidth()
+                } else {
+                    Modifier.horizontalScroll(rememberScrollState())
+                },
             )
         }
     }
