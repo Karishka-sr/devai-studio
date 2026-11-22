@@ -1,0 +1,49 @@
+-- DevAI plugin, Lua 5.2 (LuaJ sandbox)
+-- AI can call tools from this file through tool calling.
+
+local plugin = {
+  name = "Lua-инструменты",
+  description = "Пример настоящего Lua-плагина: команды и инструмент для ИИ.",
+
+  commands = {
+    {
+      name = "/upper",
+      description = "Переводит текст в верхний регистр.",
+      run = function(input)
+        return string.upper(input)
+      end
+    },
+    {
+      name = "/count",
+      description = "Считает символы и слова.",
+      run = function(input)
+        local words = 0
+        for _ in string.gmatch(input, "%S+") do words = words + 1 end
+        return "Символов: " .. string.len(input) .. ", слов: " .. words
+      end
+    }
+  },
+
+  tools = {
+    {
+      name = "word_count",
+      description = "Считает количество слов в тексте.",
+      parameters = [[{"type":"object","properties":{"text":{"type":"string","description":"Текст"}},"required":["text"]}]],
+      run = function(args)
+        local words = 0
+        for _ in string.gmatch(args.text or "", "%S+") do words = words + 1 end
+        return "Слов: " .. words
+      end
+    },
+    {
+      name = "reverse_text",
+      description = "Переворачивает строку.",
+      parameters = [[{"type":"object","properties":{"text":{"type":"string"}},"required":["text"]}]],
+      run = function(args)
+        return string.reverse(args.text or "")
+      end
+    }
+  }
+}
+
+return plugin

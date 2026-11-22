@@ -98,4 +98,65 @@ class OpenAiCompatClient(private val cfg: AiConfig) : AiClient {
                 sb.toString()
             }
         }
+
+    /**
+     * Нестримовый запрос с tools. Нужен только MCP-агенту:
+     * модель возвращает tool_calls, приложение выполняет их и повторяет запрос.
+     */
+    suspend fun chatWithTools(
+        messages: List<JSONObject>,
+        tools: List<AgentTool>,
+    ): ToolResult = withContext(Dispatchers.IO) {
+        val url = cfg.baseUrl.trimEnd('/') + "/chat/completions"
+        val payload = JSONObject().apply {
+            put("model", cfg.model)
+            put("stream", false)
+            put("temperature", cfg.temperature)
+            put("top_p", cfg.topP)
+            put("max_tokens", cfg.maxTokens)
+            put("messages", JSONArray().apply { messages.forEach(::put) })
+            put("tools", ToolAgent.toolDefinitions(tools))
+            put("tool_choice", "auto")
+        }
+
+        val request = Request.Builder()
+            .url(url)
+            .header("Authorization", "Bearer ${cfg.apiKey}")
+            .header("Content-Type", "application/json")
+            .post(payload.toString().toRequestBody("application/json".toMediaTypeOrNull()))
+            .build()
+
+        client.newCall(request).execute().use { resp ->
+            val body = resp.body?.string().orEmpty()
+            if (!resp.isSuccessful) error("HTTP ${resp.code}: $body")
+            val message = JSONObject(body)
+                .optJSONArray("choices")
+                ?.optJSONObject(0)
+                ?.optJSONObject("message")
+                ?: error("Нет message в ответе")
+
+            val content = if (message.isNull("content")) null
+            else message.optString("content").takeIf { it.isNotBlank() }
+
+            val calls = mutableListOf<ToolCall>()
+            val arr = message.optJSONArray("tool_calls")
+            if (arr != null) {
+                for (i in 0 until arr.length()) {
+                    val item = arr.optJSONObject(i) ?: continue
+                    val function = item.optJSONObject("function") ?: continue
+                    val name = function.optString("name")
+                    if (name.isBlank()) continue
+                    val args = function.opt("arguments")?.toString().orEmpty()
+                    calls.add(
+                        ToolCall(
+                            id = item.optString("id").ifBlank { "call_$i" },
+                            name = name,
+                            arguments = args,
+                        )
+                    )
+                }
+            }
+            ToolResult(content, calls)
+        }
+    }
 }

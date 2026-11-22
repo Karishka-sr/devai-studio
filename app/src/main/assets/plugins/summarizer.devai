@@ -1,0 +1,9 @@
+# DevAI Plugin Language (DPL), version 1
+name = Суммаризатор
+id = summarizer
+description = Делает краткое резюме текста или переписки.
+command = /sum
+version = 1.0
+author = DevAI Studio
+
+prompt = Сделай краткое резюме текста ниже. Выдели главное, решения и следующие шаги.\n\n{{input}}

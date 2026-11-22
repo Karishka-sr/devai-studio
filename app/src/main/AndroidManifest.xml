@@ -4,6 +4,12 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <application
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
@@ -35,6 +41,33 @@
             android:name=".ui.PremiumActivity"
             android:exported="false"
             android:label="@string/premium_title" />
+
+        <activity
+            android:name=".ui.CharactersActivity"
+            android:exported="false"
+            android:label="Карточки персонажей"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".ui.McpActivity"
+            android:exported="false"
+            android:label="MCP-инструменты"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".ui.PluginsActivity"
+            android:exported="false"
+            android:label="Плагины .devai" />
+
+        <activity
+            android:name=".ui.PluginDocsActivity"
+            android:exported="false"
+            android:label="Документация по плагинам" />
+
+        <activity
+            android:name=".ui.QrExportActivity"
+            android:exported="false"
+            android:label="QR-экспорт провайдера" />
 
         <activity
             android:name="com.qwenz.qwel.MainActivity"

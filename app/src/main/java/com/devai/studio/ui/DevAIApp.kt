@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
@@ -138,6 +139,12 @@ fun DevAIApp() {
                     label = { Text("Конструктор") },
                 )
                 NavigationBarItem(
+                    selected = tab == "tools",
+                    onClick = { tab = "tools" },
+                    icon = { Icon(Icons.Default.Build, contentDescription = "Инструменты") },
+                    label = { Text("Ещё") },
+                )
+                NavigationBarItem(
                     selected = tab == "settings",
                     onClick = { tab = "settings" },
                     icon = { Icon(Icons.Default.Settings, contentDescription = "Настройки") },
@@ -150,6 +157,7 @@ fun DevAIApp() {
             when (tab) {
                 "providers" -> ProvidersScreen()
                 "settings" -> SettingsScreen()
+                "tools" -> ToolsScreen()
                 "modes" -> ModesScreen(
                     current = mode,
                     onSelect = { selected ->

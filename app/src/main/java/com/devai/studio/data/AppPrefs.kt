@@ -23,6 +23,10 @@ object AppPrefs {
     private const val KEY_SEND_ON_ENTER = "send_on_enter"
     private const val KEY_AUTO_SCROLL = "auto_scroll"
     private const val KEY_DYNAMIC_COLOR = "dynamic_color"
+    private const val KEY_TTS_ENABLED = "tts_enabled"
+    private const val KEY_TTS_RATE = "tts_rate"
+    private const val KEY_SEARCH_ENABLED = "search_enabled"
+    private const val KEY_MCP_ENABLED = "mcp_enabled"
 
     const val DEFAULT_SYSTEM_PROMPT =
         "Ты — DevAI, полезный ИИ-ассистент разработчика. Отвечай по делу, давай рабочие примеры кода."
@@ -114,6 +118,21 @@ object AppPrefs {
     fun setDynamicColor(ctx: Context, v: Boolean) =
         p(ctx).edit().putBoolean(KEY_DYNAMIC_COLOR, v).apply()
 
+    fun ttsEnabled(ctx: Context): Boolean = p(ctx).getBoolean(KEY_TTS_ENABLED, false)
+    fun setTtsEnabled(ctx: Context, v: Boolean) =
+        p(ctx).edit().putBoolean(KEY_TTS_ENABLED, v).apply()
+
+    fun ttsRate(ctx: Context): Float = p(ctx).getFloat(KEY_TTS_RATE, 1f)
+    fun setTtsRate(ctx: Context, v: Float) = p(ctx).edit().putFloat(KEY_TTS_RATE, v).apply()
+
+    fun searchEnabled(ctx: Context): Boolean = p(ctx).getBoolean(KEY_SEARCH_ENABLED, false)
+    fun setSearchEnabled(ctx: Context, v: Boolean) =
+        p(ctx).edit().putBoolean(KEY_SEARCH_ENABLED, v).apply()
+
+    fun mcpEnabled(ctx: Context): Boolean = p(ctx).getBoolean(KEY_MCP_ENABLED, true)
+    fun setMcpEnabled(ctx: Context, v: Boolean) =
+        p(ctx).edit().putBoolean(KEY_MCP_ENABLED, v).apply()
+
     fun reset(ctx: Context) {
         p(ctx).edit().clear().apply()
     }
@@ -131,6 +150,10 @@ object AppPrefs {
         put("sendOnEnter", sendOnEnter(ctx))
         put("autoScroll", autoScroll(ctx))
         put("dynamicColor", dynamicColor(ctx))
+        put("ttsEnabled", ttsEnabled(ctx))
+        put("ttsRate", ttsRate(ctx))
+        put("searchEnabled", searchEnabled(ctx))
+        put("mcpEnabled", mcpEnabled(ctx))
         put("theme", theme(ctx))
         put("chatMode", chatMode(ctx))
         put("systemPrompt", systemPrompt(ctx))

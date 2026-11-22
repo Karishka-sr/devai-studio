@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -157,10 +158,25 @@ fun ProvidersScreen() {
         items(rows) { row ->
             when (row) {
                 ProviderRow.Header -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { openLocalModels() }, modifier = Modifier.fillMaxWidth()) {
-                        Icon(Icons.Default.List, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Локальные модели")
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = { openLocalModels() },
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Icon(Icons.Default.List, contentDescription = null)
+                            Spacer(Modifier.width(6.dp))
+                            Text("Локальные модели")
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                context.startActivity(Intent(context, QrExportActivity::class.java))
+                            },
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Icon(Icons.Default.Share, contentDescription = null)
+                            Spacer(Modifier.width(6.dp))
+                            Text("QR")
+                        }
                     }
                     Row(
                         modifier = Modifier.horizontalScroll(rememberScrollState()),

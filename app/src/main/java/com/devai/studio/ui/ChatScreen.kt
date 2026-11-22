@@ -3,7 +3,10 @@ package com.devai.studio.ui
 import android.content.Intent
 import android.os.Handler
 import android.os.Looper
+import android.provider.OpenableColumns
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +33,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -38,6 +42,7 @@ import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AssistChip
@@ -45,6 +50,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -59,6 +65,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -72,6 +79,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -80,21 +90,34 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.devai.studio.R
+import com.devai.studio.ai.AgentTool
 import com.devai.studio.ai.AiClientFactory
 import com.devai.studio.ai.AiFormat
 import com.devai.studio.ai.AiMessage
+import com.devai.studio.ai.McpClient
+import com.devai.studio.ai.ToolAgent
+import com.devai.studio.data.ApiKeyStore
 import com.devai.studio.data.AppPrefs
+import com.devai.studio.data.Attachment
+import com.devai.studio.data.CharacterStore
 import com.devai.studio.data.ChatMode
 import com.devai.studio.data.ChatSession
 import com.devai.studio.data.ChatSessionsStore
 import com.devai.studio.data.LocalModelStore
+import com.devai.studio.data.McpStore
+import com.devai.studio.data.Plugin
+import com.devai.studio.data.PluginStore
 import com.devai.studio.data.PremiumStore
+import com.devai.studio.data.SearchClient
 import com.devai.studio.util.AiSupport
 import com.devai.studio.util.PremiumDialogs
+import com.devai.studio.util.TtsManager
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -120,9 +143,46 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
 
     var showSessions by remember { mutableStateOf(false) }
     var sessions by remember { mutableStateOf<List<ChatSession>>(emptyList()) }
+    var searchEnabled by remember { mutableStateOf(AppPrefs.searchEnabled(context)) }
+    var mcpEnabled by remember { mutableStateOf(AppPrefs.mcpEnabled(context)) }
+    var attachments by remember { mutableStateOf<List<Attachment>>(emptyList()) }
+    var showPlugins by remember { mutableStateOf(false) }
+    var plugins by remember { mutableStateOf<List<Plugin>>(emptyList()) }
+    var characterName by remember {
+        mutableStateOf(CharacterStore.active(context)?.name ?: "Без персонажа")
+    }
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     fun toast(message: String) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+
+    val pickFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            scope.launch {
+                runCatching { withContext(Dispatchers.IO) { readAttachment(context, uri) } }
+                    .onSuccess { attachment ->
+                        if (attachments.size >= 3) {
+                            toast("Можно прикрепить не больше 3 файлов")
+                        } else {
+                            attachments = attachments + attachment
+                        }
+                    }
+                    .onFailure { toast("Файл: ${it.message ?: "не удалось прочитать"}") }
+            }
+        }
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                characterName = CharacterStore.active(context)?.name ?: "Без персонажа"
+                searchEnabled = AppPrefs.searchEnabled(context)
+                mcpEnabled = AppPrefs.mcpEnabled(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     fun currentModelLabel(): String {
@@ -150,6 +210,11 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
 
     fun newChat() {
         loadSession(ChatSessionsStore.create(context))
+        val greeting = CharacterStore.active(context)?.greeting.orEmpty()
+        if (greeting.isNotBlank()) {
+            messages = listOf(AiMessage("assistant", greeting))
+            persist()
+        }
     }
 
     fun openSessions() {
@@ -164,9 +229,15 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
         streaming = false
     }
 
-    fun send() {
-        val text = input.trim()
-        if (text.isEmpty()) return
+    fun openPlugins() {
+        plugins = PluginStore.list(context)
+        showPlugins = true
+    }
+
+    fun send(textOverride: String? = null) {
+        val typed = (textOverride ?: input).trim()
+        val files = attachments
+        if (typed.isEmpty() && files.isEmpty()) return
         val cfg = try {
             AiSupport.config(context)
         } catch (e: IllegalStateException) {
@@ -174,8 +245,25 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
             return
         }
 
+        val userContent = buildString {
+            if (typed.isNotBlank()) append(typed)
+            if (files.isNotEmpty()) {
+                if (typed.isNotBlank()) append("\n\n")
+                files.forEachIndexed { index, file ->
+                    append("Файл «").append(file.name).append("»:\n```\n")
+                    append(file.content)
+                    append("\n```")
+                    if (index != files.lastIndex) append("\n\n")
+                }
+            }
+        }.trim()
+        if (userContent.isEmpty()) return
+
+        val searchOn = searchEnabled
+        val useMcp = mcpEnabled
         input = ""
-        val snapshot = messages + AiMessage("user", text) + AiMessage("assistant", "")
+        attachments = emptyList()
+        val snapshot = messages + AiMessage("user", userContent) + AiMessage("assistant", "")
         messages = snapshot
         val assistantIndex = snapshot.lastIndex
         val finished = AtomicBoolean(false)
@@ -187,14 +275,36 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
             var lastUi = 0L
             try {
                 val client = AiClientFactory.create(cfg, context)
+
+                var searchBlock = ""
+                if (searchOn && typed.isNotBlank()) {
+                    if (!SearchClient.isConfigured(context)) {
+                        toast("Добавьте ключ Tavily в «Инструменты».")
+                    } else {
+                        runCatching { SearchClient.search(context, typed, 5) }
+                            .onSuccess { searchBlock = it.take(6000) }
+                            .onFailure { toast("Поиск: ${it.message ?: "ошибка"}") }
+                    }
+                }
+
                 val apiMessages = ArrayList<AiMessage>()
-                apiMessages.add(AiMessage("system", AppPrefs.systemPromptForMode(context, mode)))
+                val system = buildString {
+                    CharacterStore.active(context)?.let {
+                        append(it.systemText()).append("\n\n")
+                    }
+                    append(AppPrefs.systemPromptForMode(context, mode))
+                    if (searchBlock.isNotBlank()) {
+                        append("\n\nАктуальные результаты веб-поиска (используй, если это полезно):\n")
+                        append(searchBlock)
+                    }
+                }
+                apiMessages.add(AiMessage("system", system))
                 val history = snapshot.take(assistantIndex)
                 apiMessages.addAll(
                     if (historyLimit > 0) history.takeLast(historyLimit) else history
                 )
 
-                val full = client.chat(apiMessages) { delta ->
+                val onDelta: (String) -> Unit = { delta ->
                     synchronized(sb) { sb.append(delta) }
                     if (!cancelled.get() && !finished.get()) {
                         val now = System.currentTimeMillis()
@@ -214,6 +324,52 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                     }
                 }
 
+                val agentTools = buildList {
+                    if (useMcp) {
+                        McpStore.tools(context).forEach { tool ->
+                            add(
+                                AgentTool(
+                                    functionName = tool.functionName,
+                                    description = tool.description.ifBlank { tool.name },
+                                    inputSchema = tool.inputSchema,
+                                ) { args ->
+                                    val server = McpStore.findServer(context, tool.serverId)
+                                    if (server == null) {
+                                        "MCP-сервер не найден: ${tool.serverName}"
+                                    } else {
+                                        McpClient(
+                                            server,
+                                            ApiKeyStore.get(
+                                                context,
+                                                McpStore.tokenKey(server.id),
+                                            ),
+                                        ).callTool(tool.name, args)
+                                    }
+                                }
+                            )
+                        }
+                    }
+                    PluginStore.toolBindings(context).forEach { binding ->
+                        add(
+                            AgentTool(
+                                functionName = binding.functionName,
+                                description = binding.tool.description
+                                    .ifBlank { binding.plugin.name + ": " + binding.tool.name },
+                                inputSchema = binding.tool.parameters,
+                            ) { args ->
+                                withContext(Dispatchers.IO) {
+                                    PluginStore.callTool(binding, args)
+                                }
+                            }
+                        )
+                    }
+                }
+                val full = if (agentTools.isNotEmpty() && cfg.format == AiFormat.OPENAI_COMPAT) {
+                    ToolAgent.chat(cfg, apiMessages, agentTools, onDelta)
+                } else {
+                    client.chat(apiMessages, onDelta)
+                }
+
                 if (!cancelled.get()) {
                     finished.set(true)
                     val finalText = full.ifBlank { synchronized(sb) { sb.toString() } }
@@ -223,6 +379,9 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                         }
                     }
                     persist()
+                    if (AppPrefs.ttsEnabled(context) && finalText.isNotBlank()) {
+                        TtsManager.speak(context, finalText)
+                    }
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -285,6 +444,13 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
         sessionId = session.id
         messages = session.messages
         modelLabel = currentModelLabel()
+        val activeCharacter = CharacterStore.active(context)
+        characterName = activeCharacter?.name ?: "Без персонажа"
+        val greeting = activeCharacter?.greeting.orEmpty()
+        if (messages.isEmpty() && greeting.isNotBlank()) {
+            messages = listOf(AiMessage("assistant", greeting))
+            persist()
+        }
     }
 
     LaunchedEffect(messages.size, messages.lastOrNull()?.content) {
@@ -323,6 +489,13 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                 IconButton(onClick = { regenerate() }, enabled = !streaming) {
                     Icon(Icons.Default.Refresh, contentDescription = "Заново")
                 }
+                IconButton(
+                    onClick = {
+                        context.startActivity(Intent(context, CharactersActivity::class.java))
+                    },
+                ) {
+                    Icon(Icons.Default.Person, contentDescription = "Персонажи")
+                }
             },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -345,12 +518,65 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                 items(messages.size) { index ->
                     val message = messages[index]
                     if (!(streaming && index == messages.lastIndex && message.content.isBlank())) {
-                        MessageBubble(message, chatFontSize, codeWrap)
+                        MessageBubble(
+                            message = message,
+                            fontSize = chatFontSize,
+                            codeWrap = codeWrap,
+                            onSpeak = { TtsManager.speak(context, it) },
+                        )
                     }
                 }
                 if (streaming) {
                     item { TypingIndicator() }
                 }
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            FilterChip(
+                selected = searchEnabled,
+                onClick = {
+                    if (!searchEnabled && !SearchClient.isConfigured(context)) {
+                        toast("Добавьте ключ Tavily в «Инструменты».")
+                    } else {
+                        searchEnabled = !searchEnabled
+                        AppPrefs.setSearchEnabled(context, searchEnabled)
+                    }
+                },
+                label = { Text("🌐 Поиск") },
+            )
+            FilterChip(
+                selected = mcpEnabled,
+                onClick = {
+                    mcpEnabled = !mcpEnabled
+                    AppPrefs.setMcpEnabled(context, mcpEnabled)
+                    if (mcpEnabled && McpStore.tools(context).isEmpty()) {
+                        toast("MCP: добавьте сервер в «Инструменты».")
+                    }
+                },
+                label = { Text("🔧 MCP") },
+            )
+            AssistChip(
+                onClick = { openPlugins() },
+                label = { Text("🧩 Плагины") },
+            )
+            AssistChip(
+                onClick = {
+                    context.startActivity(Intent(context, CharactersActivity::class.java))
+                },
+                label = { Text("🎭 $characterName") },
+            )
+            attachments.forEach { attachment ->
+                AssistChip(
+                    onClick = { attachments = attachments - attachment },
+                    label = { Text("📎 ${attachment.name}") },
+                )
             }
         }
 
@@ -365,6 +591,20 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                 modifier = Modifier.padding(4.dp),
                 verticalAlignment = Alignment.Bottom,
             ) {
+                IconButton(
+                    onClick = {
+                        pickFile.launch(
+                            arrayOf(
+                                "text/*",
+                                "application/json",
+                                "application/xml",
+                                "application/octet-stream",
+                            )
+                        )
+                    },
+                ) {
+                    Text("📎", fontSize = 20.sp)
+                }
                 OutlinedTextField(
                     value = input,
                     onValueChange = { input = it },
@@ -384,7 +624,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                 Spacer(Modifier.width(4.dp))
                 FilledIconButton(
                     onClick = { if (streaming) stop() else send() },
-                    enabled = streaming || input.isNotBlank(),
+                    enabled = streaming || input.isNotBlank() || attachments.isNotEmpty(),
                 ) {
                     Icon(
                         imageVector = if (streaming) Icons.Default.Close else Icons.Default.Send,
@@ -449,6 +689,96 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                         Spacer(Modifier.width(6.dp))
                         Text("Удалить")
                     }
+                }
+            }
+        }
+    }
+
+    if (showPlugins) {
+        ModalBottomSheet(
+            onDismissRequest = { showPlugins = false },
+            sheetState = sheetState,
+        ) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 24.dp),
+            ) {
+                Text(
+                    "Плагины .devai",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    "Выберите плагин — его промпт подставится в сообщение.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(8.dp))
+                if (plugins.isEmpty()) {
+                    Text(
+                        "Плагинов нет. Добавьте .devai в «Инструменты → Плагины».",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    val actions = plugins.flatMap { plugin ->
+                        if (plugin.commands.isNotEmpty()) {
+                            plugin.commands.map { command -> plugin to command }
+                        } else {
+                            listOf(plugin to null)
+                        }
+                    }
+                    LazyColumn(Modifier.heightIn(max = 420.dp)) {
+                        items(actions) { (plugin, command) ->
+                            ListItem(
+                                headlineContent = {
+                                    Text(
+                                        plugin.name + if (command != null) " " + command.name else "",
+                                        maxLines = 1,
+                                    )
+                                },
+                                supportingContent = {
+                                    Text(
+                                        command?.description?.ifBlank { plugin.description }
+                                            ?: plugin.description.ifBlank { plugin.command },
+                                        maxLines = 2,
+                                    )
+                                },
+                                leadingContent = {
+                                    Icon(Icons.Default.Build, contentDescription = null)
+                                },
+                                modifier = Modifier.clickable {
+                                    val base = input.trim()
+                                    val rendered = PluginStore.runCommand(plugin, command, base)
+                                    showPlugins = false
+                                    if (base.isNotBlank()) {
+                                        input = rendered
+                                        send(rendered)
+                                    } else {
+                                        input = rendered
+                                    }
+                                },
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = {
+                            showPlugins = false
+                            context.startActivity(Intent(context, PluginsActivity::class.java))
+                        },
+                        modifier = Modifier.weight(1f),
+                    ) { Text("Открыть плагины") }
+                    OutlinedButton(
+                        onClick = {
+                            showPlugins = false
+                            context.startActivity(Intent(context, PluginDocsActivity::class.java))
+                        },
+                        modifier = Modifier.weight(1f),
+                    ) { Text("Документация") }
                 }
             }
         }
@@ -539,7 +869,12 @@ private fun TypingIndicator() {
 }
 
 @Composable
-private fun MessageBubble(message: AiMessage, fontSize: TextUnit, codeWrap: Boolean) {
+private fun MessageBubble(
+    message: AiMessage,
+    fontSize: TextUnit,
+    codeWrap: Boolean,
+    onSpeak: (String) -> Unit,
+) {
     val isUser = message.role == "user"
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -605,6 +940,11 @@ private fun MessageBubble(message: AiMessage, fontSize: TextUnit, codeWrap: Bool
                                 }
                             }
                         }
+                    }
+                }
+                if (!isUser && message.content.isNotBlank()) {
+                    TextButton(onClick = { onSpeak(message.content) }) {
+                        Text("🔊 Озвучить")
                     }
                 }
             }
@@ -690,6 +1030,38 @@ private fun CodeBlock(lang: String, code: String, fontSize: TextUnit, wrap: Bool
             )
         }
     }
+}
+
+private fun readAttachment(context: android.content.Context, uri: android.net.Uri): Attachment {
+    val name = context.contentResolver.query(
+        uri,
+        arrayOf(OpenableColumns.DISPLAY_NAME),
+        null,
+        null,
+        null,
+    )?.use { cursor ->
+        if (cursor.moveToFirst()) cursor.getString(0) else null
+    } ?: uri.lastPathSegment ?: "file.txt"
+
+    val extension = name.substringAfterLast('.', "").lowercase()
+    val allowed = setOf(
+        "txt", "md", "json", "kt", "kts", "java", "xml", "yaml", "yml",
+        "csv", "log", "html", "css", "js", "ts", "py", "gradle",
+        "properties", "sql", "sh", "toml", "ini", "devai",
+    )
+    if (extension !in allowed) {
+        error("формат .$extension не поддержан")
+    }
+
+    val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+        ?: error("не удалось открыть файл")
+    if (bytes.size > 64 * 1024) error("файл больше 64 КБ")
+    if (bytes.any { it == 0.toByte() }) error("это бинарный файл")
+
+    val text = bytes.toString(Charsets.UTF_8)
+    if (text.count { it == '\uFFFD' } > 5) error("файл не похож на текст")
+    if (text.isBlank()) error("файл пустой")
+    return Attachment(name, text)
 }
 
 private data class Segment(val code: Boolean, val lang: String, val text: String)

@@ -2,14 +2,14 @@
 
 **Android-студия для разработки с ИИ.** Чат с ведущими моделями, генерация Android-проектов, рабочее пространство с файлами и офлайн-модели, которые работают без интернета.
 
-[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v2.9.0** · Android 12+ · arm64-v8a
+[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v2.10.0** · Android 12+ · arm64-v8a
 
 <p align="center">
   <a href="https://t.me/NeonBeatt">
     <img src="https://img.shields.io/badge/Telegram-@NeonBeatt-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram @NeonBeatt">
   </a>
   <a href="https://github.com/Karishka-sr/devai-studio/releases">
-    <img src="https://img.shields.io/badge/Download_APK-v2.9.0-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
+    <img src="https://img.shields.io/badge/Download_APK-v2.10.0-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
   </a>
   <a href="https://rytmix-live.pplx-2.app">
     <img src="https://img.shields.io/badge/Site-rytmix--live-0A66C2?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Сайт">
@@ -23,6 +23,16 @@
 - Локальные серверы: Ollama, LM Studio, llama.cpp, Jan.
 - Свой OpenAI-совместимый сервер.
 - Стриминг ответов, история сессий, регенерация, Markdown и блоки кода с копированием.
+
+### 🧰 Инструменты и плагины
+- **MCP-инструменты**: подключение внешних серверов, токены, tool calling в чате.
+- **Веб-поиск Tavily**: результаты поиска добавляются в контекст ответа.
+- **TTS**: системное озвучивание ответов и кнопка «🔊 Озвучить» у каждого сообщения.
+- **Карточки персонажей**: имя, характер, приветствие и системный промпт.
+- **QR-экспорт провайдера**: перенос профиля между устройствами без облака.
+- **Файлы в чате**: до 3 текстовых вложений, до 64 КБ каждое.
+- **Плагины `.devai`**: настоящий Lua 5.2 через LuaJ (MIT) в песочнице. Команды для пользователя и инструменты, которые ИИ вызывает сам. Старый DPL-формат тоже поддерживается.
+- **Документация по плагинам**: отдельный `docs/PLUGINS.md` и кнопка скачивания внутри приложения.
 
 ### 📴 Офлайн-модели
 Модели скачиваются внутрь приложения и работают **без интернета**. Инференс выполняется на устройстве через LiteRT-LM, данные не покидают телефон.
@@ -83,13 +93,13 @@
 - Активация промокодом. Оплата через Google Play Billing — в планах.
 
 ## Установка
-1. Скачайте `devai-studio-2.9.0.apk` в разделе [Releases](https://github.com/Karishka-sr/devai-studio/releases).
+1. Скачайте `devai-studio-2.10.0.apk` в разделе [Releases](https://github.com/Karishka-sr/devai-studio/releases).
 2. Разрешите установку из неизвестных источников.
 3. Требования: Android 12+ (minSdk 31), процессор arm64-v8a.
 
-Текущая сборка: **2.9.0** с конструктором Vexel (`devai-studio-2.9.0.apk`).
+Текущая сборка: **2.10.0** с конструктором Vexel (`devai-studio-2.10.0.apk`).
 
-> 2.4.0 не использовать: в ней был вылет при открытии Настроек. Исправлено в 2.4.1+, актуальная — 2.9.0.
+> 2.4.0 не использовать: в ней был вылет при открытии Настроек. Исправлено в 2.4.1+, актуальная — 2.10.0.
 
 APK подписан самоподписанным ключом, поэтому Play Protect может показать предупреждение.
 
@@ -115,9 +125,11 @@ apksigner sign --ks release.jks --ks-key-alias devai \
 ```
 app/src/main/java/com/devai/studio/
 ├── ai/          # клиенты провайдеров, LiteRT-LM, форматы промптов
-├── data/        # настройки, ключи, сессии, каталог моделей, Premium
-├── ui/          # Compose-экраны: splash, чат, ИИ, настройки, автор
-└── util/        # темы, диалоги, вспомогательные классы
+├── data/        # настройки, ключи, сессии, плагины, MCP, персонажи, Premium
+├── ui/          # Compose-экраны: splash, чат, ИИ, инструменты, плагины, автор
+└── util/        # темы, TTS, QR, диалоги, вспомогательные классы
+
+docs/PLUGINS.md  # полная документация по плагинам
 
 app/src/main/kotlin/com/qwenz/qwel/   # Vexel: проекты, редактор, рендер, фигуры
 ```
@@ -125,7 +137,7 @@ app/src/main/kotlin/com/qwenz/qwel/   # Vexel: проекты, редактор,
 ## Технологии
 - Kotlin 2.2, AndroidX, Material 3, Jetpack Compose UI (чат, ИИ, настройки)
 - Compose BOM 2026.03.01 + Material3 1.5.0-alpha10, Vexel/Qwel constructor
-- Kotlin Coroutines, OkHttp
+- Kotlin Coroutines, OkHttp, LuaJ (Lua 5.2)
 - LiteRT-LM (инференс на устройстве)
 - minSdk 31, targetSdk 34, arm64-v8a
 

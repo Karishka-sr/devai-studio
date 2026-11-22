@@ -1,0 +1,9 @@
+# DevAI Plugin Language (DPL), version 1
+name = Ревью кода
+id = code-review
+description = Ищет баги, риски и проблемы в коде.
+command = /review
+version = 1.0
+author = DevAI Studio
+
+prompt = Проверь код ниже как senior-ревьюер. Найди баги, риски безопасности, проблемы производительности и читаемости. Для каждой проблемы укажи серьёзность и конкретное исправление.\n\n{{input}}

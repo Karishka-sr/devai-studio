@@ -34,3 +34,12 @@
 ## Notes
 - Google Play Billing is a placeholder (`ui/PremiumActivity.kt` "Купить" dialog); activation is promo-based.
 - Do not commit `build/`, `local.properties`, keystore.
+
+## Tools & plugins (v2.10.0)
+- New bottom-nav tab `ui/ToolsScreen.kt`: Tavily search, TTS, MCP, characters, `.devai` plugins, QR export, plugin docs.
+- `.devai` plugins are real Lua 5.2 plugins via `org.luaj:luaj-jse:3.0.1` (MIT). Engine: `data/LuaPluginEngine.kt`; store/parser: `data/PluginStore.kt`.
+- Sandbox loads only base/table/string/math; `io`, `os`, `package`, `require`, `load*`, `dofile`, `debug`, `luajava` are removed.
+- Plugin commands are user-invoked; plugin tools are exposed to the AI through OpenAI-compatible tool calling (`ai/ToolAgent.kt`, `ai/OpenAiCompatClient.kt`). MCP tools use the same `AgentTool` abstraction.
+- Docs: `docs/PLUGINS.md` (large guide) copied to `assets/devai-plugins.md`; in-app renderer/download in `ui/PluginDocsActivity.kt`.
+- Samples: `assets/plugins/{summarizer,code-review,lua-tools}.devai`.
+- Keep Vexel untouched: verify `git diff v2.9.0 -- app/src/main/kotlin/com/qwenz/qwel app/src/main/assets/{icons,fonts,fun,lang}` is empty on every release.
