@@ -84,6 +84,7 @@ import com.devai.studio.ai.AiClientFactory
 import com.devai.studio.ai.AiFormat
 import com.devai.studio.ai.AiMessage
 import com.devai.studio.data.AppPrefs
+import com.devai.studio.data.ChatMode
 import com.devai.studio.data.ChatSession
 import com.devai.studio.data.ChatSessionsStore
 import com.devai.studio.data.LocalModelStore
@@ -97,7 +98,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen() {
+fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val handler = remember { Handler(Looper.getMainLooper()) }
@@ -187,7 +188,7 @@ fun ChatScreen() {
             try {
                 val client = AiClientFactory.create(cfg, context)
                 val apiMessages = ArrayList<AiMessage>()
-                apiMessages.add(AiMessage("system", AppPrefs.systemPrompt(context)))
+                apiMessages.add(AiMessage("system", AppPrefs.systemPromptForMode(context, mode)))
                 val history = snapshot.take(assistantIndex)
                 apiMessages.addAll(
                     if (historyLimit > 0) history.takeLast(historyLimit) else history
@@ -302,7 +303,7 @@ fun ChatScreen() {
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        modelLabel,
+                        mode.title + " · " + modelLabel,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -331,6 +332,7 @@ fun ChatScreen() {
         if (messages.isEmpty() && !streaming) {
             EmptyChat(
                 modifier = Modifier.weight(1f),
+                mode = mode,
                 onSuggestion = { input = it },
             )
         } else {
@@ -456,6 +458,7 @@ fun ChatScreen() {
 @Composable
 private fun EmptyChat(
     modifier: Modifier = Modifier,
+    mode: ChatMode,
     onSuggestion: (String) -> Unit,
 ) {
     Column(
@@ -483,7 +486,11 @@ private fun EmptyChat(
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            "Спросите что угодно — код, ошибки, интерфейс.",
+            if (mode == ChatMode.DEV) {
+                "Спросите про код, ошибки, Android, Kotlin или Compose."
+            } else {
+                "Спросите что угодно — объяснения, тексты, идеи."
+            },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -493,11 +500,19 @@ private fun EmptyChat(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            listOf(
-                "Напиши код на Kotlin",
-                "Объясни ошибку",
-                "Сделай UI на Compose",
-            ).forEach { text ->
+            (if (mode == ChatMode.DEV) {
+                listOf(
+                    "Напиши код на Kotlin",
+                    "Объясни ошибку",
+                    "Сделай UI на Compose",
+                )
+            } else {
+                listOf(
+                    "Объясни простыми словами",
+                    "Помоги с текстом",
+                    "Придумай идею",
+                )
+            }).forEach { text ->
                 AssistChip(
                     onClick = { onSuggestion(text) },
                     label = { Text(text) },

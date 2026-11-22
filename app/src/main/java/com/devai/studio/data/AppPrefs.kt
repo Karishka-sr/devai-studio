@@ -12,6 +12,7 @@ object AppPrefs {
     private const val KEY_CUSTOM_MODEL = "custom_model"
     private const val KEY_SYSTEM_PROMPT = "system_prompt"
     private const val KEY_THEME = "theme"
+    private const val KEY_CHAT_MODE = "chat_mode"
     private const val KEY_TOP_P = "top_p"
     private const val KEY_HISTORY_LIMIT = "history_limit"
     private const val KEY_TIMEOUT = "timeout_seconds"
@@ -25,6 +26,11 @@ object AppPrefs {
 
     const val DEFAULT_SYSTEM_PROMPT =
         "Ты — DevAI, полезный ИИ-ассистент разработчика. Отвечай по делу, давай рабочие примеры кода."
+
+    const val DEV_SYSTEM_PROMPT =
+        "Ты — DevAI, senior-разработчик. Помогай с кодом, архитектурой, ошибками и UI. " +
+            "Сначала уточняй требования, если задача неоднозначна. Давай готовые примеры кода " +
+            "и указывай, куда их вставлять."
 
     private fun p(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -62,6 +68,18 @@ object AppPrefs {
 
     fun setSystemPrompt(ctx: Context, v: String) =
         p(ctx).edit().putString(KEY_SYSTEM_PROMPT, v).apply()
+
+    fun chatMode(ctx: Context): String = p(ctx).getString(KEY_CHAT_MODE, ChatMode.CHAT.id)
+        ?: ChatMode.CHAT.id
+
+    fun setChatMode(ctx: Context, id: String) =
+        p(ctx).edit().putString(KEY_CHAT_MODE, id).apply()
+
+    fun systemPromptForMode(ctx: Context, mode: ChatMode): String {
+        val custom = p(ctx).getString(KEY_SYSTEM_PROMPT, null)
+        if (!custom.isNullOrBlank() && custom != DEFAULT_SYSTEM_PROMPT) return custom
+        return if (mode == ChatMode.DEV) DEV_SYSTEM_PROMPT else DEFAULT_SYSTEM_PROMPT
+    }
 
     fun topP(ctx: Context): Float = p(ctx).getFloat(KEY_TOP_P, 0.95f)
     fun setTopP(ctx: Context, v: Float) = p(ctx).edit().putFloat(KEY_TOP_P, v).apply()
@@ -114,6 +132,7 @@ object AppPrefs {
         put("autoScroll", autoScroll(ctx))
         put("dynamicColor", dynamicColor(ctx))
         put("theme", theme(ctx))
+        put("chatMode", chatMode(ctx))
         put("systemPrompt", systemPrompt(ctx))
         put("provider", activeProvider(ctx).orEmpty())
         put("model", activeModel(ctx).orEmpty())

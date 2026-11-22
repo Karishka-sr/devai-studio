@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
@@ -29,6 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.devai.studio.data.AppPrefs
+import com.devai.studio.data.ChatMode
+import com.devai.studio.data.ChatSessionsStore
 import com.devai.studio.data.PremiumStore
 import com.devai.studio.util.ThemeManager
 import com.qwenz.qwel.MainActivity as QwelActivity
@@ -108,16 +110,18 @@ fun DevAITheme(content: @Composable () -> Unit) {
 
 @Composable
 fun DevAIApp() {
-    var tab by rememberSaveable { mutableStateOf("chat") }
     val context = LocalContext.current
+    var tab by rememberSaveable { mutableStateOf("chat") }
+    var modeId by rememberSaveable { mutableStateOf(AppPrefs.chatMode(context)) }
+    val mode = ChatMode.fromId(modeId)
     Scaffold(
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
-                    selected = tab == "chat",
-                    onClick = { tab = "chat" },
-                    icon = { Icon(Icons.Default.Email, contentDescription = "Чат") },
-                    label = { Text("Чат") },
+                    selected = tab == "chat" || tab == "modes",
+                    onClick = { tab = "modes" },
+                    icon = { Icon(Icons.Default.List, contentDescription = "Режимы") },
+                    label = { Text("Режимы") },
                 )
                 NavigationBarItem(
                     selected = tab == "providers",
@@ -146,7 +150,18 @@ fun DevAIApp() {
             when (tab) {
                 "providers" -> ProvidersScreen()
                 "settings" -> SettingsScreen()
-                else -> ChatScreen()
+                "modes" -> ModesScreen(
+                    current = mode,
+                    onSelect = { selected ->
+                        if (selected.id != modeId) {
+                            ChatSessionsStore.create(context)
+                        }
+                        modeId = selected.id
+                        AppPrefs.setChatMode(context, selected.id)
+                        tab = "chat"
+                    },
+                )
+                else -> ChatScreen(mode = mode)
             }
         }
     }
