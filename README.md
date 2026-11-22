@@ -2,14 +2,14 @@
 
 **Android-студия для разработки с ИИ.** Чат с ведущими моделями, генерация Android-проектов, рабочее пространство с файлами и офлайн-модели, которые работают без интернета.
 
-[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v2.4.2** · Android 12+ · arm64-v8a
+[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v2.5.0** · Android 12+ · arm64-v8a
 
 <p align="center">
   <a href="https://t.me/NeonBeatt">
     <img src="https://img.shields.io/badge/Telegram-@NeonBeatt-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram @NeonBeatt">
   </a>
   <a href="https://github.com/Karishka-sr/devai-studio/releases">
-    <img src="https://img.shields.io/badge/Download_APK-v2.4.2-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
+    <img src="https://img.shields.io/badge/Download_APK-v2.5.0-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
   </a>
   <a href="https://rytmix-live.pplx-2.app">
     <img src="https://img.shields.io/badge/Site-rytmix--live-0A66C2?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Сайт">
@@ -43,9 +43,14 @@
 - Проекты, слои, фигуры MD3, компоненты, маски, градиенты, тени и режим «Играть».
 - Экспорт PNG/SVG, импорт SVG и генерация Compose-кода.
 - Полный набор иконок Vexel: 23 670 SVG Material Symbols (outlined/rounded/sharp) в `assets/icons`.
-- Баннер автора Vexel на Compose: Miko, t.me/FemClaudeMrrr, фигуры и Android.
+- Баннер автора Vexel на Compose: Miko, t.me/FemClaudeMrrr, фигуры, Android и `Modifier.blur`.
 - Открывается из вкладки «Конструктор» на весь экран.
 - Конструктор — Vexel, автор [@cheburek_dev](https://t.me/cheburek_dev), используется с разрешения.
+
+### 🧩 Compose UI
+- Чат, ИИ-провайдеры и Настройки полностью переписаны на Compose; старые XML-фрагменты и адаптеры удалены.
+- Главный экран — Compose `Scaffold` + `NavigationBar`.
+- Material3 1.5.0-alpha10: `MaterialShapes`, Expressive-фигуры, `Modifier.blur`.
 
 ### 🎨 Оформление
 - **Material Design 3** — бесплатно, с dynamic color на Android 12+.
@@ -60,13 +65,13 @@
 - Активация промокодом. Оплата через Google Play Billing — в планах.
 
 ## Установка
-1. Скачайте `devai-studio-2.4.2.apk` в разделе [Releases](https://github.com/Karishka-sr/devai-studio/releases).
+1. Скачайте `devai-studio-2.5.0.apk` в разделе [Releases](https://github.com/Karishka-sr/devai-studio/releases).
 2. Разрешите установку из неизвестных источников.
 3. Требования: Android 12+ (minSdk 31), процессор arm64-v8a.
 
-Текущая сборка: **2.4.2** с конструктором Vexel (`devai-studio-2.4.2.apk`).
+Текущая сборка: **2.5.0** с конструктором Vexel (`devai-studio-2.5.0.apk`).
 
-> 2.4.0 не использовать: в ней был вылет при открытии Настроек. Исправлено в 2.4.1+, актуальная — 2.4.2.
+> 2.4.0 не использовать: в ней был вылет при открытии Настроек. Исправлено в 2.4.1+, актуальная — 2.5.0.
 
 APK подписан самоподписанным ключом, поэтому Play Protect может показать предупреждение.
 
@@ -80,7 +85,7 @@ export ANDROID_HOME=/path/to/android-sdk
 ```
 
 Требования: JDK 21, Android SDK 35, Gradle 8.9, AGP 8.6, Kotlin 2.2.20.
-Compose: BOM 2026.03.01 (UI 1.10.6), Material3 1.4.0, activity-compose 1.10.1, `androidx.graphics:graphics-shapes:1.1.0`.
+Compose: BOM 2026.03.01 (UI 1.10.6), Material3 1.5.0-alpha10 (`MaterialShapes`, `toShape`, `Modifier.blur`), activity-compose 1.10.1, `androidx.graphics:graphics-shapes:1.1.0`.
 
 Подпись release-сборки:
 ```bash
@@ -93,15 +98,15 @@ apksigner sign --ks release.jks --ks-key-alias devai \
 app/src/main/java/com/devai/studio/
 ├── ai/          # клиенты провайдеров, LiteRT-LM, форматы промптов
 ├── data/        # настройки, ключи, сессии, каталог моделей, Premium
-├── ui/          # экраны и адаптеры
+├── ui/          # Compose-экраны: чат, ИИ, настройки, баннер
 └── util/        # темы, диалоги, вспомогательные классы
 
 app/src/main/kotlin/com/qwenz/qwel/   # Vexel: проекты, редактор, рендер, фигуры
 ```
 
 ## Технологии
-- Kotlin 2.2, AndroidX, Material 3, ViewBinding + Jetpack Compose
-- Compose BOM 2026.03.01, Vexel/Qwel constructor
+- Kotlin 2.2, AndroidX, Material 3, Jetpack Compose UI (чат, ИИ, настройки)
+- Compose BOM 2026.03.01 + Material3 1.5.0-alpha10, Vexel/Qwel constructor
 - Kotlin Coroutines, OkHttp
 - LiteRT-LM (инференс на устройстве)
 - minSdk 31, targetSdk 34, arm64-v8a
