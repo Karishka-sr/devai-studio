@@ -48,6 +48,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -77,6 +78,10 @@ fun SettingsScreen() {
     fun toast(message: String) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
+
+    fun appVersion(): String = runCatching {
+        context.packageManager.getPackageInfo(context.packageName, 0).versionName
+    }.getOrNull().orEmpty()
 
     fun openUrl(url: String) {
         runCatching {
@@ -247,8 +252,6 @@ fun SettingsScreen() {
             }
         }
 
-        AuthorArtBanner()
-
         OutlinedButton(
             onClick = { showClear = true },
             modifier = Modifier.fillMaxWidth(),
@@ -257,6 +260,14 @@ fun SettingsScreen() {
             Spacer(Modifier.width(8.dp))
             Text("Сбросить все ключи")
         }
+
+        Text(
+            text = "DevAI Studio " + appVersion(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 
     if (showTheme) {
