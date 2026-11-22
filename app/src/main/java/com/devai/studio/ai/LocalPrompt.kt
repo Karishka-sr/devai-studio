@@ -3,7 +3,9 @@ package com.devai.studio.ai
 object LocalPrompt {
 
     private const val RUSSIAN =
-        "Отвечай на русском языке. Не начинай ответ с английских инструкций или шаблонов."
+        "Ты DevAI Studio. Отвечай на русском языке. Отвечай только на последнее сообщение " +
+            "пользователя. Не придумывай задания, не делай разбор и не пиши код, если об этом " +
+            "не просят. Если пользователь просто здоровается, ответь: Привет! Чем помочь?"
 
     /**
      * LiteRT-LM applies the model's own chat template and rejects control tokens in the
@@ -15,6 +17,7 @@ object LocalPrompt {
         ).trim()
         val turns = messages
             .filter { it.role == "user" || it.role == "assistant" }
+            .filterNot { it.role == "assistant" && ResponseGuard.isMeta(it.content) }
             .takeLast(6)
             .map { it.copy(content = PromptSanitizer.clean(it.content).take(4000)) }
 

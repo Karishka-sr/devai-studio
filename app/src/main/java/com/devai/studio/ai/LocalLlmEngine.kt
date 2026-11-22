@@ -79,7 +79,7 @@ object LocalLlmEngine {
         ctx: Context,
         path: String,
         prompt: String,
-        onDelta: (String) -> Unit
+        onDelta: (String) -> Boolean
     ): String = mutex.withLock {
         withContext(Dispatchers.IO) {
             val s = ensure(ctx.applicationContext, path)
@@ -89,11 +89,14 @@ object LocalLlmEngine {
                 override fun onNext(chunk: String) {
                     if (chunk.isEmpty()) return
                     synchronized(sb) { sb.append(chunk) }
-                    onDelta(chunk)
+                    if (!onDelta(chunk)) {
+                        done.complete(synchronized(sb) { sb.toString() })
+                        runCatching { s.cancelProcess() }
+                    }
                 }
 
                 override fun onDone() {
-                    done.complete(sb.toString())
+                    done.complete(synchronized(sb) { sb.toString() })
                 }
 
                 override fun onError(error: Throwable) {

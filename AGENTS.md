@@ -18,7 +18,7 @@
 - `LocalPrompt` always appends a Russian-language instruction, and `AppPrefs.DEFAULT_SYSTEM_PROMPT` / `DEV_SYSTEM_PROMPT` require Russian answers. This fixes small local models drifting into English benchmark-style output.
 - `data/ModelDownloader.kt` retries, resumes, and falls back to `hf-mirror.com` for Hugging Face URLs.
 
-## Themes & Premium (v2.14.0)
+## Themes & Premium (v2.14.1)
 - `util/ThemeManager.kt`: M3 (free, dynamic color), Expressive/Retro (premium).
 - `data/PremiumPlan.kt`: `PremiumPlan` (FREE/WEEK/MONTH/YEAR/LIFETIME) and 59 `PremiumFeature` entries with `minPlan`.
 - `data/PremiumStore.kt`: local entitlement, expiry timestamps, tier-aware codes (`DEVAI-WEEK`, `DEVAI-MONTH`, `DEVAI-YEAR`, `DEVAI-LIFETIME`), legacy codes migrate to LIFETIME.
