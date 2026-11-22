@@ -8,8 +8,6 @@ import android.provider.OpenableColumns
 import android.text.InputType
 import android.widget.EditText
 import android.widget.LinearLayout
-import android.widget.RadioButton
-import android.widget.RadioGroup
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
@@ -42,12 +40,10 @@ class LocalModelsActivity : AppCompatActivity() {
     private lateinit var adapter: LocalModelAdapter
     private val jobs = HashMap<String, Job>()
 
-    private val formatKeys = arrayOf("chatml", "zephyr", "gemma", "generic")
-
     private val pickFile = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             val (name, size) = fileMeta(uri)
-            askFormatThenImport(uri, name, size)
+            confirmImport(uri, name, size)
         }
     }
 
@@ -168,24 +164,11 @@ class LocalModelsActivity : AppCompatActivity() {
             hint = getString(R.string.local_models_url)
             inputType = InputType.TYPE_TEXT_VARIATION_URI
         }
-        val group = RadioGroup(this).apply { orientation = RadioGroup.VERTICAL }
-        formatLabels().forEachIndexed { i, label ->
-            group.addView(RadioButton(this).apply {
-                id = i + 1
-                text = label
-                isChecked = i == 0
-            })
-        }
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(20), dp(8), dp(20), dp(8))
             addView(name)
             addView(url)
-            addView(TextView(this@LocalModelsActivity).apply {
-                text = getString(R.string.local_models_format)
-                textSize = 13f
-            })
-            addView(group)
             addView(TextView(this@LocalModelsActivity).apply {
                 text = getString(R.string.local_models_license_note)
                 textSize = 11f
@@ -202,8 +185,7 @@ class LocalModelsActivity : AppCompatActivity() {
                     AndroidUtils.toast(this, getString(R.string.local_models_no_url))
                     return@setPositiveButton
                 }
-                val fmt = formatKeys[(group.checkedRadioButtonId - 1).coerceIn(0, formatKeys.size - 1)]
-                val model = LocalModelStore.addCustom(this, n, u, 0L, fmt)
+                val model = LocalModelStore.addCustom(this, n, u, 0L, "auto")
                 refresh()
                 launchDownload(model)
             }
@@ -211,15 +193,7 @@ class LocalModelsActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun askFormatThenImport(uri: Uri, name: String, size: Long) {
-        val group = RadioGroup(this).apply { orientation = RadioGroup.VERTICAL }
-        formatLabels().forEachIndexed { i, label ->
-            group.addView(RadioButton(this).apply {
-                id = i + 1
-                text = label
-                isChecked = i == 0
-            })
-        }
+    private fun confirmImport(uri: Uri, name: String, size: Long) {
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(20), dp(8), dp(20), dp(8))
@@ -227,19 +201,13 @@ class LocalModelsActivity : AppCompatActivity() {
                 text = name + " · " + human(size)
                 textSize = 13f
             })
-            addView(TextView(this@LocalModelsActivity).apply {
-                text = getString(R.string.local_models_format)
-                textSize = 13f
-            })
-            addView(group)
         }
 
         AlertDialog.Builder(this)
             .setTitle(R.string.local_models_import_title)
             .setView(ScrollView(this).apply { addView(container) })
             .setPositiveButton(R.string.local_models_import) { _, _ ->
-                val fmt = formatKeys[(group.checkedRadioButtonId - 1).coerceIn(0, formatKeys.size - 1)]
-                importFile(uri, name, fmt)
+                importFile(uri, name, "auto")
             }
             .setNegativeButton(R.string.common_cancel, null)
             .show()
@@ -254,7 +222,11 @@ class LocalModelsActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val dir = LocalModelStore.modelsDir(this@LocalModelsActivity)
-                val fileName = "imported_" + System.currentTimeMillis() + ".task"
+                val extension = name.substringAfterLast('.', "task")
+                    .lowercase()
+                    .takeIf { it == "task" || it == "litertlm" }
+                    ?: "task"
+                val fileName = "imported_" + System.currentTimeMillis() + "." + extension
                 val target = File(dir, fileName)
                 withContext(Dispatchers.IO) {
                     val input = contentResolver.openInputStream(uri)
@@ -299,13 +271,6 @@ class LocalModelsActivity : AppCompatActivity() {
         }
         return name to size
     }
-
-    private fun formatLabels(): Array<String> = arrayOf(
-        getString(R.string.local_models_format_chatml),
-        getString(R.string.local_models_format_zephyr),
-        getString(R.string.local_models_format_gemma),
-        getString(R.string.local_models_format_generic)
-    )
 
     private fun human(bytes: Long): String = when {
         bytes >= 1_000_000_000L -> String.format("%.2f ГБ", bytes / 1e9)

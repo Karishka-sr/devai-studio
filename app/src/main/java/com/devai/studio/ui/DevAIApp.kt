@@ -95,7 +95,7 @@ fun DevAITheme(content: @Composable () -> Unit) {
     val selected = AppPrefs.theme(context).let { id ->
         if (ThemeManager.isPremium(id) && !PremiumStore.isPremium(context)) ThemeManager.M3 else id
     }
-    val scheme = when {
+    val base = when {
         selected == ThemeManager.EXPRESSIVE -> if (dark) ExpressiveDark else ExpressiveLight
         selected == ThemeManager.RETRO -> if (dark) RetroDark else RetroLight
         AppPrefs.dynamicColor(context) -> if (dark) {
@@ -106,6 +106,13 @@ fun DevAITheme(content: @Composable () -> Unit) {
         dark -> darkColorScheme()
         else -> lightColorScheme()
     }
+    val accent = ThemeManager.accents.firstOrNull { it.id == AppPrefs.accent(context) }
+    val scheme = if (accent == null || accent.id == "default") base else base.copy(
+        primary = Color(if (dark) accent.dark else accent.light),
+        onPrimary = if (dark) Color(0xFF111827) else Color.White,
+        primaryContainer = Color(if (dark) accent.dark else accent.light).copy(alpha = 0.18f),
+        onPrimaryContainer = if (dark) Color(0xFFE5E7EB) else Color(0xFF111827),
+    )
     MaterialTheme(colorScheme = scheme, content = content)
 }
 

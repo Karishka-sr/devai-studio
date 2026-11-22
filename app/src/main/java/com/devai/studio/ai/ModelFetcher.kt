@@ -6,6 +6,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
+import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
 object ModelFetcher {
@@ -26,56 +27,85 @@ object ModelFetcher {
         }
 
     private fun openAi(baseUrl: String, apiKey: String): List<String> {
-        val req = Request.Builder().url(baseUrl.trimEnd('/') + "/models").apply {
+        val req = Request.Builder().url(normalize(baseUrl, "/models")).apply {
+            header("User-Agent", "DevAI-Studio/2.13")
             if (apiKey.isNotBlank()) header("Authorization", "Bearer $apiKey")
         }.build()
-        return exec(req) { json ->
-            val data = json.optJSONArray("data") ?: return@exec emptyList()
-            val out = mutableListOf<String>()
-            for (i in 0 until data.length()) {
-                data.optJSONObject(i)?.optString("id")?.takeIf { it.isNotBlank() }?.let { out.add(it) }
-            }
-            out.sorted()
+        val json = requestJson(req)
+        val data = json.optJSONArray("data") ?: return emptyList()
+        val out = mutableListOf<String>()
+        for (i in 0 until data.length()) {
+            data.optJSONObject(i)?.optString("id")?.takeIf { it.isNotBlank() }?.let { out.add(it) }
         }
+        return out.distinct().sorted()
     }
 
     private fun anthropic(baseUrl: String, apiKey: String): List<String> {
-        val req = Request.Builder().url(baseUrl.trimEnd('/') + "/v1/models").apply {
+        val base = baseUrl.trim().trimEnd('/')
+        val url = if (base.endsWith("/v1")) "$base/models" else "$base/v1/models"
+        val req = Request.Builder().url(url).apply {
+            header("User-Agent", "DevAI-Studio/2.13")
             if (apiKey.isNotBlank()) {
                 header("x-api-key", apiKey)
                 header("anthropic-version", "2023-06-01")
             }
         }.build()
-        return exec(req) { json ->
-            val data = json.optJSONArray("data") ?: return@exec emptyList()
-            val out = mutableListOf<String>()
-            for (i in 0 until data.length()) {
-                data.optJSONObject(i)?.optString("id")?.takeIf { it.isNotBlank() }?.let { out.add(it) }
-            }
-            out.sorted()
+        val json = requestJson(req)
+        val data = json.optJSONArray("data") ?: return emptyList()
+        val out = mutableListOf<String>()
+        for (i in 0 until data.length()) {
+            data.optJSONObject(i)?.optString("id")?.takeIf { it.isNotBlank() }?.let { out.add(it) }
         }
+        return out.distinct().sorted()
     }
 
     private fun gemini(baseUrl: String, apiKey: String): List<String> {
-        val req = Request.Builder()
-            .url(baseUrl.trimEnd('/') + "/models?key=" + apiKey)
-            .build()
-        return exec(req) { json ->
-            val arr = json.optJSONArray("models") ?: return@exec emptyList()
-            val out = mutableListOf<String>()
-            for (i in 0 until arr.length()) {
-                val name = arr.optJSONObject(i)?.optString("name").orEmpty()
-                if (name.isNotBlank()) out.add(name.removePrefix("models/"))
+        val out = mutableListOf<String>()
+        var pageToken: String? = null
+        do {
+            val url = StringBuilder(normalize(baseUrl, "/models"))
+                .append("?pageSize=1000")
+            if (apiKey.isNotBlank()) url.append("&key=").append(encode(apiKey))
+            pageToken?.let { url.append("&pageToken=").append(encode(it)) }
+            val req = Request.Builder().url(url.toString())
+                .header("User-Agent", "DevAI-Studio/2.13")
+                .build()
+            val json = requestJson(req)
+            val arr = json.optJSONArray("models")
+            if (arr != null) {
+                for (i in 0 until arr.length()) {
+                    val item = arr.optJSONObject(i) ?: continue
+                    val name = item.optString("name").removePrefix("models/")
+                    if (name.isBlank()) continue
+                    val methods = item.optJSONArray("supportedGenerationMethods")
+                    val canChat = methods == null || (0 until methods.length()).any {
+                        methods.optString(it) in setOf("generateContent", "streamGenerateContent")
+                    }
+                    if (canChat && !name.contains("embedding") && !name.contains("aqa")) out.add(name)
+                }
             }
-            out.sorted()
-        }
+            pageToken = json.optString("nextPageToken").takeIf { it.isNotBlank() }
+        } while (pageToken != null)
+        return out.distinct().sorted()
     }
 
-    private inline fun exec(req: Request, parse: (JSONObject) -> List<String>): List<String> {
+    private fun normalize(baseUrl: String, suffix: String): String {
+        var base = baseUrl.trim().trimEnd('/')
+        base = base.removeSuffix("/chat/completions").removeSuffix("/models")
+        return base + suffix
+    }
+
+    private fun encode(value: String): String =
+        URLEncoder.encode(value, Charsets.UTF_8.name())
+
+    private fun requestJson(req: Request): JSONObject {
         client.newCall(req).execute().use { resp ->
-            if (!resp.isSuccessful) error("HTTP " + resp.code)
-            val body = resp.body?.string() ?: return emptyList()
-            return parse(JSONObject(body))
+            val body = resp.body?.string().orEmpty()
+            if (!resp.isSuccessful) {
+                val detail = body.take(240).replace(Regex("\\s+"), " ").trim()
+                error("HTTP ${resp.code}" + if (detail.isBlank()) "" else ": $detail")
+            }
+            return JSONObject(body)
         }
     }
 }

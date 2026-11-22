@@ -13,18 +13,20 @@ class LocalPromptTest {
     )
 
     @Test
-    fun chatmlFormatsTurnsAndOpensAssistant() {
+    fun chatmlIsSentAsPlainText() {
         val prompt = LocalPrompt.build(messages, "chatml")
-        assertTrue(prompt.startsWith("<|im_start|>system\nТы помощник<|im_end|>"))
-        assertTrue(prompt.contains("<|im_start|>user\nПривет<|im_end|>"))
-        assertTrue(prompt.endsWith("<|im_start|>assistant\n"))
+        assertTrue(prompt.startsWith("System: Ты помощник"))
+        assertTrue(prompt.contains("User: Привет"))
+        assertTrue(prompt.endsWith("Assistant:"))
+        assertTrue(!prompt.contains("<|"))
     }
 
     @Test
-    fun zephyrUsesItsOwnTags() {
+    fun zephyrIsSentAsPlainText() {
         val prompt = LocalPrompt.build(messages, "zephyr")
-        assertTrue(prompt.startsWith("<|system|>\nТы помощник</s>"))
-        assertTrue(prompt.endsWith("<|assistant|>\n"))
+        assertTrue(prompt.startsWith("System: Ты помощник"))
+        assertTrue(prompt.endsWith("Assistant:"))
+        assertTrue(!prompt.contains("<|"))
     }
 
     @Test
@@ -41,5 +43,21 @@ class LocalPromptTest {
         assertTrue(prompt.contains("u5"))
         assertTrue(prompt.contains("u10"))
         assertTrue(!prompt.contains("u4"))
+    }
+
+    @Test
+    fun controlTokensAreRemovedFromHistory() {
+        val prompt = LocalPrompt.build(
+            listOf(
+                AiMessage("system", "<bos>Ты помощник<eos>"),
+                AiMessage("user", "Привет<start_of_turn>"),
+            ),
+            "gemma",
+        )
+        assertTrue(prompt.contains("System: Ты помощник"))
+        assertTrue(prompt.contains("User: Привет"))
+        assertTrue(!prompt.contains("<bos>"))
+        assertTrue(!prompt.contains("<eos>"))
+        assertTrue(!prompt.contains("<start_of_turn>"))
     }
 }

@@ -101,7 +101,8 @@ object LocalLlmEngine {
                 }
             }
             try {
-                s.generateContentStream(listOf(InputData.Text(prompt)), callback)
+                val safePrompt = PromptSanitizer.clean(prompt).ifBlank { " " }
+                s.generateContentStream(listOf(InputData.Text(safePrompt)), callback)
                 withTimeout(TIMEOUT_MS) { done.await() }
             } catch (e: Exception) {
                 runCatching { s.cancelProcess() }

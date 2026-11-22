@@ -120,7 +120,10 @@ object ProviderCatalog {
                 "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite",
                 "gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash-exp",
                 "gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.5-flash-8b",
-                "gemma-3-27b-it", "gemma-3-12b-it"
+                "gemini-3-pro-preview", "gemini-3-flash-preview",
+                "gemini-2.5-flash-preview-09-2025", "gemini-2.5-pro-preview-06-05",
+                "gemini-2.0-flash-thinking-exp",
+                "gemma-3-27b-it", "gemma-3-12b-it", "gemma-3-4b-it", "gemma-3-1b-it"
             ),
             getKeyUrl = "https://aistudio.google.com/app/apikey",
             website = "https://ai.google.dev/gemini-api/docs/pricing",
@@ -139,7 +142,11 @@ object ProviderCatalog {
                 "llama3-8b-8192", "llama-3.2-1b-preview", "llama-3.2-3b-preview",
                 "llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview",
                 "mixtral-8x7b-32768", "gemma2-9b-it", "deepseek-r1-distill-llama-70b",
-                "qwen-2.5-32b", "qwen-2.5-coder-32b", "whisper-large-v3", "whisper-large-v3-turbo"
+                "qwen-2.5-32b", "qwen-2.5-coder-32b", "whisper-large-v3", "whisper-large-v3-turbo",
+                "openai/gpt-oss-120b", "openai/gpt-oss-20b",
+                "moonshotai/kimi-k2-instruct", "qwen/qwen3-32b",
+                "meta-llama/llama-4-scout-17b-16e-instruct",
+                "meta-llama/llama-4-maverick-17b-128e-instruct"
             ),
             getKeyUrl = "https://console.groq.com/keys",
             website = "https://console.groq.com/docs/models",
@@ -158,7 +165,9 @@ object ProviderCatalog {
                 "open-mistral-7b", "open-mixtral-8x7b", "open-mixtral-8x22b",
                 "codestral-latest", "ministral-3b-latest", "ministral-8b-latest",
                 "pixtral-large-latest", "pixtral-12b-2409", "mistral-nemo",
-                "mistral-saba-latest", "magistral-medium-latest"
+                "mistral-saba-latest", "magistral-medium-latest",
+                "magistral-small-latest", "devstral-small-latest", "devstral-medium-latest",
+                "codestral-2501", "mistral-small-2503", "mistral-large-2411"
             ),
             getKeyUrl = "https://console.mistral.ai/api-keys/",
             website = "https://docs.mistral.ai/getting-started/models/",
@@ -179,7 +188,10 @@ object ProviderCatalog {
                 "deepseek-ai/DeepSeek-R1", "deepseek-ai/DeepSeek-V3",
                 "Qwen/Qwen2.5-72B-Instruct-Turbo", "Qwen/Qwen2.5-Coder-32B-Instruct",
                 "mistralai/Mixtral-8x7B-Instruct-v0.1", "google/gemma-2-27b-it",
-                "nvidia/Llama-3.1-Nemotron-70B-Instruct-HF"
+                "nvidia/Llama-3.1-Nemotron-70B-Instruct-HF",
+                "Qwen/Qwen3-235B-A22B", "Qwen/Qwen3-32B",
+                "deepseek-ai/DeepSeek-R1-0528", "moonshotai/Kimi-K2-Instruct",
+                "openai/gpt-oss-120b"
             ),
             getKeyUrl = "https://api.together.ai/settings/api-keys",
             website = "https://www.together.ai/pricing",
@@ -195,7 +207,9 @@ object ProviderCatalog {
             baseUrl = "https://api.cerebras.ai/v1",
             models = listOf(
                 "llama3.3-70b", "llama3.1-8b", "llama-3.3-70b",
-                "qwen-3-32b", "deepseek-r1-distill-llama-70b"
+                "qwen-3-32b", "deepseek-r1-distill-llama-70b",
+                "qwen-3-235b-a22b-instruct-2507", "gpt-oss-120b",
+                "llama-4-scout-17b-16e-instruct"
             ),
             getKeyUrl = "https://cloud.cerebras.ai/",
             website = "https://inference-docs.cerebras.ai/models/overview",
@@ -212,7 +226,9 @@ object ProviderCatalog {
             models = listOf(
                 "gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini", "o1", "o1-mini",
                 "o3-mini", "DeepSeek-R1", "DeepSeek-V3-0324", "Llama-3.3-70B-Instruct",
-                "Phi-4", "Mistral-large-2411", "Cohere-command-r-plus-08-2024"
+                "Phi-4", "Mistral-large-2411", "Cohere-command-r-plus-08-2024",
+                "gpt-5", "gpt-5-mini", "o3", "o4-mini", "DeepSeek-R1-0528",
+                "Llama-4-Maverick-17B-128E-Instruct-FP8", "Mistral-Medium-2505"
             ),
             getKeyUrl = "https://github.com/settings/tokens",
             website = "https://github.com/marketplace/models",
@@ -229,7 +245,10 @@ object ProviderCatalog {
             models = listOf(
                 "meta/llama-3.3-70b-instruct", "deepseek-ai/deepseek-r1",
                 "qwen/qwen2.5-coder-32b-instruct", "nvidia/llama-3.1-nemotron-70b-instruct",
-                "mistralai/mixtral-8x22b-instruct-v0.1", "google/gemma-2-27b-it"
+                "mistralai/mixtral-8x22b-instruct-v0.1", "google/gemma-2-27b-it",
+                "deepseek-ai/deepseek-r1-0528", "qwen/qwen3-235b-a22b",
+                "meta/llama-4-maverick-17b-128e-instruct",
+                "nvidia/llama-3.3-nemotron-super-49b-v1"
             ),
             getKeyUrl = "https://build.nvidia.com",
             website = "https://build.nvidia.com/models",
@@ -245,7 +264,7 @@ object ProviderCatalog {
             baseUrl = "https://api.sambanova.ai/v1",
             models = listOf(
                 "Meta-Llama-3.3-70B-Instruct", "DeepSeek-R1", "Qwen2.5-72B-Instruct",
-                "Llama-4-Maverick-17B-128E-Instruct"
+                "Llama-4-Maverick-17B-128E-Instruct", "DeepSeek-R1-0528", "Qwen3-32B"
             ),
             getKeyUrl = "https://cloud.sambanova.ai/apis",
             website = "https://cloud.sambanova.ai/",
@@ -261,7 +280,9 @@ object ProviderCatalog {
             baseUrl = "https://router.huggingface.co/v1",
             models = listOf(
                 "meta-llama/Llama-3.3-70B-Instruct", "Qwen/Qwen2.5-72B-Instruct",
-                "deepseek-ai/DeepSeek-R1", "mistralai/Mistral-7B-Instruct-v0.3"
+                "deepseek-ai/DeepSeek-R1", "mistralai/Mistral-7B-Instruct-v0.3",
+                "Qwen/Qwen3-235B-A22B", "deepseek-ai/DeepSeek-R1-0528",
+                "meta-llama/Llama-4-Maverick-17B-128E-Instruct", "openai/gpt-oss-120b"
             ),
             getKeyUrl = "https://huggingface.co/settings/tokens",
             website = "https://huggingface.co/docs/inference-providers",
@@ -293,7 +314,9 @@ object ProviderCatalog {
             models = listOf(
                 "gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano",
                 "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo", "o1", "o1-mini", "o1-pro",
-                "o3", "o3-mini", "o4-mini", "gpt-5", "gpt-5-mini", "gpt-5-nano"
+                "o3", "o3-mini", "o4-mini", "gpt-5", "gpt-5-mini", "gpt-5-nano",
+                "gpt-5.1", "gpt-5-pro", "gpt-5-codex", "o3-pro", "o3-deep-research",
+                "o4-mini-deep-research", "gpt-4o-audio-preview", "gpt-4o-realtime-preview"
             ),
             getKeyUrl = "https://platform.openai.com/api-keys",
             website = "https://openai.com/api/pricing/"
@@ -311,7 +334,9 @@ object ProviderCatalog {
                 "claude-sonnet-4-5-20250929", "claude-opus-4-1-20250805",
                 "claude-haiku-4-5-20251001", "claude-3-7-sonnet-20250219",
                 "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022",
-                "claude-3-opus-20240229", "claude-3-haiku-20240307"
+                "claude-3-opus-20240229", "claude-3-haiku-20240307",
+                "claude-opus-4-5-20251101", "claude-3-5-sonnet-latest",
+                "claude-3-5-haiku-latest", "claude-3-7-sonnet-latest"
             ),
             getKeyUrl = "https://console.anthropic.com/settings/keys",
             website = "https://www.anthropic.com/pricing"
@@ -324,7 +349,10 @@ object ProviderCatalog {
             description = "Очень дешёвые модели для кода и рассуждений.",
             format = AiFormat.OPENAI_COMPAT,
             baseUrl = "https://api.deepseek.com/v1",
-            models = listOf("deepseek-chat", "deepseek-reasoner", "deepseek-coder"),
+            models = listOf(
+                "deepseek-chat", "deepseek-reasoner", "deepseek-coder",
+                "deepseek-v3.1", "deepseek-v3.2", "deepseek-r1-0528"
+            ),
             getKeyUrl = "https://platform.deepseek.com/api_keys",
             website = "https://api-docs.deepseek.com/quick_start/pricing"
         ),
@@ -338,7 +366,8 @@ object ProviderCatalog {
             baseUrl = "https://api.x.ai/v1",
             models = listOf(
                 "grok-4", "grok-4-fast", "grok-3", "grok-3-mini",
-                "grok-2-1212", "grok-2-vision-1212", "grok-beta"
+                "grok-2-1212", "grok-2-vision-1212", "grok-beta",
+                "grok-code-fast-1", "grok-3-fast", "grok-3-mini-fast"
             ),
             getKeyUrl = "https://console.x.ai/",
             website = "https://docs.x.ai/docs/models"
@@ -410,7 +439,9 @@ object ProviderCatalog {
             baseUrl = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
             models = listOf(
                 "qwen-max", "qwen-plus", "qwen-turbo", "qwen3-235b-a22b",
-                "qwen2.5-72b-instruct", "qwen2.5-coder-32b-instruct"
+                "qwen2.5-72b-instruct", "qwen2.5-coder-32b-instruct",
+                "qwen3-max", "qwen3-coder-plus", "qwen3-32b",
+                "qwen2.5-vl-72b-instruct"
             ),
             getKeyUrl = "https://dashscope.console.aliyun.com/apiKey",
             website = "https://www.alibabacloud.com/help/en/model-studio/models"
@@ -475,7 +506,10 @@ object ProviderCatalog {
                 "openai/gpt-4o", "openai/gpt-4.1", "anthropic/claude-sonnet-4",
                 "anthropic/claude-opus-4", "google/gemini-2.5-pro",
                 "deepseek/deepseek-r1", "meta-llama/llama-3.3-70b-instruct",
-                "qwen/qwen-2.5-coder-32b-instruct", "x-ai/grok-4"
+                "qwen/qwen-2.5-coder-32b-instruct", "x-ai/grok-4",
+                "openai/gpt-5", "openai/gpt-5-mini", "anthropic/claude-opus-4.5",
+                "google/gemini-3-pro-preview", "x-ai/grok-code-fast-1",
+                "deepseek/deepseek-v3.2", "qwen/qwen3-max", "moonshotai/kimi-k2"
             ),
             getKeyUrl = "https://openrouter.ai/keys",
             website = "https://openrouter.ai/models"

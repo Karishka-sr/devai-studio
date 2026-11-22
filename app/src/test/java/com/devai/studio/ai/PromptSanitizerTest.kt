@@ -20,7 +20,13 @@ class PromptSanitizerTest {
 
     @Test
     fun keepsOrdinaryXmlTags() {
-        assertEquals("<user>", PromptSanitizer.clean("<user>"))
+        assertEquals("<div class=\"x\">", PromptSanitizer.clean("<div class=\"x\">"))
+    }
+
+    @Test
+    fun removesRoleAndGenericPipeTokens() {
+        val input = "<user>Привет<|assistant|><|end|><|observation|>"
+        assertEquals("Привет", PromptSanitizer.clean(input))
     }
 
     @Test

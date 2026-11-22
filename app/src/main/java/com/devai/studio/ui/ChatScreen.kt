@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -78,8 +79,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -88,6 +91,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -131,9 +135,20 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val historyLimit = AppPrefs.historyLimit(context)
     val chatFontSize = AppPrefs.chatFontSize(context).sp
+    val codeFontSize = AppPrefs.codeFontSize(context).sp
     val codeWrap = AppPrefs.codeWrap(context)
     val sendOnEnter = AppPrefs.sendOnEnter(context)
     val autoScroll = AppPrefs.autoScroll(context)
+    val chatFontFamily = when (AppPrefs.chatFontFamily(context)) {
+        "serif" -> FontFamily.Serif
+        "mono" -> FontFamily.Monospace
+        else -> FontFamily.SansSerif
+    }
+    val bubbleWidth = AppPrefs.bubbleWidth(context).dp
+    val showAvatars = AppPrefs.showAvatars(context)
+    val compactChat = AppPrefs.compactChat(context)
+    val hapticEnabled = AppPrefs.hapticFeedback(context)
+    val haptic = LocalHapticFeedback.current
 
     var sessionId by remember { mutableStateOf("") }
     var messages by remember { mutableStateOf<List<AiMessage>>(emptyList()) }
@@ -144,6 +159,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
     val cancelled = remember { AtomicBoolean(false) }
 
     var showSessions by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
     var sessions by remember { mutableStateOf<List<ChatSession>>(emptyList()) }
     var searchEnabled by remember { mutableStateOf(AppPrefs.searchEnabled(context)) }
     var mcpEnabled by remember { mutableStateOf(AppPrefs.mcpEnabled(context)) }
@@ -225,6 +241,13 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
         showSessions = true
     }
 
+    fun deleteCurrentSession() {
+        ChatSessionsStore.delete(context, sessionId)
+        loadSession(ChatSessionsStore.getOrCreateCurrent(context))
+        showSessions = false
+        showDeleteConfirm = false
+    }
+
     fun stop() {
         cancelled.set(true)
         job?.cancel()
@@ -240,6 +263,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
         val typed = (textOverride ?: input).trim()
         val files = attachments
         if (typed.isEmpty() && files.isEmpty()) return
+        if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
         val cfg = try {
             AiSupport.config(context)
         } catch (e: IllegalStateException) {
@@ -510,8 +534,11 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
             LazyColumn(
                 state = listState,
                 modifier = Modifier.weight(1f).fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(if (compactChat) 4.dp else 10.dp),
+                contentPadding = PaddingValues(
+                    horizontal = if (compactChat) 4.dp else 8.dp,
+                    vertical = if (compactChat) 4.dp else 8.dp,
+                ),
             ) {
                 items(messages.size) { index ->
                     val message = messages[index]
@@ -519,7 +546,11 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                         MessageBubble(
                             message = message,
                             fontSize = chatFontSize,
+                            codeFontSize = codeFontSize,
                             codeWrap = codeWrap,
+                            bubbleWidth = bubbleWidth,
+                            showAvatars = showAvatars,
+                            fontFamily = chatFontFamily,
                             onSpeak = { TtsManager.speak(context, it) },
                         )
                     }
@@ -678,9 +709,11 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                     }
                     OutlinedButton(
                         onClick = {
-                            ChatSessionsStore.delete(context, sessionId)
-                            loadSession(ChatSessionsStore.getOrCreateCurrent(context))
-                            showSessions = false
+                            if (AppPrefs.confirmDelete(context)) {
+                                showDeleteConfirm = true
+                            } else {
+                                deleteCurrentSession()
+                            }
                         },
                         modifier = Modifier.weight(1f),
                     ) {
@@ -691,6 +724,20 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                 }
             }
         }
+    }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Удалить чат?") },
+            text = { Text("Текущая сессия и все её сообщения будут удалены.") },
+            confirmButton = {
+                TextButton(onClick = { deleteCurrentSession() }) { Text("Удалить") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) { Text("Отмена") }
+            },
+        )
     }
 
     if (showPlugins) {
@@ -872,7 +919,11 @@ private fun TypingIndicator() {
 private fun MessageBubble(
     message: AiMessage,
     fontSize: TextUnit,
+    codeFontSize: TextUnit,
     codeWrap: Boolean,
+    bubbleWidth: Dp,
+    showAvatars: Boolean,
+    fontFamily: FontFamily,
     onSpeak: (String) -> Unit,
 ) {
     val isUser = message.role == "user"
@@ -881,7 +932,7 @@ private fun MessageBubble(
         horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
         verticalAlignment = Alignment.Top,
     ) {
-        if (!isUser) {
+        if (!isUser && showAvatars) {
             Avatar(isUser = false)
             Spacer(Modifier.width(8.dp))
         }
@@ -897,7 +948,7 @@ private fun MessageBubble(
             } else {
                 MaterialTheme.colorScheme.surfaceVariant
             },
-            modifier = Modifier.widthIn(max = 320.dp),
+            modifier = Modifier.widthIn(max = bubbleWidth),
         ) {
             Column(
                 modifier = Modifier.padding(12.dp),
@@ -909,6 +960,7 @@ private fun MessageBubble(
                             text = message.content,
                             color = MaterialTheme.colorScheme.onPrimary,
                             fontSize = fontSize,
+                            fontFamily = fontFamily,
                         )
                     }
                 } else if (message.content.isBlank()) {
@@ -920,6 +972,7 @@ private fun MessageBubble(
                             message.content,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = fontSize,
+                            fontFamily = fontFamily,
                         )
                     } else {
                         segments.forEach { segment ->
@@ -927,7 +980,7 @@ private fun MessageBubble(
                                 CodeBlock(
                                     segment.lang,
                                     segment.text,
-                                    fontSize = (fontSize.value * 0.83f).sp,
+                                    fontSize = codeFontSize,
                                     wrap = codeWrap,
                                 )
                             } else {
@@ -936,6 +989,7 @@ private fun MessageBubble(
                                         text = segment.text,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontSize = fontSize,
+                                        fontFamily = fontFamily,
                                     )
                                 }
                             }
@@ -951,7 +1005,7 @@ private fun MessageBubble(
                 }
             }
         }
-        if (isUser) {
+        if (isUser && showAvatars) {
             Spacer(Modifier.width(8.dp))
             Avatar(isUser = true)
         }

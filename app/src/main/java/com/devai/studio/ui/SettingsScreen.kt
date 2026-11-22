@@ -102,10 +102,18 @@ fun SettingsScreen() {
     var localContext by remember { mutableFloatStateOf(AppPrefs.localContextTokens(context).toFloat()) }
     var localTopK by remember { mutableStateOf(AppPrefs.localTopK(context).toString()) }
     var chatFont by remember { mutableFloatStateOf(AppPrefs.chatFontSize(context)) }
+    var codeFont by remember { mutableFloatStateOf(AppPrefs.codeFontSize(context)) }
     var codeWrap by remember { mutableStateOf(AppPrefs.codeWrap(context)) }
     var sendOnEnter by remember { mutableStateOf(AppPrefs.sendOnEnter(context)) }
     var autoScroll by remember { mutableStateOf(AppPrefs.autoScroll(context)) }
     var dynamicColor by remember { mutableStateOf(AppPrefs.dynamicColor(context)) }
+    var accent by remember { mutableStateOf(AppPrefs.accent(context)) }
+    var chatFontFamily by remember { mutableStateOf(AppPrefs.chatFontFamily(context)) }
+    var bubbleWidth by remember { mutableFloatStateOf(AppPrefs.bubbleWidth(context).toFloat()) }
+    var showAvatars by remember { mutableStateOf(AppPrefs.showAvatars(context)) }
+    var compactChat by remember { mutableStateOf(AppPrefs.compactChat(context)) }
+    var hapticFeedback by remember { mutableStateOf(AppPrefs.hapticFeedback(context)) }
+    var confirmDelete by remember { mutableStateOf(AppPrefs.confirmDelete(context)) }
     var customBase by remember { mutableStateOf(AppPrefs.customBase(context)) }
     var customModel by remember { mutableStateOf(AppPrefs.customModel(context)) }
     var systemPrompt by remember { mutableStateOf(AppPrefs.systemPrompt(context)) }
@@ -445,6 +453,37 @@ fun SettingsScreen() {
                             AppPrefs.setAutoScroll(context, it)
                         },
                     )
+
+                    SliderSetting(
+                        title = "Размер кода",
+                        valueLabel = "%.0f sp".format(codeFont),
+                        value = codeFont,
+                        range = 10f..18f,
+                        steps = 7,
+                    ) {
+                        codeFont = it
+                        AppPrefs.setCodeFontSize(context, it)
+                    }
+
+                    SwitchSetting(
+                        title = "Вибрация при отправке",
+                        subtitle = "Короткий отклик на кнопку отправки",
+                        checked = hapticFeedback,
+                        onCheckedChange = {
+                            hapticFeedback = it
+                            AppPrefs.setHapticFeedback(context, it)
+                        },
+                    )
+
+                    SwitchSetting(
+                        title = "Подтверждать удаление чата",
+                        subtitle = "Спрашивать перед удалением сессии",
+                        checked = confirmDelete,
+                        onCheckedChange = {
+                            confirmDelete = it
+                            AppPrefs.setConfirmDelete(context, it)
+                        },
+                    )
                 }
             }
 
@@ -465,6 +504,79 @@ fun SettingsScreen() {
                             dynamicColor = it
                             AppPrefs.setDynamicColor(context, it)
                             activity?.recreate()
+                        },
+                    )
+                }
+
+                SettingsSection("Кастомизация") {
+                    Text("Акцентный цвет", style = MaterialTheme.typography.bodyMedium)
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        ThemeManager.accents.forEach { option ->
+                            FilterChip(
+                                selected = accent == option.id,
+                                onClick = {
+                                    accent = option.id
+                                    AppPrefs.setAccent(context, option.id)
+                                    activity?.recreate()
+                                },
+                                label = { Text(option.label, style = MaterialTheme.typography.labelSmall) },
+                            )
+                        }
+                    }
+
+                    Text("Шрифт чата", style = MaterialTheme.typography.bodyMedium)
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        listOf(
+                            "sans" to "Системный",
+                            "serif" to "С засечками",
+                            "mono" to "Моноширинный",
+                        ).forEach { (id, label) ->
+                            FilterChip(
+                                selected = chatFontFamily == id,
+                                onClick = {
+                                    chatFontFamily = id
+                                    AppPrefs.setChatFontFamily(context, id)
+                                    activity?.recreate()
+                                },
+                                label = { Text(label, style = MaterialTheme.typography.labelSmall) },
+                            )
+                        }
+                    }
+
+                    SliderSetting(
+                        title = "Ширина сообщений",
+                        valueLabel = "${bubbleWidth.roundToInt()} dp",
+                        value = bubbleWidth,
+                        range = 240f..420f,
+                        steps = 5,
+                    ) {
+                        bubbleWidth = it
+                        AppPrefs.setBubbleWidth(context, it.roundToInt())
+                    }
+
+                    SwitchSetting(
+                        title = "Показывать аватары",
+                        subtitle = "Иконки пользователя и DevAI",
+                        checked = showAvatars,
+                        onCheckedChange = {
+                            showAvatars = it
+                            AppPrefs.setShowAvatars(context, it)
+                        },
+                    )
+
+                    SwitchSetting(
+                        title = "Компактный чат",
+                        subtitle = "Меньше отступов между сообщениями",
+                        checked = compactChat,
+                        onCheckedChange = {
+                            compactChat = it
+                            AppPrefs.setCompactChat(context, it)
                         },
                     )
                 }

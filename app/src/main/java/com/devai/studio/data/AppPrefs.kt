@@ -27,6 +27,14 @@ object AppPrefs {
     private const val KEY_TTS_RATE = "tts_rate"
     private const val KEY_SEARCH_ENABLED = "search_enabled"
     private const val KEY_MCP_ENABLED = "mcp_enabled"
+    private const val KEY_ACCENT = "accent_color"
+    private const val KEY_CHAT_FONT_FAMILY = "chat_font_family"
+    private const val KEY_BUBBLE_WIDTH = "bubble_width_dp"
+    private const val KEY_SHOW_AVATARS = "show_avatars"
+    private const val KEY_COMPACT_CHAT = "compact_chat"
+    private const val KEY_HAPTIC = "haptic_feedback"
+    private const val KEY_CODE_FONT_SIZE = "code_font_size"
+    private const val KEY_CONFIRM_DELETE = "confirm_delete_chat"
 
     const val DEFAULT_SYSTEM_PROMPT =
         "Ты — DevAI, полезный ИИ-ассистент разработчика. Отвечай по делу, давай рабочие примеры кода."
@@ -133,6 +141,38 @@ object AppPrefs {
     fun setMcpEnabled(ctx: Context, v: Boolean) =
         p(ctx).edit().putBoolean(KEY_MCP_ENABLED, v).apply()
 
+    fun accent(ctx: Context): String = p(ctx).getString(KEY_ACCENT, "default") ?: "default"
+    fun setAccent(ctx: Context, v: String) = p(ctx).edit().putString(KEY_ACCENT, v).apply()
+
+    fun chatFontFamily(ctx: Context): String =
+        p(ctx).getString(KEY_CHAT_FONT_FAMILY, "sans") ?: "sans"
+    fun setChatFontFamily(ctx: Context, v: String) =
+        p(ctx).edit().putString(KEY_CHAT_FONT_FAMILY, v).apply()
+
+    fun bubbleWidth(ctx: Context): Int = p(ctx).getInt(KEY_BUBBLE_WIDTH, 320)
+    fun setBubbleWidth(ctx: Context, v: Int) =
+        p(ctx).edit().putInt(KEY_BUBBLE_WIDTH, v.coerceIn(220, 460)).apply()
+
+    fun showAvatars(ctx: Context): Boolean = p(ctx).getBoolean(KEY_SHOW_AVATARS, true)
+    fun setShowAvatars(ctx: Context, v: Boolean) =
+        p(ctx).edit().putBoolean(KEY_SHOW_AVATARS, v).apply()
+
+    fun compactChat(ctx: Context): Boolean = p(ctx).getBoolean(KEY_COMPACT_CHAT, false)
+    fun setCompactChat(ctx: Context, v: Boolean) =
+        p(ctx).edit().putBoolean(KEY_COMPACT_CHAT, v).apply()
+
+    fun hapticFeedback(ctx: Context): Boolean = p(ctx).getBoolean(KEY_HAPTIC, true)
+    fun setHapticFeedback(ctx: Context, v: Boolean) =
+        p(ctx).edit().putBoolean(KEY_HAPTIC, v).apply()
+
+    fun codeFontSize(ctx: Context): Float = p(ctx).getFloat(KEY_CODE_FONT_SIZE, 13f)
+    fun setCodeFontSize(ctx: Context, v: Float) =
+        p(ctx).edit().putFloat(KEY_CODE_FONT_SIZE, v.coerceIn(10f, 18f)).apply()
+
+    fun confirmDelete(ctx: Context): Boolean = p(ctx).getBoolean(KEY_CONFIRM_DELETE, true)
+    fun setConfirmDelete(ctx: Context, v: Boolean) =
+        p(ctx).edit().putBoolean(KEY_CONFIRM_DELETE, v).apply()
+
     fun reset(ctx: Context) {
         p(ctx).edit().clear().apply()
     }
@@ -154,6 +194,14 @@ object AppPrefs {
         put("ttsRate", ttsRate(ctx))
         put("searchEnabled", searchEnabled(ctx))
         put("mcpEnabled", mcpEnabled(ctx))
+        put("accent", accent(ctx))
+        put("chatFontFamily", chatFontFamily(ctx))
+        put("bubbleWidth", bubbleWidth(ctx))
+        put("showAvatars", showAvatars(ctx))
+        put("compactChat", compactChat(ctx))
+        put("hapticFeedback", hapticFeedback(ctx))
+        put("codeFontSize", codeFontSize(ctx))
+        put("confirmDelete", confirmDelete(ctx))
         put("theme", theme(ctx))
         put("chatMode", chatMode(ctx))
         put("systemPrompt", systemPrompt(ctx))
