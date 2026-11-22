@@ -19,8 +19,10 @@
 - `ai/ResponseGuard.kt` answers simple greetings without inference, filters leaked benchmark/task text from streamed local responses, and drops such assistant turns from prompt history.
 - `data/ModelDownloader.kt` retries, resumes, and falls back to `hf-mirror.com` for Hugging Face URLs.
 
-## Themes & Premium (v2.14.2)
-- `util/ThemeManager.kt`: M3 (free, dynamic color), Expressive/Retro (premium).
+## Themes & Premium (v2.15.0)
+- `ui/DevAIDesign.kt` is the shared Aurora design system: gradient background, logo/top bar, rounded bordered cards, icon tiles, status pills, gradient buttons. Use these composables instead of raw `Card`/`TopAppBar` on new screens.
+- `ui/DevAIApp.kt` owns the palette, typography, shapes, and the floating rounded bottom bar. Default M3 is now Aurora (indigo/mint/coral); Expressive/Retro remain premium themes.
+- `util/ThemeManager.kt`: M3/Aurora (free, dynamic color), Expressive/Retro (premium).
 - `data/PremiumPlan.kt`: `PremiumPlan` (FREE/WEEK/MONTH/YEAR/LIFETIME) and 59 `PremiumFeature` entries with `minPlan`.
 - `data/PremiumStore.kt`: local entitlement, expiry timestamps, tier-aware codes (`DEVAI-WEEK`, `DEVAI-MONTH`, `DEVAI-YEAR`, `DEVAI-LIFETIME`), legacy codes migrate to LIFETIME.
 - `data/TelegramStars.kt`: order text and `t.me/FemClaudeMrrr` payment link; codes are issued manually after Stars payment.

@@ -56,7 +56,7 @@ class QrExportActivity : AppCompatActivity() {
         ThemeManager.apply(this)
         super.onCreate(savedInstanceState)
         ThemeManager.applyDynamicIfAvailable(this)
-        setContent { DevAITheme { QrExportScreen(onBack = { finish() }) } }
+        setContent { DevAITheme { DevAIBackground { QrExportScreen(onBack = { finish() }) } } }
     }
 }
 
@@ -95,14 +95,12 @@ fun QrExportScreen(onBack: () -> Unit) {
     }
 
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
-            TopAppBar(
-                title = { Text("QR-экспорт провайдера") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.Close, contentDescription = "Назад")
-                    }
-                },
+            DevAITopBar(
+                title = "QR-перенос",
+                subtitle = "Провайдер и модель на другом телефоне",
+                onBack = onBack,
             )
         },
     ) { padding ->
@@ -111,16 +109,17 @@ fun QrExportScreen(onBack: () -> Unit) {
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (provider == null) {
                 Text("Сначала выберите провайдера во вкладке «ИИ».")
                 return@Column
             }
-            Text(
-                "Активный провайдер: ${provider.name}",
-                style = MaterialTheme.typography.titleMedium,
+            DevAISectionTitle(
+                title = "Активный провайдер: ${provider.name}",
+                subtitle = "QR содержит base URL, модель и формат.",
+                icon = Icons.Default.Share,
             )
             Text(
                 "QR содержит base URL, модель и формат. API-ключ по умолчанию не включается.",
@@ -138,7 +137,7 @@ fun QrExportScreen(onBack: () -> Unit) {
                 }
                 Switch(checked = includeKey, onCheckedChange = { includeKey = it })
             }
-            Card(Modifier.fillMaxWidth()) {
+            DevAICard(contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) {
                 if (bitmap != null) {
                     Image(
                         bitmap = bitmap.asImageBitmap(),
@@ -156,14 +155,12 @@ fun QrExportScreen(onBack: () -> Unit) {
                     )
                 }
             }
-            Button(
-                onClick = { clipboard.setText(AnnotatedString(payload)) },
+            DevAIGradientButton(
+                text = "Скопировать JSON",
+                icon = Icons.Default.Share,
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                Icon(Icons.Default.Share, contentDescription = null)
-                Spacer(Modifier.width(6.dp))
-                Text("Скопировать JSON")
-            }
+                onClick = { clipboard.setText(AnnotatedString(payload)) },
+            )
             Text(
                 payload,
                 fontFamily = FontFamily.Monospace,

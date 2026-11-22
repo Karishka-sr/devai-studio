@@ -31,8 +31,8 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -238,29 +238,16 @@ fun SettingsScreen() {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                Icons.Default.Settings,
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.primary,
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                "Настройки",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                "v" + appVersion(),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        DevAITopBar(
+            title = "Настройки",
+            subtitle = "v" + appVersion(),
+            actions = {
+                DevAIStatusPill(if (plan.isPaid) "Premium" else "Free")
+            },
+        )
 
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
@@ -456,7 +443,7 @@ fun SettingsScreen() {
                     }
 
                     ActionRow(
-                        icon = Icons.Default.List,
+                        icon = Icons.AutoMirrored.Filled.List,
                         title = "Библиотека промптов",
                         subtitle = "${PromptLibrary.items.size} готовых промптов",
                         onClick = {
@@ -764,7 +751,7 @@ fun SettingsScreen() {
                         onClick = { shareChats() },
                     )
                     ActionRow(
-                        icon = Icons.Default.List,
+                        icon = Icons.AutoMirrored.Filled.List,
                         title = "Импорт чатов",
                         subtitle = "Premium Год · JSON",
                         onClick = {
@@ -825,11 +812,10 @@ fun SettingsScreen() {
                     )
                 }
 
-                Card(Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier.padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
+                DevAICard(
+                    accent = MaterialTheme.colorScheme.tertiary,
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
+                ) {
                         Text(
                             "Автор",
                             style = MaterialTheme.typography.titleSmall,
@@ -858,7 +844,6 @@ fun SettingsScreen() {
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                    }
                 }
             }
         }
@@ -1004,18 +989,29 @@ private fun SettingsSection(
     title: String,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Card(Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-            )
-            content()
-        }
+    val icon = when (title) {
+        "Параметры запроса" -> Icons.Default.Settings
+        "Свой провайдер" -> Icons.Default.Share
+        "Системный промпт" -> Icons.Default.Edit
+        "Локальные модели" -> Icons.Default.PlayArrow
+        "Чат" -> Icons.AutoMirrored.Filled.Send
+        "Оформление", "Кастомизация" -> Icons.Default.Star
+        "Premium" -> Icons.Default.Favorite
+        "Данные" -> Icons.Default.Lock
+        else -> Icons.Default.Info
+    }
+    val tint = when (title) {
+        "Параметры запроса", "Системный промпт" -> MaterialTheme.colorScheme.primary
+        "Локальные модели", "Чат" -> MaterialTheme.colorScheme.secondary
+        "Оформление", "Кастомизация", "Premium" -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.primary
+    }
+    DevAICard(
+        accent = tint,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
+    ) {
+        DevAISectionTitle(title = title, icon = icon)
+        content()
     }
 }
 
@@ -1146,7 +1142,7 @@ private fun ActionRow(
             }
         }
         Icon(
-            Icons.Default.KeyboardArrowRight,
+            Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
             modifier = Modifier.size(18.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,

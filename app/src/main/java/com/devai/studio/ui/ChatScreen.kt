@@ -7,9 +7,11 @@ import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -78,6 +80,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -496,48 +500,19 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
     }
 
     Column(Modifier.fillMaxSize()) {
-        TopAppBar(
-            title = {
-                Column {
-                    Text(
-                        "DevAI",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        mode.title + " · " + modelLabel,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                    )
-                }
-            },
+        DevAITopBar(
+            title = "DevAI",
+            subtitle = "Studio · " + mode.title + " · " + modelLabel,
             actions = {
-                IconButton(onClick = { openSessions() }) {
-                    Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Сессии")
-                }
-                IconButton(onClick = { newChat() }) {
-                    Icon(Icons.Default.Add, contentDescription = "Новый чат")
-                }
-                IconButton(onClick = { exportChat() }) {
-                    Icon(Icons.Default.Share, contentDescription = "Экспорт")
-                }
-                IconButton(onClick = { regenerate() }, enabled = !streaming) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Заново")
-                }
-                IconButton(
-                    onClick = {
-                        requireFeature(PremiumFeature.CHARACTERS) {
-                            context.startActivity(Intent(context, CharactersActivity::class.java))
-                        }
-                    },
-                ) {
-                    Icon(Icons.Default.Person, contentDescription = "Персонажи")
+                DevAIActionIcon(Icons.AutoMirrored.Filled.List, "Сессии") { openSessions() }
+                DevAIActionIcon(Icons.Default.Add, "Новый чат") { newChat() }
+                DevAIActionIcon(Icons.Default.Refresh, "Заново", enabled = !streaming) { regenerate() }
+                DevAIActionIcon(Icons.Default.Person, "Персонажи") {
+                    requireFeature(PremiumFeature.CHARACTERS) {
+                        context.startActivity(Intent(context, CharactersActivity::class.java))
+                    }
                 }
             },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-            ),
         )
 
         if (messages.isEmpty() && !streaming) {
@@ -633,14 +608,19 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
         }
 
         Surface(
-            tonalElevation = 3.dp,
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.18f),
+            ),
+            shadowElevation = 10.dp,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 8.dp),
         ) {
             Row(
-                modifier = Modifier.padding(4.dp),
+                modifier = Modifier.padding(5.dp),
                 verticalAlignment = Alignment.Bottom,
             ) {
                 IconButton(
@@ -655,7 +635,11 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                         )
                     },
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Прикрепить файл")
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = "Прикрепить файл",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
                 OutlinedTextField(
                     value = input,
@@ -663,7 +647,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                     modifier = Modifier.weight(1f),
                     placeholder = { Text("Сообщение…") },
                     maxLines = 4,
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(22.dp),
                     keyboardOptions = KeyboardOptions(
                         imeAction = if (sendOnEnter) ImeAction.Send else ImeAction.Default
                     ),
@@ -673,14 +657,38 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                         KeyboardActions()
                     },
                 )
-                Spacer(Modifier.width(4.dp))
-                FilledIconButton(
-                    onClick = { if (streaming) stop() else send() },
-                    enabled = streaming || input.isNotBlank() || attachments.isNotEmpty(),
+                Spacer(Modifier.width(6.dp))
+                val canSend = streaming || input.isNotBlank() || attachments.isNotEmpty()
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (canSend) {
+                                Brush.linearGradient(
+                                    listOf(
+                                        MaterialTheme.colorScheme.primary,
+                                        MaterialTheme.colorScheme.tertiary,
+                                    )
+                                )
+                            } else {
+                                Brush.linearGradient(
+                                    listOf(
+                                        MaterialTheme.colorScheme.surfaceVariant,
+                                        MaterialTheme.colorScheme.surfaceVariant,
+                                    )
+                                )
+                            }
+                        )
+                        .clickable(enabled = canSend) { if (streaming) stop() else send() },
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = if (streaming) Icons.Default.Close else Icons.AutoMirrored.Filled.Send,
                         contentDescription = if (streaming) "Стоп" else "Отправить",
+                        tint = if (canSend) MaterialTheme.colorScheme.onPrimary
+                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                        modifier = Modifier.size(21.dp),
                     )
                 }
             }
@@ -716,7 +724,18 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                         )
                     }
                 }
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(8.dp))
+                TextButton(
+                    onClick = {
+                        exportChat()
+                        showSessions = false
+                    },
+                ) {
+                    Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Экспорт текущего чата")
+                }
+                Spacer(Modifier.height(4.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
                         onClick = {
@@ -864,25 +883,34 @@ private fun EmptyChat(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Surface(
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.primaryContainer,
-            modifier = Modifier.size(80.dp),
+        Box(
+            modifier = Modifier
+                .size(96.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.tertiary,
+                        )
+                    )
+                ),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 Icons.Default.Face,
                 contentDescription = null,
-                modifier = Modifier.padding(20.dp),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(44.dp),
+                tint = MaterialTheme.colorScheme.onPrimary,
             )
         }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(18.dp))
         Text(
-            "Чем помочь?",
+            "Чем помочь сегодня?",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
         )
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(6.dp))
         Text(
             if (mode == ChatMode.DEV) {
                 "Спросите про код, ошибки, Android, Kotlin или Compose."
@@ -893,7 +921,7 @@ private fun EmptyChat(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(22.dp))
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -911,11 +939,29 @@ private fun EmptyChat(
                     "Придумай идею",
                 )
             }).forEach { text ->
-                AssistChip(
-                    onClick = { onSuggestion(text) },
-                    leadingIcon = { Icon(Icons.Default.Create, contentDescription = null) },
-                    label = { Text(text) },
-                )
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                    ),
+                    modifier = Modifier.clickable { onSuggestion(text) },
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.Default.Create,
+                            contentDescription = null,
+                            modifier = Modifier.size(15.dp),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(text, style = MaterialTheme.typography.labelMedium)
+                    }
+                }
             }
         }
     }
@@ -958,19 +1004,40 @@ private fun MessageBubble(
             Avatar(isUser = false)
             Spacer(Modifier.width(8.dp))
         }
+        val bubbleShape = RoundedCornerShape(
+            topStart = if (isUser) 22.dp else 6.dp,
+            topEnd = if (isUser) 6.dp else 22.dp,
+            bottomStart = 22.dp,
+            bottomEnd = 22.dp,
+        )
         Surface(
-            shape = RoundedCornerShape(
-                topStart = if (isUser) 18.dp else 4.dp,
-                topEnd = if (isUser) 4.dp else 18.dp,
-                bottomStart = 18.dp,
-                bottomEnd = 18.dp,
-            ),
+            shape = bubbleShape,
             color = if (isUser) {
-                MaterialTheme.colorScheme.primary
+                Color.Transparent
             } else {
-                MaterialTheme.colorScheme.surfaceVariant
+                MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
             },
-            modifier = Modifier.widthIn(max = bubbleWidth),
+            border = if (isUser) null else androidx.compose.foundation.BorderStroke(
+                1.dp,
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.16f),
+            ),
+            modifier = Modifier
+                .widthIn(max = bubbleWidth)
+                .then(
+                    if (isUser) {
+                        Modifier.background(
+                            Brush.linearGradient(
+                                listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.82f),
+                                )
+                            ),
+                            bubbleShape,
+                        )
+                    } else {
+                        Modifier
+                    }
+                ),
         ) {
             Column(
                 modifier = Modifier.padding(12.dp),
@@ -986,13 +1053,13 @@ private fun MessageBubble(
                         )
                     }
                 } else if (message.content.isBlank()) {
-                    Text("…", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("…", color = MaterialTheme.colorScheme.onSurface)
                 } else {
                     val segments = remember(message.content) { parseSegments(message.content) }
                     if (segments.isEmpty()) {
                         Text(
                             message.content,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontSize = fontSize,
                             fontFamily = fontFamily,
                         )
@@ -1009,7 +1076,7 @@ private fun MessageBubble(
                                 SelectionContainer {
                                     Text(
                                         text = segment.text,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = MaterialTheme.colorScheme.onSurface,
                                         fontSize = fontSize,
                                         fontFamily = fontFamily,
                                     )
@@ -1036,24 +1103,32 @@ private fun MessageBubble(
 
 @Composable
 private fun Avatar(isUser: Boolean) {
-    Surface(
-        shape = CircleShape,
-        color = if (isUser) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            MaterialTheme.colorScheme.tertiaryContainer
-        },
-        modifier = Modifier.size(28.dp),
+    Box(
+        modifier = Modifier
+            .size(30.dp)
+            .clip(CircleShape)
+            .background(
+                Brush.linearGradient(
+                    if (isUser) {
+                        listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.75f),
+                        )
+                    } else {
+                        listOf(
+                            MaterialTheme.colorScheme.secondary,
+                            MaterialTheme.colorScheme.tertiary,
+                        )
+                    }
+                )
+            ),
+        contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = if (isUser) Icons.Default.Person else Icons.Default.Face,
             contentDescription = null,
-            modifier = Modifier.padding(5.dp),
-            tint = if (isUser) {
-                MaterialTheme.colorScheme.onPrimary
-            } else {
-                MaterialTheme.colorScheme.onTertiaryContainer
-            },
+            modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colorScheme.onPrimary,
         )
     }
 }

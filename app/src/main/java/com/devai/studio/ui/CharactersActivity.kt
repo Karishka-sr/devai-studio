@@ -58,7 +58,9 @@ class CharactersActivity : AppCompatActivity() {
         ThemeManager.applyDynamicIfAvailable(this)
         setContent {
             DevAITheme {
-                CharactersScreen(onBack = { finish() })
+                DevAIBackground {
+                    CharactersScreen(onBack = { finish() })
+                }
             }
         }
     }
@@ -90,28 +92,25 @@ fun CharactersScreen(onBack: () -> Unit) {
     }
 
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
-            TopAppBar(
-                title = { Text("Карточки персонажей") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.Close, contentDescription = "Назад")
-                    }
-                },
+            DevAITopBar(
+                title = "Персонажи",
+                subtitle = "Характер и промпт для чата",
+                onBack = onBack,
             )
         },
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             item {
-                Text(
-                    "Персонаж добавляет свой характер и системный промпт в чат. " +
-                        "Свой системный промпт из Настроек остаётся главным.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                DevAISectionTitle(
+                    title = "Карточки персонажей",
+                    subtitle = "Свой системный промпт из Настроек остаётся главным.",
+                    icon = Icons.Default.Person,
                 )
             }
             item {
@@ -136,24 +135,22 @@ fun CharactersScreen(onBack: () -> Unit) {
                 }
             }
             items(cards) { card ->
-                Card(
-                    modifier = Modifier.fillMaxWidth().clickable { select(card) },
+                DevAICard(
+                    onClick = { select(card) },
+                    accent = if (activeId == card.id) MaterialTheme.colorScheme.primary else null,
+                    contentPadding = PaddingValues(14.dp),
                 ) {
-                    Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
+                            DevAIIconTile(
                                 Icons.Default.Person,
-                                contentDescription = null,
+                                size = 40.dp,
                                 tint = if (activeId == card.id) {
                                     MaterialTheme.colorScheme.primary
                                 } else {
                                     MaterialTheme.colorScheme.onSurfaceVariant
                                 },
                             )
-                            Spacer(Modifier.width(8.dp))
+                            Spacer(Modifier.width(10.dp))
                             Text(
                                 card.name,
                                 style = MaterialTheme.typography.titleMedium,
@@ -161,11 +158,7 @@ fun CharactersScreen(onBack: () -> Unit) {
                                 modifier = Modifier.weight(1f),
                             )
                             if (activeId == card.id) {
-                                Text(
-                                    "Активен",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
+                                DevAIStatusPill("Активен")
                             }
                         }
                         if (card.description.isNotBlank()) {
@@ -195,7 +188,6 @@ fun CharactersScreen(onBack: () -> Unit) {
                                 }
                             }
                         }
-                    }
                 }
             }
             item { Spacer(Modifier.height(24.dp)) }

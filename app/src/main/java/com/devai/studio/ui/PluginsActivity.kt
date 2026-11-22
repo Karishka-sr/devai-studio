@@ -59,7 +59,7 @@ class PluginsActivity : AppCompatActivity() {
         ThemeManager.apply(this)
         super.onCreate(savedInstanceState)
         ThemeManager.applyDynamicIfAvailable(this)
-        setContent { DevAITheme { PluginsScreen(onBack = { finish() }) } }
+        setContent { DevAITheme { DevAIBackground { PluginsScreen(onBack = { finish() }) } } }
     }
 }
 
@@ -93,28 +93,25 @@ fun PluginsScreen(onBack: () -> Unit) {
     }
 
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
-            TopAppBar(
-                title = { Text("Плагины .devai") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.Close, contentDescription = "Назад")
-                    }
-                },
+            DevAITopBar(
+                title = "Плагины .devai",
+                subtitle = "Команды и промпты без выполнения кода",
+                onBack = onBack,
             )
         },
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             item {
-                Text(
-                    "Плагины пишутся на простом языке DPL и не выполняют код. " +
-                        "Они подставляют промпт в чат.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                DevAISectionTitle(
+                    title = "Плагины",
+                    subtitle = "DPL-промпты и Lua-команды для чата.",
+                    icon = Icons.Default.Info,
                 )
             }
             item {
@@ -153,11 +150,10 @@ fun PluginsScreen(onBack: () -> Unit) {
                 }
             }
             items(plugins) { plugin ->
-                Card(Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
+                DevAICard(
+                    accent = MaterialTheme.colorScheme.secondary,
+                    contentPadding = PaddingValues(14.dp),
+                ) {
                         Text(plugin.name, fontWeight = FontWeight.SemiBold)
                         if (plugin.description.isNotBlank()) {
                             Text(
@@ -197,7 +193,6 @@ fun PluginsScreen(onBack: () -> Unit) {
                             Spacer(Modifier.width(4.dp))
                             Text("Удалить")
                         }
-                    }
                 }
             }
             item { Spacer(Modifier.height(24.dp)) }

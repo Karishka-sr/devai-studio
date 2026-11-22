@@ -6,7 +6,15 @@
         <item name="colorPrimaryContainer">@color/primary_light</item>
         <item name="colorSecondary">@color/secondary</item>
         <item name="colorSurface">@color/surface</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+        <item name="colorOnSurface">@color/on_surface</item>
         <item name="android:colorBackground">@color/background</item>
+        <item name="android:windowBackground">@color/background</item>
+        <item name="shapeAppearanceCornerExtraSmall">@style/ShapeAppearance.DevAI.Aurora</item>
+        <item name="shapeAppearanceCornerSmall">@style/ShapeAppearance.DevAI.Aurora</item>
+        <item name="shapeAppearanceCornerMedium">@style/ShapeAppearance.DevAI.Aurora</item>
+        <item name="shapeAppearanceCornerLarge">@style/ShapeAppearance.DevAI.Aurora</item>
+        <item name="shapeAppearanceCornerExtraLarge">@style/ShapeAppearance.DevAI.Aurora</item>
         <item name="android:statusBarColor">@color/primary_dark</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
@@ -42,6 +50,11 @@
         <item name="android:padding">6dp</item>
         <item name="android:minHeight">0dp</item>
         <item name="android:minWidth">0dp</item>
+    </style>
+
+    <style name="ShapeAppearance.DevAI.Aurora" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">20dp</item>
     </style>
 
     <style name="ShapeAppearance.DevAI.Expressive" parent="">

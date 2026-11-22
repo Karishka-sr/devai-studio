@@ -22,6 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -48,7 +49,7 @@ class PluginDocsActivity : AppCompatActivity() {
         ThemeManager.apply(this)
         super.onCreate(savedInstanceState)
         ThemeManager.applyDynamicIfAvailable(this)
-        setContent { DevAITheme { PluginDocsScreen(onBack = { finish() }) } }
+        setContent { DevAITheme { DevAIBackground { PluginDocsScreen(onBack = { finish() }) } } }
     }
 }
 
@@ -125,14 +126,12 @@ fun PluginDocsScreen(onBack: () -> Unit) {
     }
 
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
-            TopAppBar(
-                title = { Text("Документация по плагинам") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.Close, contentDescription = "Назад")
-                    }
-                },
+            DevAITopBar(
+                title = "Документация",
+                subtitle = "Плагины .devai",
+                onBack = onBack,
             )
         },
     ) { padding ->
@@ -140,19 +139,14 @@ fun PluginDocsScreen(onBack: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             item {
-                Text(
-                    "Документация по плагинам DevAI Studio",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    "Lua 5.2 через LuaJ + старый DPL. Плагины выполняют код в песочнице и дают ИИ инструменты.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                DevAISectionTitle(
+                    title = "Плагины DevAI Studio",
+                    subtitle = "Lua 5.2 через LuaJ + DPL. Код выполняется в песочнице.",
+                    icon = Icons.Default.Info,
                 )
             }
             item {
@@ -198,8 +192,12 @@ fun PluginDocsScreen(onBack: () -> Unit) {
                         modifier = Modifier.padding(top = if (block.level == 1) 14.dp else 8.dp),
                     )
                     is DocBlock.Code -> Surface(
-                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
                         shape = MaterialTheme.shapes.small,
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.18f),
+                        ),
                     ) {
                         SelectionContainer {
                             Text(
@@ -216,8 +214,12 @@ fun PluginDocsScreen(onBack: () -> Unit) {
                         Text(block.text, style = MaterialTheme.typography.bodyMedium)
                     }
                     is DocBlock.Table -> Surface(
-                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
                         shape = MaterialTheme.shapes.small,
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.18f),
+                        ),
                     ) {
                         Text(
                             block.lines.joinToString("\n"),

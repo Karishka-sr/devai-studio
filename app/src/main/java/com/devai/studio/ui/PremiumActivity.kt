@@ -84,26 +84,25 @@ private fun PremiumScreen(onBack: () -> Unit) {
         current = PremiumStore.plan(context)
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Premium") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
+    DevAIBackground {
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                DevAITopBar(
+                    title = "Premium",
+                    subtitle = "Больше возможностей для DevAI",
+                    onBack = onBack,
+                )
+            },
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
             StatusCard(current)
 
             Text(
@@ -131,11 +130,10 @@ private fun PremiumScreen(onBack: () -> Unit) {
 
             PaymentHelpCard()
 
-            Card(Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
+            DevAICard(
+                accent = MaterialTheme.colorScheme.primary,
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
+            ) {
                     Text(
                         "Активация по коду",
                         style = MaterialTheme.typography.titleMedium,
@@ -182,7 +180,6 @@ private fun PremiumScreen(onBack: () -> Unit) {
                             ) { Text("Сбросить") }
                         }
                     }
-                }
             }
 
             Text(
@@ -238,6 +235,7 @@ private fun PremiumScreen(onBack: () -> Unit) {
                 Text("Скопировать заказ «Навсегда»")
             }
             Spacer(Modifier.size(20.dp))
+            }
         }
     }
 }
@@ -247,46 +245,37 @@ private fun StatusCard(plan: PremiumPlan) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val until = PremiumStore.expiresText(context)
     val left = PremiumStore.daysLeft(context)
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (plan.isPaid) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant
-            },
-        ),
+    DevAICard(
+        accent = if (plan.isPaid) MaterialTheme.colorScheme.primary else null,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    if (plan.isPaid) Icons.Default.CheckCircle else Icons.Default.Lock,
-                    contentDescription = null,
-                )
-                Spacer(Modifier.width(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            DevAIIconTile(
+                if (plan.isPaid) Icons.Default.CheckCircle else Icons.Default.Lock,
+                size = 48.dp,
+                tint = if (plan.isPaid) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
                 Text(
                     if (plan.isPaid) "Premium ${plan.title}" else "Premium не активен",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                 )
-            }
-            Text(
-                when {
-                    !plan.isPaid -> "Доступны базовые функции. Выберите тариф ниже."
-                    until.isNotBlank() -> "Действует до $until · осталось $left дн."
-                    else -> "Доступ навсегда · все функции и будущие обновления."
-                },
-                style = MaterialTheme.typography.bodySmall,
-            )
-            if (PremiumStore.code(context).isNotBlank()) {
                 Text(
-                    "Код: ${PremiumStore.code(context)}",
-                    style = MaterialTheme.typography.labelSmall,
+                    when {
+                        !plan.isPaid -> "Доступны базовые функции. Выберите тариф ниже."
+                        until.isNotBlank() -> "Действует до $until · осталось $left дн."
+                        else -> "Доступ навсегда · все функции и будущие обновления."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+        if (PremiumStore.code(context).isNotBlank()) {
+            DevAIStatusPill("Код: ${PremiumStore.code(context)}")
         }
     }
 }
@@ -299,55 +288,50 @@ private fun PlanCard(
     onCopy: () -> Unit,
 ) {
     val active = current.rank >= plan.rank
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (plan == PremiumPlan.LIFETIME) {
-                MaterialTheme.colorScheme.secondaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant
-            },
-        ),
+    val accent = if (plan == PremiumPlan.LIFETIME) MaterialTheme.colorScheme.tertiary
+    else MaterialTheme.colorScheme.primary
+    DevAICard(
+        accent = if (plan == PremiumPlan.LIFETIME || active) accent else null,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
     ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        plan.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    if (plan == PremiumPlan.LIFETIME) {
+                        Spacer(Modifier.width(8.dp))
+                        DevAIStatusPill("Выгодно", MaterialTheme.colorScheme.tertiary)
+                    }
+                }
                 Text(
-                    plan.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    "${plan.stars} ⭐",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
+                    "${plan.duration} · ${PremiumFeature.forPlan(plan).size} функций",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Text(
-                "${plan.duration} · ${PremiumFeature.forPlan(plan).size} функций",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                "${plan.stars} ⭐",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = accent,
             )
-            Text(plan.tagline, style = MaterialTheme.typography.bodySmall)
-            if (active) {
-                Text(
-                    "Уже доступно",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
+        }
+        Text(plan.tagline, style = MaterialTheme.typography.bodySmall)
+        if (active) {
+            DevAIStatusPill("Уже доступно", accent)
+        } else {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                DevAIGradientButton(
+                    text = "Оплатить ${plan.stars} ⭐",
+                    icon = Icons.Default.Star,
+                    modifier = Modifier.weight(1f),
+                    onClick = onPay,
                 )
-            } else {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = onPay, modifier = Modifier.weight(1f)) {
-                        Icon(Icons.Default.Star, contentDescription = null)
-                        Spacer(Modifier.width(4.dp))
-                        Text("Оплатить ${plan.stars} ⭐")
-                    }
-                    OutlinedButton(onClick = onCopy) { Text("Копировать") }
-                }
+                OutlinedButton(onClick = onCopy) { Text("Копировать") }
             }
         }
     }
@@ -356,11 +340,10 @@ private fun PlanCard(
 @Composable
 private fun PaymentHelpCard() {
     val context = androidx.compose.ui.platform.LocalContext.current
-    Card(Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
+    DevAICard(
+        accent = MaterialTheme.colorScheme.secondary,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
+    ) {
             Text(
                 "Как оплатить",
                 style = MaterialTheme.typography.titleMedium,
@@ -387,7 +370,6 @@ private fun PaymentHelpCard() {
                     }
                 },
             ) { Text("Открыть @${TelegramStars.USERNAME}") }
-        }
     }
 }
 

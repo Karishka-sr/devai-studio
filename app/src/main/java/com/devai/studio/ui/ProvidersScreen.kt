@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.devai.studio.ai.AiFormat
 import com.devai.studio.ai.ModelFetcher
@@ -155,30 +156,60 @@ fun ProvidersScreen() {
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         items(rows) { row ->
             when (row) {
-                ProviderRow.Header -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(
-                            onClick = { openLocalModels() },
+                ProviderRow.Header -> Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    DevAITopBar(
+                        title = "ИИ",
+                        subtitle = "Провайдеры, ключи и модели",
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        DevAICard(
                             modifier = Modifier.weight(1f),
+                            onClick = { openLocalModels() },
+                            contentPadding = PaddingValues(14.dp),
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = null)
-                            Spacer(Modifier.width(6.dp))
-                            Text("Локальные модели")
+                            DevAIIconTile(
+                                Icons.AutoMirrored.Filled.List,
+                                size = 36.dp,
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                            Text(
+                                "Локальные модели",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Text(
+                                "Работают без сети",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
-                        OutlinedButton(
+                        DevAICard(
+                            modifier = Modifier.weight(1f),
                             onClick = {
                                 context.startActivity(Intent(context, QrExportActivity::class.java))
                             },
-                            modifier = Modifier.weight(1f),
+                            contentPadding = PaddingValues(14.dp),
                         ) {
-                            Icon(Icons.Default.Share, contentDescription = null)
-                            Spacer(Modifier.width(6.dp))
-                            Text("QR")
+                            DevAIIconTile(
+                                Icons.Default.Share,
+                                size = 36.dp,
+                                tint = MaterialTheme.colorScheme.secondary,
+                            )
+                            Text(
+                                "QR-перенос",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Text(
+                                "На другой телефон",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
                     }
                     Row(
@@ -204,11 +235,9 @@ fun ProvidersScreen() {
                     }
                 }
 
-                is ProviderRow.CategoryHeader -> Text(
-                    text = categoryLabel(row.category),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(top = 8.dp),
+                is ProviderRow.CategoryHeader -> DevAISectionTitle(
+                    title = categoryLabel(row.category),
+                    icon = categoryIcon(row.category),
                 )
 
                 is ProviderRow.Provider -> ProviderCard(
@@ -236,82 +265,72 @@ private fun ProviderCard(
     onSite: () -> Unit,
     onUse: () -> Unit,
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (active) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant
-            }
-        ),
+    DevAICard(
+        accent = if (active) MaterialTheme.colorScheme.primary else null,
+        contentPadding = PaddingValues(14.dp),
     ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            DevAIIconTile(
+                categoryIcon(p.category),
+                size = 44.dp,
+                tint = when (p.category) {
+                    Category.FULLY_FREE -> MaterialTheme.colorScheme.secondary
+                    Category.FREE -> MaterialTheme.colorScheme.primary
+                    Category.PAID -> MaterialTheme.colorScheme.tertiary
+                },
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
                 Text(
                     text = p.name,
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f),
+                    fontWeight = FontWeight.Bold,
                 )
-                if (active) {
-                    Icon(
-                        Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        text = "Активен",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
-            }
-            Text(
-                text = p.description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = categoryLabel(p.category) + " · " + formatLabel(p.format),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (p.freeNote.isNotBlank()) {
                 Text(
-                    text = p.freeNote,
-                    style = MaterialTheme.typography.bodySmall,
+                    text = categoryLabel(p.category) + " · " + formatLabel(p.format),
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                TextButton(onClick = onKey) {
-                    Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Ключ")
-                }
-                TextButton(onClick = onModel) {
-                    Icon(Icons.AutoMirrored.Filled.List, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Модель")
-                }
-                TextButton(onClick = onSite) {
-                    Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Сайт")
-                }
-                TextButton(onClick = onUse) {
-                    Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Использовать")
-                }
+            if (active) {
+                DevAIStatusPill("Активен")
+            }
+        }
+        Text(
+            text = p.description,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (p.freeNote.isNotBlank()) {
+            Text(
+                text = p.freeNote,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            TextButton(onClick = onKey) {
+                Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(17.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Ключ")
+            }
+            TextButton(onClick = onModel) {
+                Icon(Icons.AutoMirrored.Filled.List, contentDescription = null, modifier = Modifier.size(17.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Модель")
+            }
+            TextButton(onClick = onSite) {
+                Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(17.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Сайт")
+            }
+            TextButton(onClick = onUse) {
+                Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(17.dp))
+                Spacer(Modifier.width(4.dp))
+                Text(if (active) "Выбран" else "Использовать")
             }
         }
     }

@@ -12,8 +12,8 @@ android {
         applicationId = "com.devai.studio"
         minSdk = 31
         targetSdk = 34
-        versionCode = 27
-        versionName = "2.14.2"
+        versionCode = 28
+        versionName = "2.15.0"
         vectorDrawables.useSupportLibrary = true
         ndk {
             abiFilters += listOf("arm64-v8a")

@@ -18,8 +18,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -63,7 +65,7 @@ class McpActivity : AppCompatActivity() {
         ThemeManager.apply(this)
         super.onCreate(savedInstanceState)
         ThemeManager.applyDynamicIfAvailable(this)
-        setContent { DevAITheme { McpScreen(onBack = { finish() }) } }
+        setContent { DevAITheme { DevAIBackground { McpScreen(onBack = { finish() }) } } }
     }
 }
 
@@ -111,17 +113,15 @@ fun McpScreen(onBack: () -> Unit) {
     }
 
     Scaffold(
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
-            TopAppBar(
-                title = { Text("MCP-инструменты") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.Close, contentDescription = "Назад")
-                    }
-                },
+            DevAITopBar(
+                title = "MCP-инструменты",
+                subtitle = "Внешние инструменты для модели",
+                onBack = onBack,
                 actions = {
-                    IconButton(onClick = { refreshTools() }, enabled = !busy) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Обновить инструменты")
+                    DevAIActionIcon(Icons.Default.Refresh, "Обновить", enabled = !busy) {
+                        refreshTools()
                     }
                 },
             )
@@ -129,12 +129,11 @@ fun McpScreen(onBack: () -> Unit) {
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             item {
-                Card(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(14.dp)) {
+                DevAICard(accent = MaterialTheme.colorScheme.primary) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
                                 Text("Использовать MCP в чате", fontWeight = FontWeight.SemiBold)
@@ -157,7 +156,6 @@ fun McpScreen(onBack: () -> Unit) {
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                    }
                 }
             }
             item {
@@ -187,10 +185,10 @@ fun McpScreen(onBack: () -> Unit) {
                 }
             }
             item {
-                Text(
-                    "Серверы",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                DevAISectionTitle(
+                    title = "Серверы",
+                    subtitle = "Подключения по Streamable HTTP",
+                    icon = Icons.Default.Build,
                 )
             }
             if (servers.isEmpty()) {
@@ -203,12 +201,17 @@ fun McpScreen(onBack: () -> Unit) {
                 }
             }
             items(servers) { server ->
-                Card(Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
+                DevAICard(
+                    accent = if (server.enabled) MaterialTheme.colorScheme.secondary else null,
+                    contentPadding = PaddingValues(14.dp),
+                ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            DevAIIconTile(
+                                Icons.Default.Build,
+                                size = 40.dp,
+                                tint = MaterialTheme.colorScheme.secondary,
+                            )
+                            Spacer(Modifier.width(10.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(server.name, fontWeight = FontWeight.SemiBold)
                                 Text(
@@ -241,14 +244,13 @@ fun McpScreen(onBack: () -> Unit) {
                                 Text("Удалить")
                             }
                         }
-                    }
                 }
             }
             item {
-                Text(
-                    "Инструменты",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                DevAISectionTitle(
+                    title = "Инструменты",
+                    subtitle = "Что доступно модели",
+                    icon = Icons.AutoMirrored.Filled.List,
                 )
             }
             if (tools.isEmpty()) {
@@ -261,15 +263,13 @@ fun McpScreen(onBack: () -> Unit) {
                 }
             }
             items(tools) { tool ->
-                Card(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(12.dp)) {
+                DevAICard(contentPadding = PaddingValues(12.dp)) {
                         Text(tool.name, fontWeight = FontWeight.SemiBold)
                         Text(
                             tool.serverName + if (tool.description.isBlank()) "" else " · " + tool.description,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                    }
                 }
             }
             item { Spacer(Modifier.height(24.dp)) }

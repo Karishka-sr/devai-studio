@@ -82,26 +82,17 @@ fun ToolsScreen() {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                Icons.Default.Build,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                "Инструменты",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-        Text(
-            "Поиск, MCP, озвучивание, персонажи, плагины и QR.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        DevAITopBar(
+            title = "Ещё",
+            subtitle = "Инструменты и расширения",
+        )
+        DevAISectionTitle(
+            title = "Инструменты",
+            subtitle = "Поиск, MCP, озвучивание, персонажи, плагины и QR.",
+            icon = Icons.Default.Build,
         )
 
         ToolCard(
@@ -372,14 +363,12 @@ fun ToolsScreen() {
 @Composable
 private fun LockedTool(feature: PremiumFeature) {
     val context = LocalContext.current
-    OutlinedButton(
-        onClick = { PremiumDialogs.show(context, feature.title, feature.minPlan) },
+    DevAIGradientButton(
+        text = "Открыть ${feature.minPlan.title}",
+        icon = Icons.Default.Lock,
         modifier = Modifier.fillMaxWidth(),
-    ) {
-        Icon(Icons.Default.Lock, contentDescription = null)
-        Spacer(Modifier.width(6.dp))
-        Text("Открыть ${feature.minPlan.title}")
-    }
+        onClick = { PremiumDialogs.show(context, feature.title, feature.minPlan) },
+    )
 }
 
 @Composable
@@ -389,31 +378,34 @@ private fun ToolCard(
     icon: ImageVector,
     content: @Composable () -> Unit,
 ) {
-    Card(Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(22.dp),
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-                Spacer(Modifier.width(8.dp))
+    val tint = when (title) {
+        "Веб-поиск" -> MaterialTheme.colorScheme.primary
+        "Озвучивание (TTS)" -> MaterialTheme.colorScheme.secondary
+        "MCP-инструменты" -> MaterialTheme.colorScheme.tertiary
+        "Персонажи" -> MaterialTheme.colorScheme.primary
+        "Плагины .devai" -> MaterialTheme.colorScheme.secondary
+        else -> MaterialTheme.colorScheme.tertiary
+    }
+    DevAICard(
+        accent = tint,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            DevAIIconTile(icon, tint = tint)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
                 Text(
                     title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                 )
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
-            Text(
-                subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            content()
         }
+        content()
     }
 }
