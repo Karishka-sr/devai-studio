@@ -47,3 +47,10 @@
 - App icon: adaptive `drawable/ic_launcher_{background,foreground,monochrome}.xml` (gradient D + spark), v33 monochrome; README image `docs/devai-icon.png`.
 - Gemini input is cleaned by `ai/PromptSanitizer.kt`; it strips `<bos>`, `<start_of_turn>`, ChatML and similar control tokens before sending.
 - Keep Vexel untouched: verify `git diff v2.9.0 -- app/src/main/kotlin/com/qwenz/qwel app/src/main/assets/{icons,fonts,fun,lang}` is empty on every release.
+
+## PC version (v2.12.0)
+- Module `desktop/`: Kotlin JVM 1.8 + Swing, main `com.devai.studio.desktop.MainKt`.
+- Build jar: `./gradlew :desktop:fatJar` -> `desktop/build/libs/DevAIStudio-all.jar`.
+- Windows bundle: JRE 8u512 x64, stage `app/`, `runtime/`, `DevAI-Android.apk`, `icon.ico`.
+- Installer: `desktop/installer.nsi` (NSIS), build with `makensis installer.nsi` from the stage directory. It selects Windows 7/10/11 and writes `target.ini`.
+- The app resolves the bundled APK and `target.ini` from the JAR's parent directory, so shortcuts do not depend on `user.dir`.

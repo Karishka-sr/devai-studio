@@ -14,3 +14,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "DevAIStudio"
 include(":app")
+include(":desktop")

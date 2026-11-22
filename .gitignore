@@ -11,3 +11,5 @@ local.properties
 app/build
 *.apk
 *.idsig
+
+desktop/build
