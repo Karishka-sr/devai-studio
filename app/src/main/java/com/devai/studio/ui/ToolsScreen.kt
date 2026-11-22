@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
@@ -50,8 +51,11 @@ import com.devai.studio.data.AppPrefs
 import com.devai.studio.data.CharacterStore
 import com.devai.studio.data.McpStore
 import com.devai.studio.data.PluginStore
+import com.devai.studio.data.PremiumFeature
+import com.devai.studio.data.PremiumStore
 import com.devai.studio.data.SearchClient
 import com.devai.studio.util.AndroidUtils
+import com.devai.studio.util.PremiumDialogs
 import com.devai.studio.util.TtsManager
 import kotlinx.coroutines.launch
 
@@ -105,6 +109,10 @@ fun ToolsScreen() {
             "Tavily + GitHub + Stack Overflow + Wikipedia + DuckDuckGo + Hacker News.",
             icon = Icons.Default.Search,
         ) {
+            if (!PremiumStore.hasFeature(context, PremiumFeature.SEARCH)) {
+                LockedTool(PremiumFeature.SEARCH)
+                return@ToolCard
+            }
             OutlinedTextField(
                 value = searchKey,
                 onValueChange = { searchKey = it },
@@ -190,6 +198,10 @@ fun ToolsScreen() {
             "Системный голос Android. Можно слушать ответы.",
             icon = Icons.Default.PlayArrow,
         ) {
+            if (!PremiumStore.hasFeature(context, PremiumFeature.TTS)) {
+                LockedTool(PremiumFeature.TTS)
+                return@ToolCard
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Озвучивать ответы автоматически")
@@ -234,6 +246,10 @@ fun ToolsScreen() {
             "Подключение внешних инструментов по MCP.",
             icon = Icons.Default.Build,
         ) {
+            if (!PremiumStore.hasFeature(context, PremiumFeature.MCP)) {
+                LockedTool(PremiumFeature.MCP)
+                return@ToolCard
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Использовать MCP в чате")
@@ -267,6 +283,10 @@ fun ToolsScreen() {
             "Карточки с характером и системным промптом.",
             icon = Icons.Default.Person,
         ) {
+            if (!PremiumStore.hasFeature(context, PremiumFeature.CHARACTERS)) {
+                LockedTool(PremiumFeature.CHARACTERS)
+                return@ToolCard
+            }
             Text(
                 "Активен: " + (CharacterStore.active(context)?.name ?: "без персонажа"),
                 style = MaterialTheme.typography.bodySmall,
@@ -287,6 +307,10 @@ fun ToolsScreen() {
             "Lua 5.2 в песочнице: команды и инструменты, которые вызывает ИИ.",
             icon = Icons.AutoMirrored.Filled.List,
         ) {
+            if (!PremiumStore.hasFeature(context, PremiumFeature.PLUGINS)) {
+                LockedTool(PremiumFeature.PLUGINS)
+                return@ToolCard
+            }
             val plugins = PluginStore.list(context)
             Text(
                 "Плагинов: ${plugins.size} · инструментов ИИ: " +
@@ -327,6 +351,10 @@ fun ToolsScreen() {
             "Перенос настроек провайдера на другой телефон.",
             icon = Icons.Default.Share,
         ) {
+            if (!PremiumStore.hasFeature(context, PremiumFeature.QR_EXPORT)) {
+                LockedTool(PremiumFeature.QR_EXPORT)
+                return@ToolCard
+            }
             Button(
                 onClick = { context.startActivity(Intent(context, QrExportActivity::class.java)) },
                 modifier = Modifier.fillMaxWidth(),
@@ -338,6 +366,19 @@ fun ToolsScreen() {
         }
 
         Spacer(Modifier.width(8.dp))
+    }
+}
+
+@Composable
+private fun LockedTool(feature: PremiumFeature) {
+    val context = LocalContext.current
+    OutlinedButton(
+        onClick = { PremiumDialogs.show(context, feature.title, feature.minPlan) },
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Icon(Icons.Default.Lock, contentDescription = null)
+        Spacer(Modifier.width(6.dp))
+        Text("Открыть ${feature.minPlan.title}")
     }
 }
 

@@ -16,7 +16,8 @@ data class LocalModel(
     val promptFormat: String,
     val minRamGb: Int,
     val builtIn: Boolean = false,
-    val premium: Boolean = false
+    val premium: Boolean = false,
+    val requiredPlan: PremiumPlan = if (premium) PremiumPlan.WEEK else PremiumPlan.FREE
 )
 
 object LocalModelStore {
@@ -109,7 +110,8 @@ object LocalModelStore {
             promptFormat = "auto",
             minRamGb = 4,
             builtIn = true,
-            premium = true
+            premium = true,
+            requiredPlan = PremiumPlan.WEEK
         ),
         LocalModel(
             id = "qwen2.5-coder-1.5b",
@@ -122,7 +124,8 @@ object LocalModelStore {
             promptFormat = "auto",
             minRamGb = 6,
             builtIn = true,
-            premium = true
+            premium = true,
+            requiredPlan = PremiumPlan.MONTH
         ),
         LocalModel(
             id = "tinyllama-1.1b",
@@ -135,7 +138,8 @@ object LocalModelStore {
             promptFormat = "auto",
             minRamGb = 4,
             builtIn = true,
-            premium = true
+            premium = true,
+            requiredPlan = PremiumPlan.WEEK
         ),
         LocalModel(
             id = "qwen2.5-1.5b",
@@ -148,7 +152,8 @@ object LocalModelStore {
             promptFormat = "auto",
             minRamGb = 6,
             builtIn = true,
-            premium = true
+            premium = true,
+            requiredPlan = PremiumPlan.WEEK
         ),
         LocalModel(
             id = "qwen3-1.7b",
@@ -161,7 +166,8 @@ object LocalModelStore {
             promptFormat = "auto",
             minRamGb = 6,
             builtIn = true,
-            premium = true
+            premium = true,
+            requiredPlan = PremiumPlan.MONTH
         ),
         LocalModel(
             id = "deepseek-r1-1.5b",
@@ -174,7 +180,8 @@ object LocalModelStore {
             promptFormat = "auto",
             minRamGb = 6,
             builtIn = true,
-            premium = true
+            premium = true,
+            requiredPlan = PremiumPlan.YEAR
         ),
         LocalModel(
             id = "smollm3-3b",
@@ -187,7 +194,8 @@ object LocalModelStore {
             promptFormat = "auto",
             minRamGb = 8,
             builtIn = true,
-            premium = true
+            premium = true,
+            requiredPlan = PremiumPlan.YEAR
         ),
         LocalModel(
             id = "phi4-mini",
@@ -200,7 +208,8 @@ object LocalModelStore {
             promptFormat = "auto",
             minRamGb = 12,
             builtIn = true,
-            premium = true
+            premium = true,
+            requiredPlan = PremiumPlan.YEAR
         )
     )
     fun modelsDir(ctx: Context): File {
@@ -232,7 +241,10 @@ object LocalModelStore {
                     promptFormat = o.optString("format", "generic"),
                     minRamGb = o.optInt("minRamGb", 4),
                     builtIn = false,
-                    premium = o.optBoolean("premium", false)
+                    premium = o.optBoolean("premium", false),
+                    requiredPlan = runCatching {
+                        PremiumPlan.valueOf(o.optString("requiredPlan", "FREE"))
+                    }.getOrDefault(PremiumPlan.FREE)
                 )
             }
         } catch (e: Exception) {
@@ -255,6 +267,7 @@ object LocalModelStore {
                     .put("format", m.promptFormat)
                     .put("minRamGb", m.minRamGb)
                     .put("premium", m.premium)
+                    .put("requiredPlan", m.requiredPlan.name)
             )
         }
         prefs(ctx).edit().putString(KEY_CUSTOM, arr.toString()).apply()
@@ -310,6 +323,9 @@ object LocalModelStore {
 
     fun installed(ctx: Context): List<LocalModel> = catalog(ctx).filter { isInstalled(ctx, it) }
 
+    fun isUnlocked(ctx: Context, m: LocalModel): Boolean =
+        PremiumStore.hasPlan(ctx, m.requiredPlan)
+
     fun delete(ctx: Context, m: LocalModel) {
         file(ctx, m).delete()
         partFile(ctx, m).delete()
@@ -326,7 +342,9 @@ object LocalModelStore {
     fun active(ctx: Context): LocalModel? {
         val id = activeId(ctx)
         if (id.isBlank()) return null
-        return catalog(ctx).firstOrNull { it.id == id && isInstalled(ctx, it) }
+        return catalog(ctx).firstOrNull {
+            it.id == id && isInstalled(ctx, it) && isUnlocked(ctx, it)
+        }
     }
 
     fun activeName(ctx: Context): String = active(ctx)?.name.orEmpty()

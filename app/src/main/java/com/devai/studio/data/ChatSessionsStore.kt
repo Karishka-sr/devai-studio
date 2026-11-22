@@ -140,6 +140,26 @@ object ChatSessionsStore {
         ChatHistoryStore.clear(ctx)
     }
 
+    fun exportJson(ctx: Context): String = JSONObject()
+        .put("app", "DevAI Studio")
+        .put("version", 1)
+        .put("exportedAt", System.currentTimeMillis())
+        .put("sessions", JSONArray(serialize(list(ctx))))
+        .toString(2)
+
+    fun importJson(ctx: Context, raw: String): Int {
+        val root = runCatching { JSONObject(raw) }.getOrNull() ?: return 0
+        val array = root.optJSONArray("sessions")
+            ?: runCatching { JSONArray(raw) }.getOrNull()
+            ?: return 0
+        val imported = parse(array.toString())
+        if (imported.isEmpty()) return 0
+        val merged = list(ctx).associateBy { it.id }.toMutableMap()
+        imported.forEach { merged[it.id] = it }
+        saveAll(ctx, merged.values.toList())
+        return imported.size
+    }
+
     private fun titleFrom(messages: List<AiMessage>): String {
         val first = messages.firstOrNull { it.role == "user" }?.content ?: return DEFAULT_TITLE
         val line = first.lineSequence().firstOrNull { it.isNotBlank() }?.trim().orEmpty()

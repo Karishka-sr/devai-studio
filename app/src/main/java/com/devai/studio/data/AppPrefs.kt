@@ -37,9 +37,17 @@ object AppPrefs {
     private const val KEY_CONFIRM_DELETE = "confirm_delete_chat"
 
     const val DEFAULT_SYSTEM_PROMPT =
-        "Ты — DevAI, полезный ИИ-ассистент разработчика. Отвечай по делу, давай рабочие примеры кода."
+        "Ты — DevAI, полезный ИИ-ассистент разработчика. Отвечай по делу, давай рабочие примеры кода. " +
+            "Всегда отвечай на русском языке, если пользователь не попросил другой язык."
 
     const val DEV_SYSTEM_PROMPT =
+        "Ты — DevAI, senior-разработчик. Помогай с кодом, архитектурой, ошибками и UI. " +
+            "Сначала уточняй требования, если задача неоднозначна. Давай готовые примеры кода " +
+            "и указывай, куда их вставлять. Всегда отвечай на русском языке."
+
+    private const val LEGACY_DEFAULT_SYSTEM_PROMPT =
+        "Ты — DevAI, полезный ИИ-ассистент разработчика. Отвечай по делу, давай рабочие примеры кода."
+    private const val LEGACY_DEV_SYSTEM_PROMPT =
         "Ты — DevAI, senior-разработчик. Помогай с кодом, архитектурой, ошибками и UI. " +
             "Сначала уточняй требования, если задача неоднозначна. Давай готовые примеры кода " +
             "и указывай, куда их вставлять."
@@ -75,7 +83,11 @@ object AppPrefs {
 
     fun systemPrompt(ctx: Context): String {
         val v = p(ctx).getString(KEY_SYSTEM_PROMPT, null)
-        return if (v.isNullOrBlank()) DEFAULT_SYSTEM_PROMPT else v
+        return if (v.isNullOrBlank() || v == LEGACY_DEFAULT_SYSTEM_PROMPT) {
+            DEFAULT_SYSTEM_PROMPT
+        } else {
+            v
+        }
     }
 
     fun setSystemPrompt(ctx: Context, v: String) =
@@ -89,7 +101,12 @@ object AppPrefs {
 
     fun systemPromptForMode(ctx: Context, mode: ChatMode): String {
         val custom = p(ctx).getString(KEY_SYSTEM_PROMPT, null)
-        if (!custom.isNullOrBlank() && custom != DEFAULT_SYSTEM_PROMPT) return custom
+        if (!custom.isNullOrBlank() &&
+            custom != DEFAULT_SYSTEM_PROMPT &&
+            custom != LEGACY_DEFAULT_SYSTEM_PROMPT
+        ) {
+            return custom
+        }
         return if (mode == ChatMode.DEV) DEV_SYSTEM_PROMPT else DEFAULT_SYSTEM_PROMPT
     }
 

@@ -82,8 +82,8 @@ class LocalModelsActivity : AppCompatActivity() {
     }
 
     private fun startDownload(m: LocalModel) {
-        if (m.premium && !PremiumStore.isPremium(this)) {
-            PremiumDialogs.show(this, getString(R.string.premium_feature_models))
+        if (!PremiumStore.hasPlan(this, m.requiredPlan)) {
+            PremiumDialogs.show(this, m.name, m.requiredPlan)
             return
         }
         if (m.url.isBlank()) {
@@ -138,6 +138,10 @@ class LocalModelsActivity : AppCompatActivity() {
     }
 
     private fun use(m: LocalModel) {
+        if (!PremiumStore.hasPlan(this, m.requiredPlan)) {
+            PremiumDialogs.show(this, m.name, m.requiredPlan)
+            return
+        }
         LocalModelStore.setActive(this, m.id)
         AppPrefs.setActiveProvider(this, "local")
         AndroidUtils.toast(this, getString(R.string.local_models_selected, m.name))

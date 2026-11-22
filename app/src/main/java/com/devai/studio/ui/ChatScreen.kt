@@ -113,6 +113,7 @@ import com.devai.studio.data.LocalModelStore
 import com.devai.studio.data.McpStore
 import com.devai.studio.data.Plugin
 import com.devai.studio.data.PluginStore
+import com.devai.studio.data.PremiumFeature
 import com.devai.studio.data.PremiumStore
 import com.devai.studio.data.SearchClient
 import com.devai.studio.util.AiSupport
@@ -255,8 +256,17 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
     }
 
     fun openPlugins() {
+        if (!PremiumStore.hasFeature(context, PremiumFeature.PLUGINS)) {
+            PremiumDialogs.show(context, "Плагины", PremiumFeature.PLUGINS.minPlan)
+            return
+        }
         plugins = PluginStore.list(context)
         showPlugins = true
+    }
+
+    fun requireFeature(feature: PremiumFeature, action: () -> Unit) {
+        if (PremiumStore.hasFeature(context, feature)) action()
+        else PremiumDialogs.show(context, feature.title, feature.minPlan)
     }
 
     fun send(textOverride: String? = null) {
@@ -439,8 +449,12 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
     }
 
     fun exportChat() {
-        if (!PremiumStore.isPremium(context)) {
-            PremiumDialogs.show(context, context.getString(R.string.premium_feature_export))
+        if (!PremiumStore.hasFeature(context, PremiumFeature.CHAT_EXPORT)) {
+            PremiumDialogs.show(
+                context,
+                context.getString(R.string.premium_feature_export),
+                PremiumFeature.CHAT_EXPORT.minPlan,
+            )
             return
         }
         val visible = messages.filter { it.content.isNotBlank() }
@@ -513,7 +527,9 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                 }
                 IconButton(
                     onClick = {
-                        context.startActivity(Intent(context, CharactersActivity::class.java))
+                        requireFeature(PremiumFeature.CHARACTERS) {
+                            context.startActivity(Intent(context, CharactersActivity::class.java))
+                        }
                     },
                 ) {
                     Icon(Icons.Default.Person, contentDescription = "Персонажи")
@@ -571,8 +587,10 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
             FilterChip(
                 selected = searchEnabled,
                 onClick = {
-                    searchEnabled = !searchEnabled
-                    AppPrefs.setSearchEnabled(context, searchEnabled)
+                    requireFeature(PremiumFeature.SEARCH) {
+                        searchEnabled = !searchEnabled
+                        AppPrefs.setSearchEnabled(context, searchEnabled)
+                    }
                 },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 label = { Text("Поиск") },
@@ -580,10 +598,12 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
             FilterChip(
                 selected = mcpEnabled,
                 onClick = {
-                    mcpEnabled = !mcpEnabled
-                    AppPrefs.setMcpEnabled(context, mcpEnabled)
-                    if (mcpEnabled && McpStore.tools(context).isEmpty()) {
-                        toast("MCP: добавьте сервер в «Инструменты».")
+                    requireFeature(PremiumFeature.MCP) {
+                        mcpEnabled = !mcpEnabled
+                        AppPrefs.setMcpEnabled(context, mcpEnabled)
+                        if (mcpEnabled && McpStore.tools(context).isEmpty()) {
+                            toast("MCP: добавьте сервер в «Инструменты».")
+                        }
                     }
                 },
                 leadingIcon = { Icon(Icons.Default.Build, contentDescription = null) },
@@ -596,7 +616,9 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
             )
             AssistChip(
                 onClick = {
-                    context.startActivity(Intent(context, CharactersActivity::class.java))
+                    requireFeature(PremiumFeature.CHARACTERS) {
+                        context.startActivity(Intent(context, CharactersActivity::class.java))
+                    }
                 },
                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                 label = { Text(characterName) },

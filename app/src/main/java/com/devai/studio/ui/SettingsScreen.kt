@@ -4,9 +4,13 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -14,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,6 +32,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -73,7 +79,10 @@ import com.devai.studio.ai.LocalLlmEngine
 import com.devai.studio.data.ApiKeyStore
 import com.devai.studio.data.AppPrefs
 import com.devai.studio.data.ChatSessionsStore
+import com.devai.studio.data.PremiumFeature
+import com.devai.studio.data.PremiumPlan
 import com.devai.studio.data.PremiumStore
+import com.devai.studio.data.PromptLibrary
 import com.devai.studio.util.PremiumDialogs
 import com.devai.studio.util.ThemeManager
 import kotlin.math.roundToInt
@@ -118,15 +127,38 @@ fun SettingsScreen() {
     var customModel by remember { mutableStateOf(AppPrefs.customModel(context)) }
     var systemPrompt by remember { mutableStateOf(AppPrefs.systemPrompt(context)) }
     var themeId by remember { mutableStateOf(AppPrefs.theme(context)) }
-    var premium by remember { mutableStateOf(PremiumStore.isPremium(context)) }
+    var plan by remember { mutableStateOf(PremiumStore.plan(context)) }
     var category by remember { mutableStateOf(SettingsCategory.GENERATION) }
     var showTheme by remember { mutableStateOf(false) }
+    var showPromptLibrary by remember { mutableStateOf(false) }
     var showClearKeys by remember { mutableStateOf(false) }
     var showClearHistory by remember { mutableStateOf(false) }
     var showReset by remember { mutableStateOf(false) }
 
     fun toast(message: String) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+
+    fun requireFeature(feature: PremiumFeature, action: () -> Unit) {
+        if (PremiumStore.hasFeature(context, feature)) action()
+        else PremiumDialogs.show(context, feature.title, feature.minPlan)
+    }
+
+    val importChats = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        runCatching {
+            context.contentResolver.openInputStream(uri)
+                ?.bufferedReader()
+                ?.use { it.readText() }
+                ?: error("Пустой файл")
+        }.onSuccess { raw ->
+            val count = ChatSessionsStore.importJson(context, raw)
+            toast(if (count > 0) "Импортировано чатов: $count" else "В файле нет чатов")
+        }.onFailure {
+            toast("Не удалось импортировать: ${it.message ?: "ошибка"}")
+        }
     }
 
     fun appVersion(): String = runCatching {
@@ -142,9 +174,10 @@ fun SettingsScreen() {
     }
 
     fun chooseTheme(id: String) {
-        if (ThemeManager.isPremium(id) && !PremiumStore.isPremium(context)) {
+        val feature = ThemeManager.featureFor(id)
+        if (feature != null && !PremiumStore.hasFeature(context, feature)) {
             showTheme = false
-            PremiumDialogs.show(context, context.getString(R.string.premium_feature_themes))
+            PremiumDialogs.show(context, feature.title, feature.minPlan)
             return
         }
         AppPrefs.setTheme(context, id)
@@ -154,12 +187,30 @@ fun SettingsScreen() {
     }
 
     fun shareSettings() {
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/json"
-            putExtra(Intent.EXTRA_SUBJECT, "DevAI Studio — настройки")
-            putExtra(Intent.EXTRA_TEXT, AppPrefs.exportJson(context))
+        requireFeature(PremiumFeature.SETTINGS_BACKUP) {
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/json"
+                putExtra(Intent.EXTRA_SUBJECT, "DevAI Studio — настройки")
+                putExtra(Intent.EXTRA_TEXT, AppPrefs.exportJson(context))
+            }
+            context.startActivity(Intent.createChooser(intent, "Поделиться настройками"))
         }
-        context.startActivity(Intent.createChooser(intent, "Поделиться настройками"))
+    }
+
+    fun shareChats() {
+        requireFeature(PremiumFeature.CHAT_BACKUP) {
+            val sessions = ChatSessionsStore.list(context)
+            if (sessions.isEmpty()) {
+                toast("Чатов пока нет")
+                return@requireFeature
+            }
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/json"
+                putExtra(Intent.EXTRA_SUBJECT, "DevAI Studio — все чаты")
+                putExtra(Intent.EXTRA_TEXT, ChatSessionsStore.exportJson(context))
+            }
+            context.startActivity(Intent.createChooser(intent, "Экспорт всех чатов"))
+        }
     }
 
     val promptPresets = listOf(
@@ -173,7 +224,7 @@ fun SettingsScreen() {
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                premium = PremiumStore.isPremium(context)
+                plan = PremiumStore.plan(context)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -271,11 +322,24 @@ fun SettingsScreen() {
                     CompactNumberSetting(
                         label = "Лимит истории",
                         value = historyLimit,
-                        supporting = "0 — вся история",
+                        supporting = "0 — вся история (Premium Год)",
                         onChange = {
+                            val value = it.toIntOrNull()
+                            if (value == 0 && !PremiumStore.hasFeature(
+                                    context,
+                                    PremiumFeature.HISTORY_UNLIMITED,
+                                )
+                            ) {
+                                PremiumDialogs.show(
+                                    context,
+                                    "Вся история",
+                                    PremiumFeature.HISTORY_UNLIMITED.minPlan,
+                                )
+                                return@CompactNumberSetting
+                            }
                             historyLimit = it
-                            it.toIntOrNull()?.let { value ->
-                                if (value in 0..500) AppPrefs.setHistoryLimit(context, value)
+                            if (value != null && value in 0..500) {
+                                AppPrefs.setHistoryLimit(context, value)
                             }
                         },
                     )
@@ -294,44 +358,84 @@ fun SettingsScreen() {
                 }
 
                 SettingsSection("Свой провайдер") {
-                    OutlinedTextField(
-                        value = customBase,
-                        onValueChange = {
-                            customBase = it
-                            AppPrefs.setCustomBase(context, it)
-                        },
-                        label = { Text("Base URL") },
-                        singleLine = true,
-                        textStyle = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                    val providerUnlocked =
+                        PremiumStore.hasFeature(context, PremiumFeature.CUSTOM_PROVIDER)
+                    Box {
+                        OutlinedTextField(
+                            value = customBase,
+                            onValueChange = {
+                                customBase = it
+                                AppPrefs.setCustomBase(context, it)
+                            },
+                            label = { Text("Base URL") },
+                            singleLine = true,
+                            enabled = providerUnlocked,
+                            textStyle = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        if (!providerUnlocked) {
+                            LockedFieldOverlay {
+                                PremiumDialogs.show(
+                                    context,
+                                    "Свой провайдер",
+                                    PremiumFeature.CUSTOM_PROVIDER.minPlan,
+                                )
+                            }
+                        }
+                    }
 
-                    OutlinedTextField(
-                        value = customModel,
-                        onValueChange = {
-                            customModel = it
-                            AppPrefs.setCustomModel(context, it)
-                        },
-                        label = { Text("Модель") },
-                        singleLine = true,
-                        textStyle = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                    Box {
+                        OutlinedTextField(
+                            value = customModel,
+                            onValueChange = {
+                                customModel = it
+                                AppPrefs.setCustomModel(context, it)
+                            },
+                            label = { Text("Модель") },
+                            singleLine = true,
+                            enabled = providerUnlocked,
+                            textStyle = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        if (!providerUnlocked) {
+                            LockedFieldOverlay {
+                                PremiumDialogs.show(
+                                    context,
+                                    "Свой провайдер",
+                                    PremiumFeature.CUSTOM_PROVIDER.minPlan,
+                                )
+                            }
+                        }
+                    }
                 }
 
                 SettingsSection("Системный промпт") {
-                    OutlinedTextField(
-                        value = systemPrompt,
-                        onValueChange = {
-                            systemPrompt = it
-                            AppPrefs.setSystemPrompt(context, it)
-                        },
-                        label = { Text("Промпт") },
-                        minLines = 3,
-                        maxLines = 5,
-                        textStyle = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                    val promptUnlocked =
+                        PremiumStore.hasFeature(context, PremiumFeature.SYSTEM_PROMPT)
+                    Box {
+                        OutlinedTextField(
+                            value = systemPrompt,
+                            onValueChange = {
+                                systemPrompt = it
+                                AppPrefs.setSystemPrompt(context, it)
+                            },
+                            label = { Text("Промпт") },
+                            minLines = 3,
+                            maxLines = 5,
+                            enabled = promptUnlocked,
+                            textStyle = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        if (!promptUnlocked) {
+                            LockedFieldOverlay {
+                                PremiumDialogs.show(
+                                    context,
+                                    "Свой системный промпт",
+                                    PremiumFeature.SYSTEM_PROMPT.minPlan,
+                                )
+                            }
+                        }
+                    }
 
                     Row(
                         modifier = Modifier.horizontalScroll(rememberScrollState()),
@@ -340,14 +444,27 @@ fun SettingsScreen() {
                         promptPresets.forEach { (label, prompt) ->
                             AssistChip(
                                 onClick = {
-                                    systemPrompt = prompt
-                                    AppPrefs.setSystemPrompt(context, prompt)
+                                    requireFeature(PremiumFeature.PROMPT_PRESETS) {
+                                        systemPrompt = prompt
+                                        AppPrefs.setSystemPrompt(context, prompt)
+                                    }
                                 },
                                 leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
                                 label = { Text(label) },
                             )
                         }
                     }
+
+                    ActionRow(
+                        icon = Icons.Default.List,
+                        title = "Библиотека промптов",
+                        subtitle = "${PromptLibrary.items.size} готовых промптов",
+                        onClick = {
+                            requireFeature(PremiumFeature.PROMPT_LIBRARY) {
+                                showPromptLibrary = true
+                            }
+                        },
+                    )
                 }
             }
 
@@ -461,8 +578,10 @@ fun SettingsScreen() {
                         range = 10f..18f,
                         steps = 7,
                     ) {
-                        codeFont = it
-                        AppPrefs.setCodeFontSize(context, it)
+                        requireFeature(PremiumFeature.CODE_FONT) {
+                            codeFont = it
+                            AppPrefs.setCodeFontSize(context, it)
+                        }
                     }
 
                     SwitchSetting(
@@ -470,8 +589,10 @@ fun SettingsScreen() {
                         subtitle = "Короткий отклик на кнопку отправки",
                         checked = hapticFeedback,
                         onCheckedChange = {
-                            hapticFeedback = it
-                            AppPrefs.setHapticFeedback(context, it)
+                            requireFeature(PremiumFeature.HAPTIC) {
+                                hapticFeedback = it
+                                AppPrefs.setHapticFeedback(context, it)
+                            }
                         },
                     )
 
@@ -518,9 +639,11 @@ fun SettingsScreen() {
                             FilterChip(
                                 selected = accent == option.id,
                                 onClick = {
-                                    accent = option.id
-                                    AppPrefs.setAccent(context, option.id)
-                                    activity?.recreate()
+                                    requireFeature(PremiumFeature.ACCENT_COLORS) {
+                                        accent = option.id
+                                        AppPrefs.setAccent(context, option.id)
+                                        activity?.recreate()
+                                    }
                                 },
                                 label = { Text(option.label, style = MaterialTheme.typography.labelSmall) },
                             )
@@ -540,9 +663,11 @@ fun SettingsScreen() {
                             FilterChip(
                                 selected = chatFontFamily == id,
                                 onClick = {
-                                    chatFontFamily = id
-                                    AppPrefs.setChatFontFamily(context, id)
-                                    activity?.recreate()
+                                    requireFeature(PremiumFeature.CHAT_FONTS) {
+                                        chatFontFamily = id
+                                        AppPrefs.setChatFontFamily(context, id)
+                                        activity?.recreate()
+                                    }
                                 },
                                 label = { Text(label, style = MaterialTheme.typography.labelSmall) },
                             )
@@ -556,8 +681,10 @@ fun SettingsScreen() {
                         range = 240f..420f,
                         steps = 5,
                     ) {
-                        bubbleWidth = it
-                        AppPrefs.setBubbleWidth(context, it.roundToInt())
+                        requireFeature(PremiumFeature.BUBBLE_WIDTH) {
+                            bubbleWidth = it
+                            AppPrefs.setBubbleWidth(context, it.roundToInt())
+                        }
                     }
 
                     SwitchSetting(
@@ -565,8 +692,10 @@ fun SettingsScreen() {
                         subtitle = "Иконки пользователя и DevAI",
                         checked = showAvatars,
                         onCheckedChange = {
-                            showAvatars = it
-                            AppPrefs.setShowAvatars(context, it)
+                            requireFeature(PremiumFeature.AVATARS) {
+                                showAvatars = it
+                                AppPrefs.setShowAvatars(context, it)
+                            }
                         },
                     )
 
@@ -575,8 +704,10 @@ fun SettingsScreen() {
                         subtitle = "Меньше отступов между сообщениями",
                         checked = compactChat,
                         onCheckedChange = {
-                            compactChat = it
-                            AppPrefs.setCompactChat(context, it)
+                            requireFeature(PremiumFeature.COMPACT_CHAT) {
+                                compactChat = it
+                                AppPrefs.setCompactChat(context, it)
+                            }
                         },
                     )
                 }
@@ -592,11 +723,21 @@ fun SettingsScreen() {
                     ) {
                         Icon(Icons.Default.Favorite, contentDescription = null)
                         Spacer(Modifier.width(6.dp))
-                        Text(if (premium) "Premium активен" else "Открыть Premium")
+                        Text(
+                            if (plan.isPaid) "Premium ${plan.title} активен"
+                            else "Открыть Premium"
+                        )
                     }
                     Text(
-                        if (premium) "Премиум-темы, большие офлайн-модели и экспорт чата доступны."
-                        else "Премиум-темы, большие офлайн-модели и экспорт чата в Markdown.",
+                        if (plan.isPaid) {
+                            val until = PremiumStore.expiresText(context)
+                            val left = PremiumStore.daysLeft(context)
+                            "Открыто функций: ${PremiumFeature.forPlan(plan).size} из ${PremiumFeature.entries.size}." +
+                                if (until.isNotBlank()) " Действует до $until ($left дн.)." else " Навсегда."
+                        } else {
+                            "4 тарифа: Неделя, Месяц, Год и Навсегда. " +
+                                "На «Навсегда» — все ${PremiumFeature.entries.size} функций и будущие обновления."
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -613,7 +754,34 @@ fun SettingsScreen() {
                     ActionRow(
                         icon = Icons.Default.Share,
                         title = "Поделиться настройками",
+                        subtitle = "Premium Год",
                         onClick = { shareSettings() },
+                    )
+                    ActionRow(
+                        icon = Icons.Default.Share,
+                        title = "Экспорт всех чатов",
+                        subtitle = "Premium Год · JSON",
+                        onClick = { shareChats() },
+                    )
+                    ActionRow(
+                        icon = Icons.Default.List,
+                        title = "Импорт чатов",
+                        subtitle = "Premium Год · JSON",
+                        onClick = {
+                            requireFeature(PremiumFeature.CHAT_BACKUP) {
+                                importChats.launch(arrayOf("application/json", "text/plain", "*/*"))
+                            }
+                        },
+                    )
+                    ActionRow(
+                        icon = Icons.Default.Share,
+                        title = "QR-перенос настроек",
+                        subtitle = "Premium Год",
+                        onClick = {
+                            requireFeature(PremiumFeature.QR_EXPORT) {
+                                context.startActivity(Intent(context, QrExportActivity::class.java))
+                            }
+                        },
                     )
                     ActionRow(
                         icon = Icons.Default.Lock,
@@ -729,6 +897,49 @@ fun SettingsScreen() {
             },
             confirmButton = {
                 TextButton(onClick = { showTheme = false }) { Text("Закрыть") }
+            },
+        )
+    }
+
+    if (showPromptLibrary) {
+        AlertDialog(
+            onDismissRequest = { showPromptLibrary = false },
+            title = { Text("Библиотека промптов") },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 420.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    PromptLibrary.items.forEach { item ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    systemPrompt = item.prompt
+                                    AppPrefs.setSystemPrompt(context, item.prompt)
+                                    showPromptLibrary = false
+                                    toast("Промпт «${item.title}» установлен")
+                                }
+                                .padding(vertical = 8.dp),
+                        ) {
+                            Text(
+                                item.title,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                item.prompt.take(90) + "…",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showPromptLibrary = false }) { Text("Закрыть") }
             },
         )
     }
@@ -941,4 +1152,13 @@ private fun ActionRow(
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
+}
+
+@Composable
+private fun BoxScope.LockedFieldOverlay(onClick: () -> Unit) {
+    Box(
+        Modifier
+            .matchParentSize()
+            .clickable(onClick = onClick)
+    )
 }

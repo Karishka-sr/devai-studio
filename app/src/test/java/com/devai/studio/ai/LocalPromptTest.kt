@@ -16,6 +16,7 @@ class LocalPromptTest {
     fun chatmlIsSentAsPlainText() {
         val prompt = LocalPrompt.build(messages, "chatml")
         assertTrue(prompt.startsWith("System: Ты помощник"))
+        assertTrue(prompt.contains("Отвечай на русском языке"))
         assertTrue(prompt.contains("User: Привет"))
         assertTrue(prompt.endsWith("Assistant:"))
         assertTrue(!prompt.contains("<|"))

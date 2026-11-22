@@ -60,13 +60,14 @@ class LocalModelAdapter(
         val m = items[position]
         val b = holder.binding
         val installed = LocalModelStore.isInstalled(ctx, m)
+        val unlocked = LocalModelStore.isUnlocked(ctx, m)
         val isDownloading = downloading.contains(m.id)
-        val isActive = m.id == activeId && installed
+        val isActive = m.id == activeId && installed && unlocked
 
         b.modelName.text = m.name
         val extras = buildList {
             if (!m.builtIn) add(ctx.getString(R.string.local_models_custom_mark))
-            if (m.premium) add("PRO")
+            if (m.premium) add(m.requiredPlan.title)
         }
         b.modelMeta.text = ctx.getString(R.string.local_models_meta, sizeText(m), m.license) +
             if (extras.isEmpty()) "" else " · " + extras.joinToString(" · ")
@@ -97,9 +98,11 @@ class LocalModelAdapter(
                 b.btnDownload.visibility = View.GONE
                 b.btnUse.visibility = View.VISIBLE
                 b.btnUse.isEnabled = !isActive
-                b.btnUse.text = ctx.getString(
-                    if (isActive) R.string.local_models_active else R.string.local_models_use
-                )
+                b.btnUse.text = when {
+                    isActive -> ctx.getString(R.string.local_models_active)
+                    !unlocked -> "Открыть ${m.requiredPlan.title}"
+                    else -> ctx.getString(R.string.local_models_use)
+                }
                 b.btnDelete.visibility = View.VISIBLE
             }
             else -> {
@@ -110,7 +113,11 @@ class LocalModelAdapter(
                         ctx.getString(R.string.local_models_partial, human(part.length()))
                     else ctx.getString(R.string.local_models_not_downloaded)
                 b.btnDownload.visibility = if (m.url.isBlank()) View.GONE else View.VISIBLE
-                b.btnDownload.text = ctx.getString(R.string.local_models_download)
+                b.btnDownload.text = if (!unlocked) {
+                    "Открыть ${m.requiredPlan.title}"
+                } else {
+                    ctx.getString(R.string.local_models_download)
+                }
                 b.btnUse.visibility = View.GONE
                 b.btnDelete.visibility = if (m.builtIn) View.GONE else View.VISIBLE
             }

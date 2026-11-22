@@ -11,15 +11,20 @@
 - Runtime: `com.google.ai.edge.litertlm:litertlm:0.0.0-alpha05`.
 - Catalog/store: `data/LocalModelStore.kt`; downloader: `data/ModelDownloader.kt`; UI: `ui/LocalModelsActivity.kt`.
 - Models are downloaded to `getExternalFilesDir("models")`; `.part` files support resume.
-- Free: SmolLM 135M, LFM2.5 350M, SmolLM2 360M, Granite 4.0 H 350M, Qwen2.5 0.5B, Qwen3 0.6B. Premium: LFM2.5 1.2B, Qwen2.5 Coder 1.5B, TinyLlama 1.1B, Qwen2.5 1.5B, Qwen3 1.7B, DeepSeek R1 1.5B, SmolLM3 3B, Phi-4 Mini.
+- Free: SmolLM 135M, LFM2.5 350M, SmolLM2 360M, Granite 4.0 H 350M, Qwen2.5 0.5B, Qwen3 0.6B.
+- Premium Неделя: LFM2.5 1.2B, TinyLlama 1.1B, Qwen2.5 1.5B. Месяц: Qwen2.5 Coder 1.5B, Qwen3 1.7B. Год: DeepSeek R1 1.5B, SmolLM3 3B, Phi-4 Mini.
 - Catalog uses public LiteRT-LM files (`.task` and `.litertlm`). Do not add gated Hugging Face repos (Gemma, Falcon-H1): direct downloads return 401 without a token.
 - LiteRT-LM applies the model chat template itself. `ai/LocalPrompt.kt` sends plain text and sanitizes every message; never send `<bos>`/ChatML/Gemma control tokens to `generateContentStream`.
+- `LocalPrompt` always appends a Russian-language instruction, and `AppPrefs.DEFAULT_SYSTEM_PROMPT` / `DEV_SYSTEM_PROMPT` require Russian answers. This fixes small local models drifting into English benchmark-style output.
 - `data/ModelDownloader.kt` retries, resumes, and falls back to `hf-mirror.com` for Hugging Face URLs.
 
-## Themes & Premium
+## Themes & Premium (v2.14.0)
 - `util/ThemeManager.kt`: M3 (free, dynamic color), Expressive/Retro (premium).
-- `data/PremiumStore.kt`: local entitlement and promo codes (client-side validation; use a server for production).
-- Premium UI: `ui/PremiumActivity.kt`; gates: themes, large models, chat export.
+- `data/PremiumPlan.kt`: `PremiumPlan` (FREE/WEEK/MONTH/YEAR/LIFETIME) and 59 `PremiumFeature` entries with `minPlan`.
+- `data/PremiumStore.kt`: local entitlement, expiry timestamps, tier-aware codes (`DEVAI-WEEK`, `DEVAI-MONTH`, `DEVAI-YEAR`, `DEVAI-LIFETIME`), legacy codes migrate to LIFETIME.
+- `data/TelegramStars.kt`: order text and `t.me/FemClaudeMrrr` payment link; codes are issued manually after Stars payment.
+- Premium UI: `ui/PremiumActivity.kt` (tier cards, feature matrix, activation, Stars buttons). Gates: themes, model tiers, chat export, search/MCP/plugins/TTS/characters, chat customization, prompt library, backups, QR, history limit.
+- Chat backups: `ChatSessionsStore.exportJson/importJson`; prompt library: `data/PromptLibrary.kt` (24 prompts).
 
 ## Compose UI (v2.4.0)
 - Compose BOM 2026.03.01 (UI/foundation 1.10.6, Material3 1.4.0), `androidx.activity:activity-compose:1.10.1`, `androidx.graphics:graphics-shapes:1.1.0`, Compose compiler plugin 2.2.20.
@@ -35,7 +40,7 @@
 - Credit: Vexel by @cheburek_dev (https://t.me/cheburek_dev), used with permission.
 
 ## Notes
-- Google Play Billing is a placeholder (`ui/PremiumActivity.kt` "Купить" dialog); activation is promo-based.
+- Google Play Billing is not used. Premium is activated by tier code after Telegram Stars payment; entitlement is client-side.
 - Do not commit `build/`, `local.properties`, keystore.
 
 ## Tools & plugins (v2.13.0)

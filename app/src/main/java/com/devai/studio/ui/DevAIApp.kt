@@ -93,7 +93,8 @@ fun DevAITheme(content: @Composable () -> Unit) {
     val context = LocalContext.current
     val dark = isSystemInDarkTheme()
     val selected = AppPrefs.theme(context).let { id ->
-        if (ThemeManager.isPremium(id) && !PremiumStore.isPremium(context)) ThemeManager.M3 else id
+        val feature = ThemeManager.featureFor(id)
+        if (feature != null && !PremiumStore.hasFeature(context, feature)) ThemeManager.M3 else id
     }
     val base = when {
         selected == ThemeManager.EXPRESSIVE -> if (dark) ExpressiveDark else ExpressiveLight

@@ -6,7 +6,7 @@
 
 **Android-студия для разработки с ИИ.** Чат с ведущими моделями, генерация Android-проектов, рабочее пространство с файлами и офлайн-модели, которые работают без интернета.
 
-[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v2.13.0** · Android 12+ · arm64-v8a
+[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v2.14.0** · Android 12+ · arm64-v8a
 [Скачать PC-версию](https://github.com/Karishka-sr/devai-studio-pc/releases/latest) · **Windows 7/10/11 · 2.12.0** · JRE 8 внутри
 
 <p align="center">
@@ -14,7 +14,7 @@
     <img src="https://img.shields.io/badge/Telegram-@NeonBeatt-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram @NeonBeatt">
   </a>
   <a href="https://github.com/Karishka-sr/devai-studio/releases">
-    <img src="https://img.shields.io/badge/Download_APK-v2.13.0-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
+    <img src="https://img.shields.io/badge/Download_APK-v2.14.0-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
   </a>
   <a href="https://rytmix-live.pplx-2.app">
     <img src="https://img.shields.io/badge/Site-rytmix--live-0A66C2?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Сайт">
@@ -60,14 +60,14 @@
 | Granite 4.0 H 350M | ~436 МБ | Бесплатно |
 | Qwen2.5 0.5B | ~547 МБ | Бесплатно |
 | Qwen3 0.6B | ~614 МБ | Бесплатно |
-| LFM2.5 1.2B Instruct | ~736 МБ | Premium |
-| Qwen2.5 Coder 1.5B | ~1.12 ГБ | Premium |
-| TinyLlama 1.1B | ~1.15 ГБ | Premium |
-| Qwen2.5 1.5B | ~1.60 ГБ | Premium |
-| Qwen3 1.7B | ~1.75 ГБ | Premium |
-| DeepSeek R1 Distill 1.5B | ~1.86 ГБ | Premium |
-| SmolLM3 3B | ~2.00 ГБ | Premium |
-| Phi-4 Mini Instruct | ~3.94 ГБ | Premium |
+| LFM2.5 1.2B Instruct | ~736 МБ | Premium · Неделя |
+| Qwen2.5 Coder 1.5B | ~1.12 ГБ | Premium · Месяц |
+| TinyLlama 1.1B | ~1.15 ГБ | Premium · Неделя |
+| Qwen2.5 1.5B | ~1.60 ГБ | Premium · Неделя |
+| Qwen3 1.7B | ~1.75 ГБ | Premium · Месяц |
+| DeepSeek R1 Distill 1.5B | ~1.86 ГБ | Premium · Год |
+| SmolLM3 3B | ~2.00 ГБ | Premium · Год |
+| Phi-4 Mini Instruct | ~3.94 ГБ | Premium · Год |
 
 - Докачка после отмены, прогресс, удаление.
 - Импорт своего `.task` или `.litertlm` и добавление модели по прямой ссылке.
@@ -127,19 +127,23 @@
 - Переключение: Настройки → Оформление.
 
 ### 👑 Premium
-- Премиум-стили оформления.
-- Большие офлайн-модели: LFM2.5 1.2B, Qwen2.5 Coder 1.5B, Qwen3 1.7B, DeepSeek R1 1.5B, SmolLM3 3B и Phi-4 Mini.
-- Экспорт чата в Markdown.
-- Активация промокодом. Оплата через Google Play Billing — в планах.
+Четыре тарифа: **Неделя**, **Месяц**, **Год**, **Навсегда**. Чем длиннее тариф, тем больше функций; на «Навсегда» открыты все 59 функций и будущие обновления.
+
+- **Неделя:** Expressive-тема, вибрация, экспорт чата, докачка моделей, LFM2.5 1.2B, TinyLlama 1.1B, Qwen2.5 1.5B.
+- **Месяц:** всё из недели + Retro-тема, 10 акцентов, шрифты, ширина пузырей, аватары, компактный чат, библиотека из 24 промптов, веб-поиск, персонажи, свой провайдер, Qwen2.5 Coder, Qwen3 1.7B.
+- **Год:** всё из месяца + размер кода, TTS, вся история, свой системный промпт, бэкап настроек и всех чатов, QR-перенос, DeepSeek R1, SmolLM3 3B, Phi-4 Mini, ранний доступ.
+- **Навсегда:** все функции, включая MCP, плагины, будущие модели и темы, агентный режим, GitHub/GitLab, сборку APK, облачную синхронизацию, голос, vision и генерацию изображений (часть — в разработке).
+
+Оплата — **Telegram Stars** через [@FemClaudeMrrr](https://t.me/FemClaudeMrrr). Кнопка «Оплатить» открывает Telegram с готовым заказом; после оплаты продавец выдаёт код активации (`DEVAI-WEEK`, `DEVAI-MONTH`, `DEVAI-YEAR`, `DEVAI-LIFETIME`).
 
 ## Установка
-1. Скачайте `devai-studio-2.13.0.apk` в разделе [Releases](https://github.com/Karishka-sr/devai-studio/releases).
+1. Скачайте `devai-studio-2.14.0.apk` в разделе [Releases](https://github.com/Karishka-sr/devai-studio/releases).
 2. Разрешите установку из неизвестных источников.
 3. Требования: Android 12+ (minSdk 31), процессор arm64-v8a.
 
-Текущая сборка: **2.13.0** с конструктором Vexel (`devai-studio-2.13.0.apk`).
+Текущая сборка: **2.14.0** с конструктором Vexel (`devai-studio-2.14.0.apk`).
 
-> 2.4.0 не использовать: в ней был вылет при открытии Настроек. Исправлено в 2.4.1+, актуальная — 2.13.0.
+> 2.4.0 не использовать: в ней был вылет при открытии Настроек. Исправлено в 2.4.1+, актуальная — 2.14.0.
 
 APK подписан самоподписанным ключом, поэтому Play Protect может показать предупреждение.
 
@@ -191,7 +195,7 @@ SmolChat (Apache-2.0) и Off Grid AI (MIT).
 - Локальные модели в каталоге текстовые: vision/audio-бэкенды LiteRT-LM отключены.
 - Небольшие офлайн-модели подходят для простых задач; для сложного кода лучше облачные модели.
 - Для Qwen2.5 1.5B рекомендуется 6 ГБ RAM.
-- Premium и промокоды проверяются локально. Для продакшена нужен сервер или Google Play Billing.
+- Premium и промокоды проверяются локально; оплата звёздами Telegram подтверждается вручную. Для продакшена нужен сервер.
 
 
 ## 💬 Сообщество

@@ -189,6 +189,7 @@
     <string name="premium_open">Открыть Premium</string>
     <string name="premium_later">Позже</string>
     <string name="premium_locked_message">«%1$s» доступно в DevAI Studio Premium.\n\nАктивируйте промокод или купите Premium.</string>
+    <string name="premium_locked_plan">«%1$s» доступно в тарифе «%2$s» (от %3$d ⭐).\n\nОплатите звёздами в Telegram и введите код активации.</string>
     <string name="premium_status_button_free">👑 Premium: бесплатная версия</string>
     <string name="premium_status_button_active">👑 Premium активен</string>
     <string name="premium_feature_themes">Стили оформления</string>

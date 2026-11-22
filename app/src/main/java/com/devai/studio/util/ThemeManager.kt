@@ -3,6 +3,7 @@ package com.devai.studio.util
 import android.app.Activity
 import com.devai.studio.R
 import com.devai.studio.data.AppPrefs
+import com.devai.studio.data.PremiumFeature
 import com.devai.studio.data.PremiumStore
 import com.google.android.material.color.DynamicColors
 
@@ -45,7 +46,8 @@ object ThemeManager {
 
     private fun current(activity: Activity): String {
         val id = AppPrefs.theme(activity)
-        return if (isPremium(id) && !PremiumStore.isPremium(activity)) M3 else id
+        val feature = featureFor(id) ?: return id
+        return if (PremiumStore.hasFeature(activity, feature)) id else M3
     }
 
     fun styleRes(id: String): Int = when (id) {
@@ -55,6 +57,12 @@ object ThemeManager {
     }
 
     fun isPremium(id: String): Boolean = id != M3
+
+    fun featureFor(id: String): PremiumFeature? = when (id) {
+        EXPRESSIVE -> PremiumFeature.EXPRESSIVE_THEME
+        RETRO -> PremiumFeature.RETRO_THEME
+        else -> null
+    }
 
     fun labelRes(id: String): Int = when (id) {
         EXPRESSIVE -> R.string.theme_expressive

@@ -2,6 +2,9 @@ package com.devai.studio.ai
 
 object LocalPrompt {
 
+    private const val RUSSIAN =
+        "Отвечай на русском языке. Не начинай ответ с английских инструкций или шаблонов."
+
     /**
      * LiteRT-LM applies the model's own chat template and rejects control tokens in the
      * input. Keep the prompt as plain text, even for models imported with a legacy format.
@@ -16,7 +19,9 @@ object LocalPrompt {
             .map { it.copy(content = PromptSanitizer.clean(it.content).take(4000)) }
 
         return buildString {
-            if (system.isNotBlank()) append("System: ").append(system).append("\n\n")
+            append("System: ")
+            if (system.isNotBlank()) append(system).append(' ')
+            append(RUSSIAN).append("\n\n")
             turns.forEach { m ->
                 append(if (m.role == "user") "User: " else "Assistant: ")
                     .append(m.content).append("\n\n")
