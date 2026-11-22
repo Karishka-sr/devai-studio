@@ -17,9 +17,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
@@ -124,8 +122,7 @@ private fun VexelArt() {
             modifier = Modifier
                 .offset(0.dp, 466.11.dp)
                 .alpha(0.4f)
-                .clickable(onClick = { uriHandler.openUri("https://t.me/FemClaudeMrrr") })
-                .blur(1.07.dp, BlurredEdgeTreatment.Unbounded),
+                .clickable(onClick = { uriHandler.openUri("https://t.me/FemClaudeMrrr") }),
             color = MaterialTheme.colorScheme.onSurface,
             fontSize = 36.71.sp,
             fontWeight = FontWeight.W700,

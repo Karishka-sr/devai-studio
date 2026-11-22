@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
 import androidx.appcompat.app.AlertDialog
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import com.devai.studio.R
@@ -36,6 +37,15 @@ class SettingsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val ctx = requireContext()
+
+        runCatching {
+            binding.authorArt.setViewCompositionStrategy(
+                ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
+            )
+            binding.authorArt.setContent { AuthorArtBanner() }
+        }.onFailure {
+            binding.authorArt.visibility = View.GONE
+        }
 
         binding.temperatureBar.max = 20
         binding.temperatureBar.progress = (AppPrefs.temperature(ctx) * 20f).toInt().coerceIn(0, 20)

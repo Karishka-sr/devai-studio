@@ -38,10 +38,11 @@
         <activity
             android:name="com.qwenz.qwel.MainActivity"
             android:exported="false"
-            android:label="Vexel"
+            android:label="@string/vexel_app_name"
+            android:icon="@mipmap/vexel_ic_launcher"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode|density|fontScale"
             android:windowSoftInputMode="adjustResize"
-            android:theme="@style/Theme.Qwel" />
+            android:theme="@style/Theme.Vexel" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
