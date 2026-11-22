@@ -22,7 +22,7 @@ class LocalLlmClient(private val ctx: Context) : AiClient {
         val gate = ResponseGate(onDelta)
         val raw = LocalLlmEngine.generate(ctx, file.absolutePath, prompt) { gate.onChunk(it) }
         gate.finish()
-        if (gate.blocked || ResponseGuard.isMeta(raw)) {
+        if (gate.blocked || raw.isBlank() || ResponseGuard.isMeta(raw)) {
             val reply = ResponseGuard.fallback(lastUser)
             onDelta(reply)
             return reply
