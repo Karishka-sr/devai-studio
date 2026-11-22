@@ -22,6 +22,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
@@ -29,7 +30,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
@@ -80,7 +81,7 @@ import kotlin.math.roundToInt
 private enum class SettingsCategory(val title: String, val icon: ImageVector) {
     GENERATION("Генерация", Icons.Default.Settings),
     MODELS("Модели", Icons.Default.PlayArrow),
-    CHAT("Чат", Icons.Default.Send),
+    CHAT("Чат", Icons.AutoMirrored.Filled.Send),
     LOOK("Вид", Icons.Default.Star),
     PREMIUM("Premium", Icons.Default.Favorite),
     DATA("Данные", Icons.Default.Lock),
@@ -334,6 +335,7 @@ fun SettingsScreen() {
                                     systemPrompt = prompt
                                     AppPrefs.setSystemPrompt(context, prompt)
                                 },
+                                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
                                 label = { Text(label) },
                             )
                         }

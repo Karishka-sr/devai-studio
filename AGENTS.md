@@ -35,7 +35,7 @@
 - Google Play Billing is a placeholder (`ui/PremiumActivity.kt` "Купить" dialog); activation is promo-based.
 - Do not commit `build/`, `local.properties`, keystore.
 
-## Tools & plugins (v2.11.2)
+## Tools & plugins (v2.11.3)
 - New bottom-nav tab `ui/ToolsScreen.kt`: multi-source search, TTS, MCP, characters, `.devai` plugins, QR export, plugin docs.
 - Search (`data/SearchClient.kt`) queries Tavily (optional key), GitHub (repos/issues; optional token also enables code search), Stack Overflow, Wikipedia, DuckDuckGo and Hacker News in parallel. Tavily/GitHub keys are optional because the other sources work without auth.
 - `.devai` plugins are real Lua 5.2 plugins via `org.luaj:luaj-jse:3.0.1` (MIT). Engine: `data/LuaPluginEngine.kt`; store/parser: `data/PluginStore.kt`.
@@ -43,6 +43,7 @@
 - Plugin commands are user-invoked; plugin tools are exposed to the AI through OpenAI-compatible tool calling (`ai/ToolAgent.kt`, `ai/OpenAiCompatClient.kt`). MCP tools use the same `AgentTool` abstraction.
 - Docs: `docs/PLUGINS.md` (large guide) copied to `assets/devai-plugins.md`; in-app renderer/download in `ui/PluginDocsActivity.kt`.
 - Samples: `assets/plugins/{summarizer,code-review,lua-tools}.devai`.
+- Chat/Tools/Providers/Settings chips and actions use Material icons; emoji are not used as UI icons.
 - App icon: adaptive `drawable/ic_launcher_{background,foreground,monochrome}.xml` (gradient D + spark), v33 monochrome; README image `docs/devai-icon.png`.
 - Gemini input is cleaned by `ai/PromptSanitizer.kt`; it strips `<bos>`, `<start_of_turn>`, ChatML and similar control tokens before sending.
 - Keep Vexel untouched: verify `git diff v2.9.0 -- app/src/main/kotlin/com/qwenz/qwel app/src/main/assets/{icons,fonts,fun,lang}` is empty on every release.

@@ -36,14 +36,16 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
@@ -474,7 +476,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
             },
             actions = {
                 IconButton(onClick = { openSessions() }) {
-                    Icon(Icons.Default.List, contentDescription = "Сессии")
+                    Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Сессии")
                 }
                 IconButton(onClick = { newChat() }) {
                     Icon(Icons.Default.Add, contentDescription = "Новый чат")
@@ -541,7 +543,8 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                     searchEnabled = !searchEnabled
                     AppPrefs.setSearchEnabled(context, searchEnabled)
                 },
-                label = { Text("🌐 Поиск") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                label = { Text("Поиск") },
             )
             FilterChip(
                 selected = mcpEnabled,
@@ -552,22 +555,26 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                         toast("MCP: добавьте сервер в «Инструменты».")
                     }
                 },
-                label = { Text("🔧 MCP") },
+                leadingIcon = { Icon(Icons.Default.Build, contentDescription = null) },
+                label = { Text("MCP") },
             )
             AssistChip(
                 onClick = { openPlugins() },
-                label = { Text("🧩 Плагины") },
+                leadingIcon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
+                label = { Text("Плагины") },
             )
             AssistChip(
                 onClick = {
                     context.startActivity(Intent(context, CharactersActivity::class.java))
                 },
-                label = { Text("🎭 $characterName") },
+                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                label = { Text(characterName) },
             )
             attachments.forEach { attachment ->
                 AssistChip(
                     onClick = { attachments = attachments - attachment },
-                    label = { Text("📎 ${attachment.name}") },
+                    leadingIcon = { Icon(Icons.Default.Close, contentDescription = null) },
+                    label = { Text(attachment.name) },
                 )
             }
         }
@@ -595,7 +602,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                         )
                     },
                 ) {
-                    Text("📎", fontSize = 20.sp)
+                    Icon(Icons.Default.Add, contentDescription = "Прикрепить файл")
                 }
                 OutlinedTextField(
                     value = input,
@@ -619,7 +626,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                     enabled = streaming || input.isNotBlank() || attachments.isNotEmpty(),
                 ) {
                     Icon(
-                        imageVector = if (streaming) Icons.Default.Close else Icons.Default.Send,
+                        imageVector = if (streaming) Icons.Default.Close else Icons.AutoMirrored.Filled.Send,
                         contentDescription = if (streaming) "Стоп" else "Отправить",
                     )
                 }
@@ -837,6 +844,7 @@ private fun EmptyChat(
             }).forEach { text ->
                 AssistChip(
                     onClick = { onSuggestion(text) },
+                    leadingIcon = { Icon(Icons.Default.Create, contentDescription = null) },
                     label = { Text(text) },
                 )
             }
@@ -936,7 +944,9 @@ private fun MessageBubble(
                 }
                 if (!isUser && message.content.isNotBlank()) {
                     TextButton(onClick = { onSpeak(message.content) }) {
-                        Text("🔊 Озвучить")
+                        Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Озвучить")
                     }
                 }
             }

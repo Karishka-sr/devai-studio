@@ -19,9 +19,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -38,6 +40,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.devai.studio.ai.AiFormat
@@ -163,7 +166,7 @@ fun ProvidersScreen() {
                             onClick = { openLocalModels() },
                             modifier = Modifier.weight(1f),
                         ) {
-                            Icon(Icons.Default.List, contentDescription = null)
+                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = null)
                             Spacer(Modifier.width(6.dp))
                             Text("Локальные модели")
                         }
@@ -185,12 +188,16 @@ fun ProvidersScreen() {
                         FilterChip(
                             selected = filter == null,
                             onClick = { filter = null },
+                            leadingIcon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
                             label = { Text("Все") },
                         )
                         Category.entries.forEach { category ->
                             FilterChip(
                                 selected = filter == category,
                                 onClick = { filter = category },
+                                leadingIcon = {
+                                    Icon(categoryIcon(category), contentDescription = null)
+                                },
                                 label = { Text(categoryLabel(category)) },
                             )
                         }
@@ -291,7 +298,7 @@ private fun ProviderCard(
                     Text("Ключ")
                 }
                 TextButton(onClick = onModel) {
-                    Icon(Icons.Default.List, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(Icons.AutoMirrored.Filled.List, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(4.dp))
                     Text("Модель")
                 }
@@ -314,6 +321,12 @@ private sealed interface ProviderRow {
     data object Header : ProviderRow
     data class CategoryHeader(val category: Category) : ProviderRow
     data class Provider(val info: ProviderInfo) : ProviderRow
+}
+
+private fun categoryIcon(category: Category): ImageVector = when (category) {
+    Category.FULLY_FREE -> Icons.Default.Star
+    Category.FREE -> Icons.Default.CheckCircle
+    Category.PAID -> Icons.Default.ShoppingCart
 }
 
 private fun categoryLabel(category: Category): String = when (category) {

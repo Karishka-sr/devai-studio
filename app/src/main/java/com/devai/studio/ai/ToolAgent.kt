@@ -56,7 +56,7 @@ object ToolAgent {
                 return text
             }
 
-            onDelta("🔧 " + result.calls.joinToString { it.name } + "\n\n")
+            onDelta("Инструменты: " + result.calls.joinToString { it.name } + "\n\n")
             raw.add(
                 JSONObject()
                     .put("role", "assistant")

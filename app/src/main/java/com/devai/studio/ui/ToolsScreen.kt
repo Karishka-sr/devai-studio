@@ -16,7 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
@@ -194,7 +194,7 @@ fun ToolsScreen() {
                 Column(Modifier.weight(1f)) {
                     Text("Озвучивать ответы автоматически")
                     Text(
-                        "Кнопка 🔊 есть у каждого ответа.",
+                        "Кнопка «Озвучить» есть у каждого ответа.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -285,7 +285,7 @@ fun ToolsScreen() {
         ToolCard(
             "Плагины .devai",
             "Lua 5.2 в песочнице: команды и инструменты, которые вызывает ИИ.",
-            icon = Icons.Default.List,
+            icon = Icons.AutoMirrored.Filled.List,
         ) {
             val plugins = PluginStore.list(context)
             Text(
