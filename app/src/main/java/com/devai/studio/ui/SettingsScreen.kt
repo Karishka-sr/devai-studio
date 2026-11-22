@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -22,9 +23,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
@@ -32,6 +37,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -43,6 +49,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +57,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
@@ -68,6 +76,16 @@ import com.devai.studio.data.PremiumStore
 import com.devai.studio.util.PremiumDialogs
 import com.devai.studio.util.ThemeManager
 import kotlin.math.roundToInt
+
+private enum class SettingsCategory(val title: String, val icon: ImageVector) {
+    GENERATION("Генерация", Icons.Default.Settings),
+    MODELS("Модели", Icons.Default.PlayArrow),
+    CHAT("Чат", Icons.Default.Send),
+    LOOK("Вид", Icons.Default.Star),
+    PREMIUM("Premium", Icons.Default.Favorite),
+    DATA("Данные", Icons.Default.Lock),
+    ABOUT("О приложении", Icons.Default.Info),
+}
 
 @Composable
 fun SettingsScreen() {
@@ -92,6 +110,7 @@ fun SettingsScreen() {
     var systemPrompt by remember { mutableStateOf(AppPrefs.systemPrompt(context)) }
     var themeId by remember { mutableStateOf(AppPrefs.theme(context)) }
     var premium by remember { mutableStateOf(PremiumStore.isPremium(context)) }
+    var category by remember { mutableStateOf(SettingsCategory.GENERATION) }
     var showTheme by remember { mutableStateOf(false) }
     var showClearKeys by remember { mutableStateOf(false) }
     var showClearHistory by remember { mutableStateOf(false) }
@@ -152,369 +171,414 @@ fun SettingsScreen() {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
+    val scrollState = rememberScrollState()
+    LaunchedEffect(category) { scrollState.scrollTo(0) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+            .verticalScroll(scrollState)
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 Icons.Default.Settings,
                 contentDescription = null,
-                modifier = Modifier.size(28.dp),
+                modifier = Modifier.size(24.dp),
                 tint = MaterialTheme.colorScheme.primary,
             )
             Spacer(Modifier.width(8.dp))
-            Text("Настройки", style = MaterialTheme.typography.headlineMedium)
-        }
-
-        SettingsSection("Генерация") {
-            SliderSetting(
-                title = "Температура",
-                valueLabel = "%.2f".format(temperature),
-                value = temperature,
-                range = 0f..1f,
-                steps = 19,
-            ) {
-                temperature = it
-                AppPrefs.setTemperature(context, it)
-            }
-
-            SliderSetting(
-                title = "Top-P",
-                valueLabel = "%.2f".format(topP),
-                value = topP,
-                range = 0.1f..1f,
-                steps = 17,
-            ) {
-                topP = it
-                AppPrefs.setTopP(context, it)
-            }
-
-            NumberSetting(
-                label = "Макс. токенов",
-                value = maxTokens,
-                supporting = "1–100000",
-                onChange = {
-                    maxTokens = it
-                    it.toIntOrNull()?.let { value ->
-                        if (value in 1..100000) AppPrefs.setMaxTokens(context, value)
-                    }
-                },
-            )
-
-            NumberSetting(
-                label = "Лимит истории",
-                value = historyLimit,
-                supporting = "Сколько последних сообщений отправлять. 0 — вся история",
-                onChange = {
-                    historyLimit = it
-                    it.toIntOrNull()?.let { value ->
-                        if (value in 0..500) AppPrefs.setHistoryLimit(context, value)
-                    }
-                },
-            )
-
-            NumberSetting(
-                label = "Таймаут запроса, сек",
-                value = timeout,
-                supporting = "15–600",
-                onChange = {
-                    timeout = it
-                    it.toIntOrNull()?.let { value ->
-                        if (value in 15..600) AppPrefs.setTimeoutSeconds(context, value)
-                    }
-                },
-            )
-
-            OutlinedTextField(
-                value = customBase,
-                onValueChange = {
-                    customBase = it
-                    AppPrefs.setCustomBase(context, it)
-                },
-                label = { Text("Свой base URL") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            OutlinedTextField(
-                value = customModel,
-                onValueChange = {
-                    customModel = it
-                    AppPrefs.setCustomModel(context, it)
-                },
-                label = { Text("Своя модель") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            OutlinedTextField(
-                value = systemPrompt,
-                onValueChange = {
-                    systemPrompt = it
-                    AppPrefs.setSystemPrompt(context, it)
-                },
-                label = { Text("Системный промпт") },
-                minLines = 3,
-                maxLines = 6,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
             Text(
-                "Пресеты промпта",
-                style = MaterialTheme.typography.labelLarge,
+                "Настройки",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                "v" + appVersion(),
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                promptPresets.forEach { (label, prompt) ->
-                    AssistChip(
-                        onClick = {
-                            systemPrompt = prompt
-                            AppPrefs.setSystemPrompt(context, prompt)
+        }
+
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            SettingsCategory.entries.forEach { item ->
+                FilterChip(
+                    selected = category == item,
+                    onClick = { category = item },
+                    label = { Text(item.title, style = MaterialTheme.typography.labelMedium) },
+                    leadingIcon = {
+                        Icon(
+                            item.icon,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    },
+                )
+            }
+        }
+
+        when (category) {
+            SettingsCategory.GENERATION -> {
+                SettingsSection("Параметры запроса") {
+                    SliderSetting(
+                        title = "Температура",
+                        valueLabel = "%.2f".format(temperature),
+                        value = temperature,
+                        range = 0f..1f,
+                        steps = 19,
+                    ) {
+                        temperature = it
+                        AppPrefs.setTemperature(context, it)
+                    }
+
+                    SliderSetting(
+                        title = "Top-P",
+                        valueLabel = "%.2f".format(topP),
+                        value = topP,
+                        range = 0.1f..1f,
+                        steps = 17,
+                    ) {
+                        topP = it
+                        AppPrefs.setTopP(context, it)
+                    }
+
+                    CompactNumberSetting(
+                        label = "Макс. токенов",
+                        value = maxTokens,
+                        supporting = "1–100000",
+                        onChange = {
+                            maxTokens = it
+                            it.toIntOrNull()?.let { value ->
+                                if (value in 1..100000) AppPrefs.setMaxTokens(context, value)
+                            }
                         },
-                        label = { Text(label) },
+                    )
+
+                    CompactNumberSetting(
+                        label = "Лимит истории",
+                        value = historyLimit,
+                        supporting = "0 — вся история",
+                        onChange = {
+                            historyLimit = it
+                            it.toIntOrNull()?.let { value ->
+                                if (value in 0..500) AppPrefs.setHistoryLimit(context, value)
+                            }
+                        },
+                    )
+
+                    CompactNumberSetting(
+                        label = "Таймаут, сек",
+                        value = timeout,
+                        supporting = "15–600",
+                        onChange = {
+                            timeout = it
+                            it.toIntOrNull()?.let { value ->
+                                if (value in 15..600) AppPrefs.setTimeoutSeconds(context, value)
+                            }
+                        },
                     )
                 }
-            }
-        }
 
-        SettingsSection("Локальные модели") {
-            SliderSetting(
-                title = "Контекст, токенов",
-                valueLabel = localContext.roundToInt().toString(),
-                value = localContext,
-                range = 512f..1280f,
-                steps = 2,
-            ) {
-                val rounded = (it / 256f).roundToInt() * 256
-                localContext = rounded.toFloat()
-                AppPrefs.setLocalContextTokens(context, rounded)
-            }
+                SettingsSection("Свой провайдер") {
+                    OutlinedTextField(
+                        value = customBase,
+                        onValueChange = {
+                            customBase = it
+                            AppPrefs.setCustomBase(context, it)
+                        },
+                        label = { Text("Base URL") },
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
 
-            NumberSetting(
-                label = "Top-K",
-                value = localTopK,
-                supporting = "1–100. Меньше — стабильнее, больше — разнообразнее",
-                onChange = {
-                    localTopK = it
-                    it.toIntOrNull()?.let { value ->
-                        if (value in 1..100) AppPrefs.setLocalTopK(context, value)
+                    OutlinedTextField(
+                        value = customModel,
+                        onValueChange = {
+                            customModel = it
+                            AppPrefs.setCustomModel(context, it)
+                        },
+                        label = { Text("Модель") },
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+
+                SettingsSection("Системный промпт") {
+                    OutlinedTextField(
+                        value = systemPrompt,
+                        onValueChange = {
+                            systemPrompt = it
+                            AppPrefs.setSystemPrompt(context, it)
+                        },
+                        label = { Text("Промпт") },
+                        minLines = 3,
+                        maxLines = 5,
+                        textStyle = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        promptPresets.forEach { (label, prompt) ->
+                            AssistChip(
+                                onClick = {
+                                    systemPrompt = prompt
+                                    AppPrefs.setSystemPrompt(context, prompt)
+                                },
+                                label = { Text(label) },
+                            )
+                        }
                     }
-                },
-            )
-
-            Text(
-                "Изменения применятся при следующем запросе: движок перезагрузит модель.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(
-                    onClick = {
-                        context.startActivity(Intent(context, LocalModelsActivity::class.java))
-                    },
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text("Локальные модели")
-                }
-                OutlinedButton(
-                    onClick = {
-                        LocalLlmEngine.close()
-                        toast("Модель выгружена")
-                    },
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text("Выгрузить")
-                }
-            }
-        }
-
-        SettingsSection("Чат") {
-            SliderSetting(
-                title = "Размер текста",
-                valueLabel = "%.0f sp".format(chatFont),
-                value = chatFont,
-                range = 12f..22f,
-                steps = 9,
-            ) {
-                chatFont = it
-                AppPrefs.setChatFontSize(context, it)
-            }
-
-            SwitchSetting(
-                title = "Перенос длинных строк кода",
-                subtitle = "Если выключено, код прокручивается по горизонтали",
-                checked = codeWrap,
-                onCheckedChange = {
-                    codeWrap = it
-                    AppPrefs.setCodeWrap(context, it)
-                },
-            )
-
-            SwitchSetting(
-                title = "Отправлять по Enter",
-                subtitle = "Если выключено, Enter переносит строку",
-                checked = sendOnEnter,
-                onCheckedChange = {
-                    sendOnEnter = it
-                    AppPrefs.setSendOnEnter(context, it)
-                },
-            )
-
-            SwitchSetting(
-                title = "Автопрокрутка",
-                subtitle = "Прокручивать к последнему сообщению",
-                checked = autoScroll,
-                onCheckedChange = {
-                    autoScroll = it
-                    AppPrefs.setAutoScroll(context, it)
-                },
-            )
-        }
-
-        SettingsSection("Оформление") {
-            OutlinedButton(
-                onClick = { showTheme = true },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Icon(Icons.Default.Settings, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Оформление: " + stringResource(ThemeManager.labelRes(themeId)))
-            }
-
-            SwitchSetting(
-                title = "Dynamic color",
-                subtitle = "Цвета системы на Android 12+. Работает для Material Design 3",
-                checked = dynamicColor,
-                onCheckedChange = {
-                    dynamicColor = it
-                    AppPrefs.setDynamicColor(context, it)
-                    activity?.recreate()
-                },
-            )
-        }
-
-        SettingsSection("Premium") {
-            Button(
-                onClick = {
-                    context.startActivity(Intent(context, PremiumActivity::class.java))
-                },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Icon(Icons.Default.Star, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(if (premium) "Premium активен" else "Открыть Premium")
-            }
-            Text(
-                if (premium) "Премиум-темы, большие офлайн-модели и экспорт чата доступны."
-                else "Премиум-темы, большие офлайн-модели и экспорт чата в Markdown.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-
-        SettingsSection("Данные") {
-            OutlinedButton(
-                onClick = { showClearHistory = true },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Icon(Icons.Default.Delete, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Очистить историю чатов")
-            }
-
-            OutlinedButton(
-                onClick = { shareSettings() },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Icon(Icons.Default.Share, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Поделиться настройками")
-            }
-
-            OutlinedButton(
-                onClick = { showClearKeys = true },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Icon(Icons.Default.Lock, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Сбросить API-ключи")
-            }
-
-            OutlinedButton(
-                onClick = { showReset = true },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Icon(Icons.Default.Refresh, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Сбросить настройки")
-            }
-        }
-
-        SettingsSection("О приложении") {
-            Text(
-                "DevAI Studio " + appVersion(),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Row {
-                TextButton(onClick = {
-                    openUrl("https://github.com/Karishka-sr/devai-studio/releases")
-                }) {
-                    Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Обновления")
-                }
-                TextButton(onClick = { openUrl(context.getString(R.string.author_telegram_url)) }) {
-                    Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Telegram")
-                }
-                TextButton(onClick = { openUrl(context.getString(R.string.author_site_url)) }) {
-                    Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("Сайт")
                 }
             }
 
-            Card(Modifier.fillMaxWidth()) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Text("Автор", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        "Miko",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
+            SettingsCategory.MODELS -> {
+                SettingsSection("Локальные модели") {
+                    SliderSetting(
+                        title = "Контекст, токенов",
+                        valueLabel = localContext.roundToInt().toString(),
+                        value = localContext,
+                        range = 512f..1280f,
+                        steps = 2,
+                    ) {
+                        val rounded = (it / 256f).roundToInt() * 256
+                        localContext = rounded.toFloat()
+                        AppPrefs.setLocalContextTokens(context, rounded)
+                    }
+
+                    CompactNumberSetting(
+                        label = "Top-K",
+                        value = localTopK,
+                        supporting = "1–100. Меньше — стабильнее",
+                        onChange = {
+                            localTopK = it
+                            it.toIntOrNull()?.let { value ->
+                                if (value in 1..100) AppPrefs.setLocalTopK(context, value)
+                            }
+                        },
                     )
+
                     Text(
-                        "Vexel / DevAI Studio",
-                        style = MaterialTheme.typography.bodyMedium,
+                        "Изменения применятся при следующем запросе.",
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Text(
-                        text = stringResource(R.string.settings_author_credit),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.clickable {
-                            openUrl(context.getString(R.string.author_vexel_url))
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = {
+                                context.startActivity(
+                                    Intent(context, LocalModelsActivity::class.java)
+                                )
+                            },
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null)
+                            Spacer(Modifier.width(4.dp))
+                            Text("Модели")
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                LocalLlmEngine.close()
+                                toast("Модель выгружена")
+                            },
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Icon(Icons.Default.Refresh, contentDescription = null)
+                            Spacer(Modifier.width(4.dp))
+                            Text("Выгрузить")
+                        }
+                    }
+                }
+            }
+
+            SettingsCategory.CHAT -> {
+                SettingsSection("Чат") {
+                    SliderSetting(
+                        title = "Размер текста",
+                        valueLabel = "%.0f sp".format(chatFont),
+                        value = chatFont,
+                        range = 12f..22f,
+                        steps = 9,
+                    ) {
+                        chatFont = it
+                        AppPrefs.setChatFontSize(context, it)
+                    }
+
+                    SwitchSetting(
+                        title = "Перенос длинных строк кода",
+                        subtitle = "Иначе код прокручивается по горизонтали",
+                        checked = codeWrap,
+                        onCheckedChange = {
+                            codeWrap = it
+                            AppPrefs.setCodeWrap(context, it)
+                        },
+                    )
+
+                    SwitchSetting(
+                        title = "Отправлять по Enter",
+                        subtitle = "Иначе Enter переносит строку",
+                        checked = sendOnEnter,
+                        onCheckedChange = {
+                            sendOnEnter = it
+                            AppPrefs.setSendOnEnter(context, it)
+                        },
+                    )
+
+                    SwitchSetting(
+                        title = "Автопрокрутка",
+                        subtitle = "К последнему сообщению",
+                        checked = autoScroll,
+                        onCheckedChange = {
+                            autoScroll = it
+                            AppPrefs.setAutoScroll(context, it)
                         },
                     )
                 }
             }
 
-            Text(
-                "Конструктор Vexel не изменялся. Оригинал: t.me/cheburek_dev",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            SettingsCategory.LOOK -> {
+                SettingsSection("Оформление") {
+                    ActionRow(
+                        icon = Icons.Default.Star,
+                        title = "Тема",
+                        subtitle = stringResource(ThemeManager.labelRes(themeId)),
+                        onClick = { showTheme = true },
+                    )
+
+                    SwitchSetting(
+                        title = "Dynamic color",
+                        subtitle = "Цвета системы на Android 12+",
+                        checked = dynamicColor,
+                        onCheckedChange = {
+                            dynamicColor = it
+                            AppPrefs.setDynamicColor(context, it)
+                            activity?.recreate()
+                        },
+                    )
+                }
+            }
+
+            SettingsCategory.PREMIUM -> {
+                SettingsSection("Premium") {
+                    Button(
+                        onClick = {
+                            context.startActivity(Intent(context, PremiumActivity::class.java))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(Icons.Default.Favorite, contentDescription = null)
+                        Spacer(Modifier.width(6.dp))
+                        Text(if (premium) "Premium активен" else "Открыть Premium")
+                    }
+                    Text(
+                        if (premium) "Премиум-темы, большие офлайн-модели и экспорт чата доступны."
+                        else "Премиум-темы, большие офлайн-модели и экспорт чата в Markdown.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            SettingsCategory.DATA -> {
+                SettingsSection("Данные") {
+                    ActionRow(
+                        icon = Icons.Default.Delete,
+                        title = "Очистить историю чатов",
+                        onClick = { showClearHistory = true },
+                    )
+                    ActionRow(
+                        icon = Icons.Default.Share,
+                        title = "Поделиться настройками",
+                        onClick = { shareSettings() },
+                    )
+                    ActionRow(
+                        icon = Icons.Default.Lock,
+                        title = "Сбросить API-ключи",
+                        onClick = { showClearKeys = true },
+                    )
+                    ActionRow(
+                        icon = Icons.Default.Refresh,
+                        title = "Сбросить настройки",
+                        onClick = { showReset = true },
+                    )
+                }
+            }
+
+            SettingsCategory.ABOUT -> {
+                SettingsSection("О приложении") {
+                    Text(
+                        "DevAI Studio " + appVersion(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    ActionRow(
+                        icon = Icons.Default.Info,
+                        title = "Обновления",
+                        subtitle = "GitHub Releases",
+                        onClick = {
+                            openUrl("https://github.com/Karishka-sr/devai-studio/releases")
+                        },
+                    )
+                    ActionRow(
+                        icon = Icons.Default.Email,
+                        title = "Telegram",
+                        subtitle = "@NeonBeatt",
+                        onClick = { openUrl(context.getString(R.string.author_telegram_url)) },
+                    )
+                    ActionRow(
+                        icon = Icons.Default.Share,
+                        title = "Сайт",
+                        subtitle = "rytmix-live",
+                        onClick = { openUrl(context.getString(R.string.author_site_url)) },
+                    )
+                }
+
+                Card(Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Text(
+                            "Автор",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            "Miko",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            "Vexel / DevAI Studio",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            text = stringResource(R.string.settings_author_credit),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.clickable {
+                                openUrl(context.getString(R.string.author_vexel_url))
+                            },
+                        )
+                        Text(
+                            "Конструктор Vexel не изменялся. Оригинал: t.me/cheburek_dev",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
         }
 
         Text(
@@ -537,7 +601,7 @@ fun SettingsScreen() {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { chooseTheme(id) }
-                                .padding(vertical = 8.dp),
+                                .padding(vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             RadioButton(
@@ -617,12 +681,12 @@ private fun SettingsSection(
 ) {
     Card(Modifier.fillMaxWidth()) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
                 title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
             )
             content()
@@ -660,26 +724,42 @@ private fun SliderSetting(
             onValueChange = onValueChange,
             valueRange = range,
             steps = steps,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(32.dp),
         )
     }
 }
 
 @Composable
-private fun NumberSetting(
+private fun CompactNumberSetting(
     label: String,
     value: String,
     supporting: String,
     onChange: (String) -> Unit,
 ) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onChange,
-        label = { Text(label) },
-        supportingText = { Text(supporting) },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+    Row(
         modifier = Modifier.fillMaxWidth(),
-    )
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                supporting,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        OutlinedTextField(
+            value = value,
+            onValueChange = onChange,
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodySmall,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.width(108.dp),
+        )
+    }
 }
 
 @Composable
@@ -690,11 +770,13 @@ private fun SwitchSetting(
     onCheckedChange: (Boolean) -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(title, style = MaterialTheme.typography.bodyMedium)
             if (subtitle != null) {
                 Text(
                     subtitle,
@@ -704,5 +786,45 @@ private fun SwitchSetting(
             }
         }
         Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun ActionRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String? = null,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            tint = MaterialTheme.colorScheme.primary,
+        )
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyMedium)
+            if (subtitle != null) {
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        Icon(
+            Icons.Default.KeyboardArrowRight,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }

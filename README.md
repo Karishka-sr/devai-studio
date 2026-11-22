@@ -2,14 +2,14 @@
 
 **Android-студия для разработки с ИИ.** Чат с ведущими моделями, генерация Android-проектов, рабочее пространство с файлами и офлайн-модели, которые работают без интернета.
 
-[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v2.10.0** · Android 12+ · arm64-v8a
+[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v2.11.0** · Android 12+ · arm64-v8a
 
 <p align="center">
   <a href="https://t.me/NeonBeatt">
     <img src="https://img.shields.io/badge/Telegram-@NeonBeatt-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram @NeonBeatt">
   </a>
   <a href="https://github.com/Karishka-sr/devai-studio/releases">
-    <img src="https://img.shields.io/badge/Download_APK-v2.10.0-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
+    <img src="https://img.shields.io/badge/Download_APK-v2.11.0-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
   </a>
   <a href="https://rytmix-live.pplx-2.app">
     <img src="https://img.shields.io/badge/Site-rytmix--live-0A66C2?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Сайт">
@@ -65,6 +65,19 @@
 - Чат: `TopAppBar`, аватары, пустое состояние с подсказками, bottom sheet сессий, индикатор печати и иконочные кнопки.
 - Material3 1.5.0-alpha10: `MaterialShapes`, Expressive-фигуры.
 
+### 🌐 Поиск по всем источникам
+- Tavily (если добавлен ключ), GitHub, Stack Overflow, Wikipedia, DuckDuckGo и Hacker News.
+- Источники опрашиваются параллельно, результаты объединяются в один контекст.
+- GitHub ищет репозитории, issues/PR; с токеном — ещё и код.
+- Ключи Tavily и GitHub необязательны: бесплатные источники работают сразу.
+- Кнопка «Поиск» в чате включает мультиисточниковый поиск.
+
+### 🎛 Настройки по категориям
+- Семь категорий с иконками: «Генерация», «Модели», «Чат», «Вид», «Premium», «Данные», «О приложении».
+- Показывается только выбранная категория — больше не нужно прокручивать всю страницу.
+- Компактные строки параметров, карточки с меньшими отступами и быстрые действия с иконками.
+- Иконки добавлены к карточкам «Веб-поиск», «TTS», «MCP», «Персонажи», «Плагины» и «QR-экспорт».
+
 ### 🧭 Режимы
 - Вкладка «Режимы» вместо «Чата».
 - «Обычный чат» — свободный диалог: вопросы, тексты, идеи и объяснения.
@@ -93,13 +106,13 @@
 - Активация промокодом. Оплата через Google Play Billing — в планах.
 
 ## Установка
-1. Скачайте `devai-studio-2.10.0.apk` в разделе [Releases](https://github.com/Karishka-sr/devai-studio/releases).
+1. Скачайте `devai-studio-2.11.0.apk` в разделе [Releases](https://github.com/Karishka-sr/devai-studio/releases).
 2. Разрешите установку из неизвестных источников.
 3. Требования: Android 12+ (minSdk 31), процессор arm64-v8a.
 
-Текущая сборка: **2.10.0** с конструктором Vexel (`devai-studio-2.10.0.apk`).
+Текущая сборка: **2.11.0** с конструктором Vexel (`devai-studio-2.11.0.apk`).
 
-> 2.4.0 не использовать: в ней был вылет при открытии Настроек. Исправлено в 2.4.1+, актуальная — 2.10.0.
+> 2.4.0 не использовать: в ней был вылет при открытии Настроек. Исправлено в 2.4.1+, актуальная — 2.11.0.
 
 APK подписан самоподписанным ключом, поэтому Play Protect может показать предупреждение.
 

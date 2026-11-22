@@ -278,13 +278,9 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
 
                 var searchBlock = ""
                 if (searchOn && typed.isNotBlank()) {
-                    if (!SearchClient.isConfigured(context)) {
-                        toast("Добавьте ключ Tavily в «Инструменты».")
-                    } else {
-                        runCatching { SearchClient.search(context, typed, 5) }
-                            .onSuccess { searchBlock = it.take(6000) }
-                            .onFailure { toast("Поиск: ${it.message ?: "ошибка"}") }
-                    }
+                    runCatching { SearchClient.search(context, typed, 5) }
+                        .onSuccess { searchBlock = it.take(6000) }
+                        .onFailure { toast("Поиск: ${it.message ?: "ошибка"}") }
                 }
 
                 val apiMessages = ArrayList<AiMessage>()
@@ -294,7 +290,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                     }
                     append(AppPrefs.systemPromptForMode(context, mode))
                     if (searchBlock.isNotBlank()) {
-                        append("\n\nАктуальные результаты веб-поиска (используй, если это полезно):\n")
+                        append("\n\nАктуальные результаты поиска (веб, GitHub, Stack Overflow, Wikipedia, DuckDuckGo, Hacker News; используй, если это полезно):\n")
                         append(searchBlock)
                     }
                 }
@@ -542,12 +538,8 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
             FilterChip(
                 selected = searchEnabled,
                 onClick = {
-                    if (!searchEnabled && !SearchClient.isConfigured(context)) {
-                        toast("Добавьте ключ Tavily в «Инструменты».")
-                    } else {
-                        searchEnabled = !searchEnabled
-                        AppPrefs.setSearchEnabled(context, searchEnabled)
-                    }
+                    searchEnabled = !searchEnabled
+                    AppPrefs.setSearchEnabled(context, searchEnabled)
                 },
                 label = { Text("🌐 Поиск") },
             )

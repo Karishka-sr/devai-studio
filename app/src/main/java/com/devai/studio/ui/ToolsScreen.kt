@@ -9,13 +9,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
@@ -37,6 +40,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -57,6 +61,9 @@ fun ToolsScreen() {
     val scope = rememberCoroutineScope()
     var searchKey by remember {
         mutableStateOf(ApiKeyStore.get(context, SearchClient.KEY_ID).orEmpty())
+    }
+    var githubKey by remember {
+        mutableStateOf(ApiKeyStore.get(context, SearchClient.GITHUB_KEY_ID).orEmpty())
     }
     var searchEnabled by remember { mutableStateOf(AppPrefs.searchEnabled(context)) }
     var searchResult by remember { mutableStateOf("") }
@@ -93,11 +100,23 @@ fun ToolsScreen() {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        ToolCard("Веб-поиск", "Tavily. Результаты добавляются в контекст ответа.") {
+        ToolCard(
+            "Веб-поиск",
+            "Tavily + GitHub + Stack Overflow + Wikipedia + DuckDuckGo + Hacker News.",
+            icon = Icons.Default.Search,
+        ) {
             OutlinedTextField(
                 value = searchKey,
                 onValueChange = { searchKey = it },
-                label = { Text("Ключ Tavily") },
+                label = { Text("Ключ Tavily (необязательно)") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedTextField(
+                value = githubKey,
+                onValueChange = { githubKey = it },
+                label = { Text("GitHub token (необязательно, для кода)") },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
@@ -110,7 +129,16 @@ fun ToolsScreen() {
                         } else {
                             ApiKeyStore.save(context, SearchClient.KEY_ID, searchKey.trim())
                         }
-                        toast("Ключ поиска сохранён")
+                        if (githubKey.isBlank()) {
+                            ApiKeyStore.clear(context, SearchClient.GITHUB_KEY_ID)
+                        } else {
+                            ApiKeyStore.save(
+                                context,
+                                SearchClient.GITHUB_KEY_ID,
+                                githubKey.trim(),
+                            )
+                        }
+                        toast("Ключи поиска сохранены")
                     },
                     modifier = Modifier.weight(1f),
                 ) { Text("Сохранить") }
@@ -132,7 +160,7 @@ fun ToolsScreen() {
                 Column(Modifier.weight(1f)) {
                     Text("Использовать поиск в чате")
                     Text(
-                        "Кнопка «Поиск» в чате включает запрос к Tavily.",
+                        "Кнопка «Поиск» опрашивает все источники. Tavily и GitHub-токен необязательны.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -157,7 +185,11 @@ fun ToolsScreen() {
             }
         }
 
-        ToolCard("Озвучивание (TTS)", "Системный голос Android. Можно слушать ответы.") {
+        ToolCard(
+            "Озвучивание (TTS)",
+            "Системный голос Android. Можно слушать ответы.",
+            icon = Icons.Default.PlayArrow,
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Озвучивать ответы автоматически")
@@ -197,7 +229,11 @@ fun ToolsScreen() {
             }
         }
 
-        ToolCard("MCP-инструменты", "Подключение внешних инструментов по MCP.") {
+        ToolCard(
+            "MCP-инструменты",
+            "Подключение внешних инструментов по MCP.",
+            icon = Icons.Default.Build,
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Использовать MCP в чате")
@@ -226,7 +262,11 @@ fun ToolsScreen() {
             }
         }
 
-        ToolCard("Персонажи", "Карточки с характером и системным промптом.") {
+        ToolCard(
+            "Персонажи",
+            "Карточки с характером и системным промптом.",
+            icon = Icons.Default.Person,
+        ) {
             Text(
                 "Активен: " + (CharacterStore.active(context)?.name ?: "без персонажа"),
                 style = MaterialTheme.typography.bodySmall,
@@ -245,6 +285,7 @@ fun ToolsScreen() {
         ToolCard(
             "Плагины .devai",
             "Lua 5.2 в песочнице: команды и инструменты, которые вызывает ИИ.",
+            icon = Icons.Default.List,
         ) {
             val plugins = PluginStore.list(context)
             Text(
@@ -281,7 +322,11 @@ fun ToolsScreen() {
             }
         }
 
-        ToolCard("QR-экспорт", "Перенос настроек провайдера на другой телефон.") {
+        ToolCard(
+            "QR-экспорт",
+            "Перенос настроек провайдера на другой телефон.",
+            icon = Icons.Default.Share,
+        ) {
             Button(
                 onClick = { context.startActivity(Intent(context, QrExportActivity::class.java)) },
                 modifier = Modifier.fillMaxWidth(),
@@ -300,14 +345,28 @@ fun ToolsScreen() {
 private fun ToolCard(
     title: String,
     subtitle: String,
+    icon: ImageVector,
     content: @Composable () -> Unit,
 ) {
     Card(Modifier.fillMaxWidth()) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
             Text(
                 subtitle,
                 style = MaterialTheme.typography.bodySmall,
