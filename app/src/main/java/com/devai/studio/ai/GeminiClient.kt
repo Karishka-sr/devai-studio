@@ -28,13 +28,23 @@ class GeminiClient(private val cfg: AiConfig) : AiClient {
             val url = cfg.baseUrl.trimEnd('/') +
                 "/models/${cfg.model}:streamGenerateContent?alt=sse&key=${cfg.apiKey}"
 
-            val system = messages.filter { it.role == "system" }.joinToString("\n") { it.content }
+            val system = PromptSanitizer.clean(
+                messages.filter { it.role == "system" }.joinToString("\n") { it.content }
+            )
             val contents = messages.filter { it.role != "system" }
                 .map {
                     JSONObject().put(
                         "role",
                         if (it.role == "assistant") "model" else "user"
-                    ).put("parts", JSONArray().put(JSONObject().put("text", it.content)))
+                    ).put(
+                        "parts",
+                        JSONArray().put(
+                            JSONObject().put(
+                                "text",
+                                PromptSanitizer.clean(it.content).ifBlank { " " },
+                            )
+                        ),
+                    )
                 }
 
             val generationConfig = JSONObject().apply {
