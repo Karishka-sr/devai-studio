@@ -16,6 +16,7 @@
 - Catalog uses public LiteRT-LM files (`.task` and `.litertlm`). Do not add gated Hugging Face repos (Gemma, Falcon-H1): direct downloads return 401 without a token.
 - LiteRT-LM applies the model chat template itself. `ai/LocalPrompt.kt` sends plain text and sanitizes every message; never send `<bos>`/ChatML/Gemma control tokens to `generateContentStream`.
 - `LocalPrompt` always appends a Russian-language instruction, and `AppPrefs.DEFAULT_SYSTEM_PROMPT` / `DEV_SYSTEM_PROMPT` require Russian answers. This fixes small local models drifting into English benchmark-style output.
+- `ai/ResponseGuard.kt` answers simple greetings without inference, filters leaked benchmark/task text from streamed local responses, and drops such assistant turns from prompt history.
 - `data/ModelDownloader.kt` retries, resumes, and falls back to `hf-mirror.com` for Hugging Face URLs.
 
 ## Themes & Premium (v2.14.1)
