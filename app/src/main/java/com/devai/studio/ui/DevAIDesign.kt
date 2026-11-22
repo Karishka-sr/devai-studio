@@ -28,10 +28,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,8 +51,8 @@ import com.devai.studio.R
 object DevAIPalette {
     val Indigo = Color(0xFF5B4BE8)
     val IndigoDeep = Color(0xFF35258F)
-    val Mint = Color(0xFF0E9F8A)
-    val Coral = Color(0xFFE85D75)
+    val Mint = Color(0xFF0B7A6B)
+    val Coral = Color(0xFFC2415A)
     val Amber = Color(0xFFF59E0B)
     val Ink = Color(0xFF141322)
     val Paper = Color(0xFFF8F7FF)
@@ -69,32 +71,34 @@ fun DevAIBackground(
     val middle = if (dark) scheme.surface else Color(0xFFF2EFFF)
     val glow = scheme.primary.copy(alpha = if (dark) 0.18f else 0.12f)
     val glowTwo = scheme.tertiary.copy(alpha = if (dark) 0.12f else 0.08f)
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(top, middle, top))),
-    ) {
-        Canvas(Modifier.fillMaxSize()) {
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(glow, Color.Transparent),
-                    center = Offset(size.width * 0.92f, size.height * 0.03f),
+    CompositionLocalProvider(LocalContentColor provides scheme.onBackground) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(top, middle, top))),
+        ) {
+            Canvas(Modifier.fillMaxSize()) {
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(glow, Color.Transparent),
+                        center = Offset(size.width * 0.92f, size.height * 0.03f),
+                        radius = size.width * 0.75f,
+                    ),
                     radius = size.width * 0.75f,
-                ),
-                radius = size.width * 0.75f,
-                center = Offset(size.width * 0.92f, size.height * 0.03f),
-            )
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(glowTwo, Color.Transparent),
-                    center = Offset(size.width * 0.05f, size.height * 0.85f),
+                    center = Offset(size.width * 0.92f, size.height * 0.03f),
+                )
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(glowTwo, Color.Transparent),
+                        center = Offset(size.width * 0.05f, size.height * 0.85f),
+                        radius = size.width * 0.7f,
+                    ),
                     radius = size.width * 0.7f,
-                ),
-                radius = size.width * 0.7f,
-                center = Offset(size.width * 0.05f, size.height * 0.85f),
-            )
+                    center = Offset(size.width * 0.05f, size.height * 0.85f),
+                )
+            }
+            content()
         }
-        content()
     }
 }
 
@@ -139,6 +143,7 @@ fun DevAITopBar(
             Surface(
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                contentColor = MaterialTheme.colorScheme.onSurface,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)),
             ) {
                 IconButton(onClick = onBack, modifier = Modifier.size(42.dp)) {
@@ -212,7 +217,8 @@ fun DevAICard(
             .fillMaxWidth()
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         shape = shape,
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.82f),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+        contentColor = MaterialTheme.colorScheme.onSurface,
         border = BorderStroke(
             1.dp,
             (accent ?: MaterialTheme.colorScheme.outline).copy(alpha = if (accent != null) 0.35f else 0.16f),

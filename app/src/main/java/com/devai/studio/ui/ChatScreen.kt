@@ -611,6 +611,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
         Surface(
             shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
             border = androidx.compose.foundation.BorderStroke(
                 1.dp,
                 MaterialTheme.colorScheme.outline.copy(alpha = 0.18f),
@@ -943,6 +944,7 @@ private fun EmptyChat(
                 Surface(
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                    contentColor = MaterialTheme.colorScheme.onSurface,
                     border = androidx.compose.foundation.BorderStroke(
                         1.dp,
                         MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
@@ -1018,6 +1020,8 @@ private fun MessageBubble(
             } else {
                 MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
             },
+            contentColor = if (isUser) MaterialTheme.colorScheme.onPrimary
+            else MaterialTheme.colorScheme.onSurface,
             border = if (isUser) null else androidx.compose.foundation.BorderStroke(
                 1.dp,
                 MaterialTheme.colorScheme.outline.copy(alpha = 0.16f),
@@ -1138,7 +1142,11 @@ private fun Avatar(isUser: Boolean) {
 private fun CodeBlock(lang: String, code: String, fontSize: TextUnit, wrap: Boolean) {
     val clipboard = LocalClipboardManager.current
     var copied by remember { mutableStateOf(false) }
-    Surface(color = Color(0xFF1E1E1E), shape = RoundedCornerShape(8.dp)) {
+    Surface(
+        color = Color(0xFF1E1E1E),
+        contentColor = Color(0xFFE6E6E6),
+        shape = RoundedCornerShape(8.dp),
+    ) {
         Column(Modifier.padding(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(

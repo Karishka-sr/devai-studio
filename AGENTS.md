@@ -19,9 +19,13 @@
 - `ai/ResponseGuard.kt` answers simple greetings without inference, filters leaked benchmark/task text from streamed local responses, and drops such assistant turns from prompt history.
 - `data/ModelDownloader.kt` retries, resumes, and falls back to `hf-mirror.com` for Hugging Face URLs.
 
-## Themes & Premium (v2.15.0)
+## Themes & Premium (v2.16.0)
 - `ui/DevAIDesign.kt` is the shared Aurora design system: gradient background, logo/top bar, rounded bordered cards, icon tiles, status pills, gradient buttons. Use these composables instead of raw `Card`/`TopAppBar` on new screens.
+- Contrast is enforced at the container level: `DevAIBackground` provides `LocalContentColor = onBackground`; `DevAICard`, top-bar buttons, bottom bar, chat bubbles and custom `Surface`s set an explicit `contentColor`. Do not rely on `contentColorFor()` for translucent colors (`surface.copy(alpha = ...)`) — it returns `Unspecified` and can inherit an unreadable color.
 - `ui/DevAIApp.kt` owns the palette, typography, shapes, and the floating rounded bottom bar. Default M3 is now Aurora (indigo/mint/coral); Expressive/Retro remain premium themes.
+- `res/values/themes.xml` sets `android:forceDarkAllowed=false` and explicit `colorOnSurface`, `colorOnSurfaceVariant`, `colorOnBackground`, `colorOutline*`, `colorOnSecondary`/`colorOnTertiary`. Keep these explicit: the XML `Theme.DevAIStudio` is DayNight but its surface palette is intentionally light.
+- Settings is a two-level Claude/ChatGPT-style screen (`ui/SettingsScreen.kt`): `SettingsHome` has a profile card, search field and grouped navigation rows; each category opens a detail page with a back arrow and `SettingsSection` cards. Add new settings to a category, not to the home list.
+- Settings categories: Основное (Генерация, Модели, Чат), Интерфейс (Вид), Аккаунт (Premium, Данные), Приложение (О приложении). «Чат» is split into Сообщения / Поведение / Отклик; «Данные» into История / Резервные копии / Сброс.
 - `util/ThemeManager.kt`: M3/Aurora (free, dynamic color), Expressive/Retro (premium).
 - `data/PremiumPlan.kt`: `PremiumPlan` (FREE/WEEK/MONTH/YEAR/LIFETIME) and 59 `PremiumFeature` entries with `minPlan`.
 - `data/PremiumStore.kt`: local entitlement, expiry timestamps, tier-aware codes (`DEVAI-WEEK`, `DEVAI-MONTH`, `DEVAI-YEAR`, `DEVAI-LIFETIME`), legacy codes migrate to LIFETIME.
@@ -57,7 +61,7 @@
 - Chat/Tools/Providers/Settings chips and actions use Material icons; emoji are not used as UI icons.
 - App icon: adaptive `drawable/ic_launcher_{background,foreground,monochrome}.xml` (gradient D + spark), v33 monochrome; README image `docs/devai-icon.png`.
 - Prompts are cleaned by `ai/PromptSanitizer.kt`; it strips `<bos>`, `<start_of_turn>`, ChatML and similar control tokens before Gemini and LiteRT-LM calls.
-- Settings → «Вид» → «Кастомизация»: accent palette, chat font family, bubble width, avatars, compact mode; «Чат» also has code font size, haptics and delete confirmation.
+- Settings → «Вид»: theme previews (Aurora/Expressive/Retro), dynamic color, accent palette, chat font family, bubble width, avatars, compact mode; «Чат» also has code font size, haptics and delete confirmation.
 - Keep Vexel untouched: verify `git diff v2.9.0 -- app/src/main/kotlin/com/qwenz/qwel app/src/main/assets/{icons,fonts,fun,lang}` is empty on every release.
 
 ## PC version (v2.12.0)

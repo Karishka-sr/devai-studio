@@ -4,14 +4,18 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,9 +27,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
@@ -36,6 +43,7 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
@@ -45,12 +53,15 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -61,9 +72,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -71,6 +85,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -87,14 +102,19 @@ import com.devai.studio.util.PremiumDialogs
 import com.devai.studio.util.ThemeManager
 import kotlin.math.roundToInt
 
-private enum class SettingsCategory(val title: String, val icon: ImageVector) {
-    GENERATION("Генерация", Icons.Default.Settings),
-    MODELS("Модели", Icons.Default.PlayArrow),
-    CHAT("Чат", Icons.AutoMirrored.Filled.Send),
-    LOOK("Вид", Icons.Default.Star),
-    PREMIUM("Premium", Icons.Default.Favorite),
-    DATA("Данные", Icons.Default.Lock),
-    ABOUT("О приложении", Icons.Default.Info),
+private enum class SettingsCategory(
+    val title: String,
+    val subtitle: String,
+    val icon: ImageVector,
+    val group: String,
+) {
+    GENERATION("Генерация", "Температура, лимиты и промпт", Icons.Default.Settings, "Основное"),
+    MODELS("Модели", "Локальные модели и контекст", Icons.Default.PlayArrow, "Основное"),
+    CHAT("Чат", "Шрифт, отправка и прокрутка", Icons.AutoMirrored.Filled.Send, "Основное"),
+    LOOK("Вид", "Тема, акцент и аватары", Icons.Default.Star, "Интерфейс"),
+    PREMIUM("Premium", "Тариф и возможности", Icons.Default.Favorite, "Аккаунт"),
+    DATA("Данные", "История, экспорт и сброс", Icons.Default.Lock, "Аккаунт"),
+    ABOUT("О приложении", "Версия, обновления и автор", Icons.Default.Info, "Приложение"),
 }
 
 @Composable
@@ -129,6 +149,8 @@ fun SettingsScreen() {
     var themeId by remember { mutableStateOf(AppPrefs.theme(context)) }
     var plan by remember { mutableStateOf(PremiumStore.plan(context)) }
     var category by remember { mutableStateOf(SettingsCategory.GENERATION) }
+    var home by rememberSaveable { mutableStateOf(true) }
+    var query by rememberSaveable { mutableStateOf("") }
     var showTheme by remember { mutableStateOf(false) }
     var showPromptLibrary by remember { mutableStateOf(false) }
     var showClearKeys by remember { mutableStateOf(false) }
@@ -231,45 +253,42 @@ fun SettingsScreen() {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    val scrollState = rememberScrollState()
-    LaunchedEffect(category) { scrollState.scrollTo(0) }
+    BackHandler(enabled = !home || query.isNotEmpty()) {
+        if (!home) home = true else query = ""
+    }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        DevAITopBar(
-            title = "Настройки",
-            subtitle = "v" + appVersion(),
-            actions = {
-                DevAIStatusPill(if (plan.isPaid) "Premium" else "Free")
+    val scrollState = rememberScrollState()
+    LaunchedEffect(home, category) { scrollState.scrollTo(0) }
+
+    if (home) {
+        SettingsHome(
+            plan = plan,
+            version = appVersion(),
+            query = query,
+            onQueryChange = { query = it },
+            onOpen = {
+                category = it
+                home = false
+            },
+            onPremium = {
+                context.startActivity(Intent(context, PremiumActivity::class.java))
             },
         )
-
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            SettingsCategory.entries.forEach { item ->
-                FilterChip(
-                    selected = category == item,
-                    onClick = { category = item },
-                    label = { Text(item.title, style = MaterialTheme.typography.labelMedium) },
-                    leadingIcon = {
-                        Icon(
-                            item.icon,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                        )
-                    },
-                )
-            }
-        }
+            DevAITopBar(
+                title = category.title,
+                subtitle = category.subtitle,
+                onBack = { home = true },
+            )
 
-        when (category) {
+            when (category) {
             SettingsCategory.GENERATION -> {
                 SettingsSection("Параметры запроса") {
                     SliderSetting(
@@ -516,7 +535,7 @@ fun SettingsScreen() {
             }
 
             SettingsCategory.CHAT -> {
-                SettingsSection("Чат") {
+                SettingsSection("Сообщения") {
                     SliderSetting(
                         title = "Размер текста",
                         valueLabel = "%.0f sp".format(chatFont),
@@ -528,6 +547,19 @@ fun SettingsScreen() {
                         AppPrefs.setChatFontSize(context, it)
                     }
 
+                    SliderSetting(
+                        title = "Размер кода",
+                        valueLabel = "%.0f sp".format(codeFont),
+                        value = codeFont,
+                        range = 10f..18f,
+                        steps = 7,
+                    ) {
+                        requireFeature(PremiumFeature.CODE_FONT) {
+                            codeFont = it
+                            AppPrefs.setCodeFontSize(context, it)
+                        }
+                    }
+
                     SwitchSetting(
                         title = "Перенос длинных строк кода",
                         subtitle = "Иначе код прокручивается по горизонтали",
@@ -537,7 +569,9 @@ fun SettingsScreen() {
                             AppPrefs.setCodeWrap(context, it)
                         },
                     )
+                }
 
+                SettingsSection("Поведение") {
                     SwitchSetting(
                         title = "Отправлять по Enter",
                         subtitle = "Иначе Enter переносит строку",
@@ -558,19 +592,18 @@ fun SettingsScreen() {
                         },
                     )
 
-                    SliderSetting(
-                        title = "Размер кода",
-                        valueLabel = "%.0f sp".format(codeFont),
-                        value = codeFont,
-                        range = 10f..18f,
-                        steps = 7,
-                    ) {
-                        requireFeature(PremiumFeature.CODE_FONT) {
-                            codeFont = it
-                            AppPrefs.setCodeFontSize(context, it)
-                        }
-                    }
+                    SwitchSetting(
+                        title = "Подтверждать удаление чата",
+                        subtitle = "Спрашивать перед удалением сессии",
+                        checked = confirmDelete,
+                        onCheckedChange = {
+                            confirmDelete = it
+                            AppPrefs.setConfirmDelete(context, it)
+                        },
+                    )
+                }
 
+                SettingsSection("Отклик") {
                     SwitchSetting(
                         title = "Вибрация при отправке",
                         subtitle = "Короткий отклик на кнопку отправки",
@@ -582,24 +615,19 @@ fun SettingsScreen() {
                             }
                         },
                     )
-
-                    SwitchSetting(
-                        title = "Подтверждать удаление чата",
-                        subtitle = "Спрашивать перед удалением сессии",
-                        checked = confirmDelete,
-                        onCheckedChange = {
-                            confirmDelete = it
-                            AppPrefs.setConfirmDelete(context, it)
-                        },
-                    )
                 }
             }
 
             SettingsCategory.LOOK -> {
                 SettingsSection("Оформление") {
+                    ThemeChooserRow(
+                        current = themeId,
+                        onChoose = { chooseTheme(it) },
+                    )
+
                     ActionRow(
                         icon = Icons.Default.Star,
-                        title = "Тема",
+                        title = "Все темы",
                         subtitle = stringResource(ThemeManager.labelRes(themeId)),
                         onClick = { showTheme = true },
                     )
@@ -732,12 +760,16 @@ fun SettingsScreen() {
             }
 
             SettingsCategory.DATA -> {
-                SettingsSection("Данные") {
+                SettingsSection("История") {
                     ActionRow(
                         icon = Icons.Default.Delete,
                         title = "Очистить историю чатов",
+                        subtitle = "Удалить все сессии и сообщения",
                         onClick = { showClearHistory = true },
                     )
+                }
+
+                SettingsSection("Резервные копии") {
                     ActionRow(
                         icon = Icons.Default.Share,
                         title = "Поделиться настройками",
@@ -770,14 +802,19 @@ fun SettingsScreen() {
                             }
                         },
                     )
+                }
+
+                SettingsSection("Сброс") {
                     ActionRow(
                         icon = Icons.Default.Lock,
                         title = "Сбросить API-ключи",
+                        subtitle = "Удалить сохранённые ключи",
                         onClick = { showClearKeys = true },
                     )
                     ActionRow(
                         icon = Icons.Default.Refresh,
                         title = "Сбросить настройки",
+                        subtitle = "Вернуть значения по умолчанию",
                         onClick = { showReset = true },
                     )
                 }
@@ -848,13 +885,14 @@ fun SettingsScreen() {
             }
         }
 
-        Text(
-            text = "DevAI Studio " + appVersion(),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
-        )
+            Text(
+                text = "DevAI Studio " + appVersion(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 
     if (showTheme) {
@@ -985,6 +1023,273 @@ fun SettingsScreen() {
 }
 
 @Composable
+private fun SettingsHome(
+    plan: PremiumPlan,
+    version: String,
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onOpen: (SettingsCategory) -> Unit,
+    onPremium: () -> Unit,
+) {
+    val filtered = SettingsCategory.entries.filter { item ->
+        query.isBlank() ||
+            item.title.contains(query, ignoreCase = true) ||
+            item.subtitle.contains(query, ignoreCase = true)
+    }
+    val groups = listOf("Основное", "Интерфейс", "Аккаунт", "Приложение")
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        DevAITopBar(
+            title = "Настройки",
+            subtitle = "DevAI Studio · v$version",
+            actions = {
+                DevAIStatusPill(
+                    if (plan.isPaid) "Premium" else "Free",
+                    accent = if (plan.isPaid) MaterialTheme.colorScheme.tertiary
+                    else MaterialTheme.colorScheme.primary,
+                )
+            },
+        )
+
+        DevAICard(
+            onClick = onPremium,
+            accent = MaterialTheme.colorScheme.primary,
+            contentPadding = PaddingValues(18.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                DevAILogo(54.dp)
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        "Miko",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        "DevAI Studio",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    DevAIStatusPill(
+                        if (plan.isPaid) "Premium · ${plan.title}" else "Free",
+                        accent = if (plan.isPaid) MaterialTheme.colorScheme.tertiary
+                        else MaterialTheme.colorScheme.primary,
+                    )
+                }
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Text(
+                "Настройте генерацию, чат и оформление под себя.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        OutlinedTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Поиск настроек") },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+            trailingIcon = {
+                if (query.isNotEmpty()) {
+                    IconButton(onClick = { onQueryChange("") }) {
+                        Icon(Icons.Default.Close, contentDescription = "Очистить")
+                    }
+                }
+            },
+            singleLine = true,
+            shape = RoundedCornerShape(18.dp),
+        )
+
+        if (filtered.isEmpty()) {
+            DevAICard(contentPadding = PaddingValues(18.dp)) {
+                Text(
+                    "Ничего не найдено",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    "Попробуйте «тема», «чат», «модели» или «данные».",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        } else if (query.isNotBlank()) {
+            SettingsGroup("Результаты", filtered, plan, onOpen)
+        } else {
+            groups.forEach { group ->
+                val items = filtered.filter { it.group == group }
+                if (items.isNotEmpty()) SettingsGroup(group, items, plan, onOpen)
+            }
+        }
+
+        Text(
+            text = "DevAI Studio $version",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 8.dp),
+        )
+    }
+}
+
+@Composable
+private fun SettingsGroup(
+    title: String,
+    items: List<SettingsCategory>,
+    plan: PremiumPlan,
+    onOpen: (SettingsCategory) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            title.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 6.dp),
+        )
+        DevAICard(contentPadding = PaddingValues(0.dp)) {
+            Column {
+                items.forEachIndexed { index, item ->
+                    SettingsNavRow(item, plan, onClick = { onOpen(item) })
+                    if (index != items.lastIndex) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(start = 66.dp, end = 14.dp),
+                            thickness = 1.dp,
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.14f),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsNavRow(
+    item: SettingsCategory,
+    plan: PremiumPlan,
+    onClick: () -> Unit,
+) {
+    val tint = when (item) {
+        SettingsCategory.GENERATION, SettingsCategory.ABOUT -> MaterialTheme.colorScheme.primary
+        SettingsCategory.MODELS -> MaterialTheme.colorScheme.secondary
+        SettingsCategory.CHAT -> MaterialTheme.colorScheme.primary
+        SettingsCategory.LOOK, SettingsCategory.PREMIUM -> MaterialTheme.colorScheme.tertiary
+        SettingsCategory.DATA -> MaterialTheme.colorScheme.secondary
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        DevAIIconTile(item.icon, size = 40.dp, tint = tint)
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                item.title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                item.subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (item == SettingsCategory.PREMIUM) {
+            Spacer(Modifier.width(8.dp))
+            DevAIStatusPill(
+                if (plan.isPaid) "Активен" else "Free",
+                accent = if (plan.isPaid) MaterialTheme.colorScheme.tertiary
+                else MaterialTheme.colorScheme.primary,
+            )
+        }
+        Spacer(Modifier.width(6.dp))
+        Icon(
+            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun ThemeChooserRow(current: String, onChoose: (String) -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        ThemeManager.all.forEach { id ->
+            val selected = id == current
+            val accent = when (id) {
+                ThemeManager.EXPRESSIVE -> Color(0xFF7C4DFF)
+                ThemeManager.RETRO -> Color(0xFF1565C0)
+                else -> MaterialTheme.colorScheme.primary
+            }
+            Surface(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onChoose(id) },
+                shape = RoundedCornerShape(16.dp),
+                color = if (selected) accent.copy(alpha = 0.14f)
+                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                border = BorderStroke(
+                    if (selected) 1.5.dp else 1.dp,
+                    if (selected) accent else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                ),
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Box(
+                            Modifier.size(14.dp).clip(CircleShape).background(accent)
+                        )
+                        Box(
+                            Modifier.size(14.dp).clip(CircleShape)
+                                .background(accent.copy(alpha = 0.55f))
+                        )
+                        Box(
+                            Modifier.size(14.dp).clip(CircleShape)
+                                .background(accent.copy(alpha = 0.25f))
+                        )
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        when (id) {
+                            ThemeManager.EXPRESSIVE -> "Expressive"
+                            ThemeManager.RETRO -> "Классика"
+                            else -> "Aurora"
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun SettingsSection(
     title: String,
     content: @Composable ColumnScope.() -> Unit,
@@ -994,16 +1299,23 @@ private fun SettingsSection(
         "Свой провайдер" -> Icons.Default.Share
         "Системный промпт" -> Icons.Default.Edit
         "Локальные модели" -> Icons.Default.PlayArrow
-        "Чат" -> Icons.AutoMirrored.Filled.Send
+        "Чат", "Сообщения" -> Icons.AutoMirrored.Filled.Send
+        "Поведение" -> Icons.Default.Settings
+        "Отклик" -> Icons.Default.Star
         "Оформление", "Кастомизация" -> Icons.Default.Star
         "Premium" -> Icons.Default.Favorite
         "Данные" -> Icons.Default.Lock
+        "История" -> Icons.Default.Delete
+        "Резервные копии" -> Icons.Default.Share
+        "Сброс" -> Icons.Default.Refresh
         else -> Icons.Default.Info
     }
     val tint = when (title) {
         "Параметры запроса", "Системный промпт" -> MaterialTheme.colorScheme.primary
-        "Локальные модели", "Чат" -> MaterialTheme.colorScheme.secondary
-        "Оформление", "Кастомизация", "Premium" -> MaterialTheme.colorScheme.tertiary
+        "Локальные модели", "Чат", "Сообщения", "Поведение", "Резервные копии" ->
+            MaterialTheme.colorScheme.secondary
+        "Оформление", "Кастомизация", "Premium", "Отклик", "Сброс" ->
+            MaterialTheme.colorScheme.tertiary
         else -> MaterialTheme.colorScheme.primary
     }
     DevAICard(

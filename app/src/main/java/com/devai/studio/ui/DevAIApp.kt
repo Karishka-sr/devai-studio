@@ -58,11 +58,11 @@ private val AuroraLight = lightColorScheme(
     onPrimary = Color.White,
     primaryContainer = Color(0xFFE7E3FF),
     onPrimaryContainer = Color(0xFF1B1450),
-    secondary = Color(0xFF0E9F8A),
+    secondary = Color(0xFF0B7A6B),
     onSecondary = Color.White,
     secondaryContainer = Color(0xFFC9F7EF),
     onSecondaryContainer = Color(0xFF00382F),
-    tertiary = Color(0xFFE85D75),
+    tertiary = Color(0xFFC2415A),
     onTertiary = Color.White,
     tertiaryContainer = Color(0xFFFFD9DF),
     onTertiaryContainer = Color(0xFF4A0018),
@@ -297,6 +297,7 @@ private fun DevAIBottomBar(
         Surface(
             shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
             border = BorderStroke(
                 1.dp,
                 MaterialTheme.colorScheme.outline.copy(alpha = 0.18f),

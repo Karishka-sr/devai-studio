@@ -193,6 +193,7 @@ fun PluginDocsScreen(onBack: () -> Unit) {
                     )
                     is DocBlock.Code -> Surface(
                         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                        contentColor = MaterialTheme.colorScheme.onSurface,
                         shape = MaterialTheme.shapes.small,
                         border = androidx.compose.foundation.BorderStroke(
                             1.dp,
@@ -215,6 +216,7 @@ fun PluginDocsScreen(onBack: () -> Unit) {
                     }
                     is DocBlock.Table -> Surface(
                         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                        contentColor = MaterialTheme.colorScheme.onSurface,
                         shape = MaterialTheme.shapes.small,
                         border = androidx.compose.foundation.BorderStroke(
                             1.dp,
