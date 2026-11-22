@@ -7,15 +7,24 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -149,6 +158,8 @@ fun ProvidersScreen() {
             when (row) {
                 ProviderRow.Header -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = { openLocalModels() }, modifier = Modifier.fillMaxWidth()) {
+                        Icon(Icons.Default.List, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
                         Text("Локальные модели")
                     }
                     Row(
@@ -223,6 +234,13 @@ private fun ProviderCard(
                     modifier = Modifier.weight(1f),
                 )
                 if (active) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(Modifier.width(4.dp))
                     Text(
                         text = "Активен",
                         style = MaterialTheme.typography.labelSmall,
@@ -251,10 +269,26 @@ private fun ProviderCard(
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                TextButton(onClick = onKey) { Text("Ключ") }
-                TextButton(onClick = onModel) { Text("Модель") }
-                TextButton(onClick = onSite) { Text("Сайт") }
-                TextButton(onClick = onUse) { Text("Использовать") }
+                TextButton(onClick = onKey) {
+                    Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Ключ")
+                }
+                TextButton(onClick = onModel) {
+                    Icon(Icons.Default.List, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Модель")
+                }
+                TextButton(onClick = onSite) {
+                    Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Сайт")
+                }
+                TextButton(onClick = onUse) {
+                    Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Использовать")
+                }
             }
         }
     }

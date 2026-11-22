@@ -5,6 +5,12 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -42,13 +48,13 @@ fun DevAIApp() {
                 NavigationBarItem(
                     selected = tab == "chat",
                     onClick = { tab = "chat" },
-                    icon = { Text("💬") },
+                    icon = { Icon(Icons.Default.Email, contentDescription = "Чат") },
                     label = { Text("Чат") },
                 )
                 NavigationBarItem(
                     selected = tab == "providers",
                     onClick = { tab = "providers" },
-                    icon = { Text("🤖") },
+                    icon = { Icon(Icons.Default.Person, contentDescription = "ИИ") },
                     label = { Text("ИИ") },
                 )
                 NavigationBarItem(
@@ -56,13 +62,13 @@ fun DevAIApp() {
                     onClick = {
                         context.startActivity(Intent(context, QwelActivity::class.java))
                     },
-                    icon = { Text("🧩") },
+                    icon = { Icon(Icons.Default.Add, contentDescription = "Конструктор") },
                     label = { Text("Конструктор") },
                 )
                 NavigationBarItem(
                     selected = tab == "settings",
                     onClick = { tab = "settings" },
-                    icon = { Text("⚙️") },
+                    icon = { Icon(Icons.Default.Settings, contentDescription = "Настройки") },
                     label = { Text("Настройки") },
                 )
             }

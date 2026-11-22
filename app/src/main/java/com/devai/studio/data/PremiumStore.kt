@@ -7,7 +7,14 @@ object PremiumStore {
     private const val KEY_PREMIUM = "premium"
     private const val KEY_CODE = "code"
 
-    private val CODES = setOf("DEVAI-PRO", "DEVAI-2025", "DEVAI-PRO-2025", "PREMIUM")
+    private val CODES = setOf(
+        "DEVAI-PRO",
+        "DEVAI-2025",
+        "DEVAI-PRO-2025",
+        "PREMIUM",
+        "DEVAI-2026",
+        "DEVAI-TEST",
+    )
 
     fun isPremium(ctx: Context): Boolean = p(ctx).getBoolean(KEY_PREMIUM, false)
 

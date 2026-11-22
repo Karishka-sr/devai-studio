@@ -8,15 +8,25 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -105,7 +115,16 @@ fun SettingsScreen() {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Настройки", style = MaterialTheme.typography.headlineMedium)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                Icons.Default.Settings,
+                contentDescription = null,
+                modifier = Modifier.size(28.dp),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Spacer(Modifier.width(8.dp))
+            Text("Настройки", style = MaterialTheme.typography.headlineMedium)
+        }
 
         Text(
             text = "Температура: " + "%.2f".format(temperature),
@@ -173,6 +192,8 @@ fun SettingsScreen() {
             onClick = { showTheme = true },
             modifier = Modifier.fillMaxWidth(),
         ) {
+            Icon(Icons.Default.Settings, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
             Text("Оформление: " + stringResource(ThemeManager.labelRes(themeId)))
         }
 
@@ -182,6 +203,8 @@ fun SettingsScreen() {
             },
             modifier = Modifier.fillMaxWidth(),
         ) {
+            Icon(Icons.Default.Star, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
             Text(if (premium) "Premium активен" else "Premium")
         }
 
@@ -203,9 +226,13 @@ fun SettingsScreen() {
                 )
                 Row {
                     TextButton(onClick = { openUrl(context.getString(R.string.author_telegram_url)) }) {
+                        Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(4.dp))
                         Text("Telegram")
                     }
                     TextButton(onClick = { openUrl(context.getString(R.string.author_site_url)) }) {
+                        Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(4.dp))
                         Text("Сайт")
                     }
                 }
@@ -226,6 +253,8 @@ fun SettingsScreen() {
             onClick = { showClear = true },
             modifier = Modifier.fillMaxWidth(),
         ) {
+            Icon(Icons.Default.Delete, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
             Text("Сбросить все ключи")
         }
     }

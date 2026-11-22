@@ -2,14 +2,14 @@
 
 **Android-студия для разработки с ИИ.** Чат с ведущими моделями, генерация Android-проектов, рабочее пространство с файлами и офлайн-модели, которые работают без интернета.
 
-[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v2.5.0** · Android 12+ · arm64-v8a
+[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v2.6.0** · Android 12+ · arm64-v8a
 
 <p align="center">
   <a href="https://t.me/NeonBeatt">
     <img src="https://img.shields.io/badge/Telegram-@NeonBeatt-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram @NeonBeatt">
   </a>
   <a href="https://github.com/Karishka-sr/devai-studio/releases">
-    <img src="https://img.shields.io/badge/Download_APK-v2.5.0-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
+    <img src="https://img.shields.io/badge/Download_APK-v2.6.0-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
   </a>
   <a href="https://rytmix-live.pplx-2.app">
     <img src="https://img.shields.io/badge/Site-rytmix--live-0A66C2?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Сайт">
@@ -50,6 +50,8 @@
 ### 🧩 Compose UI
 - Чат, ИИ-провайдеры и Настройки полностью переписаны на Compose; старые XML-фрагменты и адаптеры удалены.
 - Главный экран — Compose `Scaffold` + `NavigationBar`.
+- Настоящие Material Icons (`material-icons-core`): навигация, чат, провайдеры, настройки — без emoji.
+- Чат: `TopAppBar`, аватары, пустое состояние с подсказками, bottom sheet сессий, индикатор печати и иконочные кнопки.
 - Material3 1.5.0-alpha10: `MaterialShapes`, Expressive-фигуры, `Modifier.blur`.
 
 ### 🎨 Оформление
@@ -65,13 +67,13 @@
 - Активация промокодом. Оплата через Google Play Billing — в планах.
 
 ## Установка
-1. Скачайте `devai-studio-2.5.0.apk` в разделе [Releases](https://github.com/Karishka-sr/devai-studio/releases).
+1. Скачайте `devai-studio-2.6.0.apk` в разделе [Releases](https://github.com/Karishka-sr/devai-studio/releases).
 2. Разрешите установку из неизвестных источников.
 3. Требования: Android 12+ (minSdk 31), процессор arm64-v8a.
 
-Текущая сборка: **2.5.0** с конструктором Vexel (`devai-studio-2.5.0.apk`).
+Текущая сборка: **2.6.0** с конструктором Vexel (`devai-studio-2.6.0.apk`).
 
-> 2.4.0 не использовать: в ней был вылет при открытии Настроек. Исправлено в 2.4.1+, актуальная — 2.5.0.
+> 2.4.0 не использовать: в ней был вылет при открытии Настроек. Исправлено в 2.4.1+, актуальная — 2.6.0.
 
 APK подписан самоподписанным ключом, поэтому Play Protect может показать предупреждение.
 
@@ -85,7 +87,7 @@ export ANDROID_HOME=/path/to/android-sdk
 ```
 
 Требования: JDK 21, Android SDK 35, Gradle 8.9, AGP 8.6, Kotlin 2.2.20.
-Compose: BOM 2026.03.01 (UI 1.10.6), Material3 1.5.0-alpha10 (`MaterialShapes`, `toShape`, `Modifier.blur`), activity-compose 1.10.1, `androidx.graphics:graphics-shapes:1.1.0`.
+Compose: BOM 2026.03.01 (UI 1.10.6), Material3 1.5.0-alpha10 (`MaterialShapes`, `toShape`, `Modifier.blur`), `material-icons-core`, activity-compose 1.10.1, `androidx.graphics:graphics-shapes:1.1.0`.
 
 Подпись release-сборки:
 ```bash

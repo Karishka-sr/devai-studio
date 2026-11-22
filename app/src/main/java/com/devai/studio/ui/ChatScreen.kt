@@ -4,32 +4,60 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -47,6 +75,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.devai.studio.R
@@ -65,12 +94,14 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val handler = remember { Handler(Looper.getMainLooper()) }
     val listState = rememberLazyListState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     var sessionId by remember { mutableStateOf("") }
     var messages by remember { mutableStateOf<List<AiMessage>>(emptyList()) }
@@ -108,6 +139,16 @@ fun ChatScreen() {
         ChatSessionsStore.setCurrent(context, session.id)
         messages = session.messages
         modelLabel = currentModelLabel()
+    }
+
+    fun newChat() {
+        loadSession(ChatSessionsStore.create(context))
+    }
+
+    fun openSessions() {
+        persist()
+        sessions = ChatSessionsStore.list(context)
+        showSessions = true
     }
 
     fun stop() {
@@ -242,92 +283,227 @@ fun ChatScreen() {
         }
     }
 
-    Column(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = modelLabel,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                modifier = Modifier.weight(1f),
-            )
-            TextButton(onClick = {
-                persist()
-                sessions = ChatSessionsStore.list(context)
-                showSessions = true
-            }) { Text("Сессии") }
-            TextButton(onClick = { regenerate() }, enabled = !streaming) { Text("Заново") }
-            TextButton(onClick = { exportChat() }) { Text("Экспорт") }
-        }
+    Column(Modifier.fillMaxSize()) {
+        TopAppBar(
+            title = {
+                Column {
+                    Text(
+                        "DevAI",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        modelLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                    )
+                }
+            },
+            actions = {
+                IconButton(onClick = { openSessions() }) {
+                    Icon(Icons.Default.List, contentDescription = "Сессии")
+                }
+                IconButton(onClick = { newChat() }) {
+                    Icon(Icons.Default.Add, contentDescription = "Новый чат")
+                }
+                IconButton(onClick = { exportChat() }) {
+                    Icon(Icons.Default.Share, contentDescription = "Экспорт")
+                }
+                IconButton(onClick = { regenerate() }, enabled = !streaming) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Заново")
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
+        )
 
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(vertical = 8.dp),
-        ) {
-            items(messages.size) { index ->
-                MessageBubble(messages[index])
+        if (messages.isEmpty() && !streaming) {
+            EmptyChat(
+                modifier = Modifier.weight(1f),
+                onSuggestion = { input = it },
+            )
+        } else {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+            ) {
+                items(messages.size) { index ->
+                    val message = messages[index]
+                    if (!(streaming && index == messages.lastIndex && message.content.isBlank())) {
+                        MessageBubble(message)
+                    }
+                }
+                if (streaming) {
+                    item { TypingIndicator() }
+                }
             }
         }
 
-        Row(
-            verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        Surface(
+            tonalElevation = 3.dp,
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
         ) {
-            OutlinedTextField(
-                value = input,
-                onValueChange = { input = it },
-                modifier = Modifier.weight(1f),
-                placeholder = { Text("Сообщение") },
-                maxLines = 4,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                keyboardActions = KeyboardActions(onSend = { if (!streaming) send() }),
-            )
-            Button(
-                onClick = { if (streaming) stop() else send() },
-                enabled = streaming || input.isNotBlank(),
+            Row(
+                modifier = Modifier.padding(4.dp),
+                verticalAlignment = Alignment.Bottom,
             ) {
-                Text(if (streaming) "Стоп" else "Отправить")
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = { input = it },
+                    modifier = Modifier.weight(1f),
+                    placeholder = { Text("Сообщение…") },
+                    maxLines = 4,
+                    shape = RoundedCornerShape(20.dp),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                    keyboardActions = KeyboardActions(onSend = { if (!streaming) send() }),
+                )
+                Spacer(Modifier.width(4.dp))
+                FilledIconButton(
+                    onClick = { if (streaming) stop() else send() },
+                    enabled = streaming || input.isNotBlank(),
+                ) {
+                    Icon(
+                        imageVector = if (streaming) Icons.Default.Close else Icons.Default.Send,
+                        contentDescription = if (streaming) "Стоп" else "Отправить",
+                    )
+                }
             }
         }
     }
 
     if (showSessions) {
-        AlertDialog(
+        ModalBottomSheet(
             onDismissRequest = { showSessions = false },
-            title = { Text("Сессии") },
-            text = {
-                Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
-                    sessions.forEach { session ->
-                        TextButton(
-                            onClick = {
+            sheetState = sheetState,
+        ) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 24.dp),
+            ) {
+                Text(
+                    "Сессии",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(Modifier.height(8.dp))
+                LazyColumn(Modifier.heightIn(max = 360.dp)) {
+                    items(sessions) { session ->
+                        ListItem(
+                            headlineContent = { Text(session.title, maxLines = 1) },
+                            leadingContent = { Icon(Icons.Default.Email, contentDescription = null) },
+                            modifier = Modifier.clickable {
                                 loadSession(session)
                                 showSessions = false
                             },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(session.title, maxLines = 1)
-                        }
+                        )
                     }
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    loadSession(ChatSessionsStore.create(context))
-                    showSessions = false
-                }) { Text("Новая") }
-            },
-            dismissButton = {
-                Row {
-                    TextButton(onClick = {
-                        ChatSessionsStore.delete(context, sessionId)
-                        loadSession(ChatSessionsStore.getOrCreateCurrent(context))
-                        showSessions = false
-                    }) { Text("Удалить") }
-                    TextButton(onClick = { showSessions = false }) { Text("Закрыть") }
+                Spacer(Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = {
+                            newChat()
+                            showSessions = false
+                        },
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null)
+                        Spacer(Modifier.width(6.dp))
+                        Text("Новая")
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            ChatSessionsStore.delete(context, sessionId)
+                            loadSession(ChatSessionsStore.getOrCreateCurrent(context))
+                            showSessions = false
+                        },
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = null)
+                        Spacer(Modifier.width(6.dp))
+                        Text("Удалить")
+                    }
                 }
-            },
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyChat(
+    modifier: Modifier = Modifier,
+    onSuggestion: (String) -> Unit,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            modifier = Modifier.size(80.dp),
+        ) {
+            Icon(
+                Icons.Default.Face,
+                contentDescription = null,
+                modifier = Modifier.padding(20.dp),
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+        Text(
+            "Чем помочь?",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Спросите что угодно — код, ошибки, интерфейс.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(20.dp))
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            listOf(
+                "Напиши код на Kotlin",
+                "Объясни ошибку",
+                "Сделай UI на Compose",
+            ).forEach { text ->
+                AssistChip(
+                    onClick = { onSuggestion(text) },
+                    label = { Text(text) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TypingIndicator() {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+        Spacer(Modifier.width(8.dp))
+        Text(
+            "DevAI печатает…",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -338,15 +514,25 @@ private fun MessageBubble(message: AiMessage) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
+        verticalAlignment = Alignment.Top,
     ) {
+        if (!isUser) {
+            Avatar(isUser = false)
+            Spacer(Modifier.width(8.dp))
+        }
         Surface(
-            shape = RoundedCornerShape(18.dp),
+            shape = RoundedCornerShape(
+                topStart = if (isUser) 18.dp else 4.dp,
+                topEnd = if (isUser) 4.dp else 18.dp,
+                bottomStart = 18.dp,
+                bottomEnd = 18.dp,
+            ),
             color = if (isUser) {
                 MaterialTheme.colorScheme.primary
             } else {
                 MaterialTheme.colorScheme.surfaceVariant
             },
-            modifier = Modifier.widthIn(max = 340.dp),
+            modifier = Modifier.widthIn(max = 320.dp),
         ) {
             Column(
                 modifier = Modifier.padding(12.dp),
@@ -365,7 +551,11 @@ private fun MessageBubble(message: AiMessage) {
                 } else {
                     val segments = remember(message.content) { parseSegments(message.content) }
                     if (segments.isEmpty()) {
-                        Text(message.content, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 15.sp)
+                        Text(
+                            message.content,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 15.sp,
+                        )
                     } else {
                         segments.forEach { segment ->
                             if (segment.code) {
@@ -384,6 +574,34 @@ private fun MessageBubble(message: AiMessage) {
                 }
             }
         }
+        if (isUser) {
+            Spacer(Modifier.width(8.dp))
+            Avatar(isUser = true)
+        }
+    }
+}
+
+@Composable
+private fun Avatar(isUser: Boolean) {
+    Surface(
+        shape = CircleShape,
+        color = if (isUser) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.tertiaryContainer
+        },
+        modifier = Modifier.size(28.dp),
+    ) {
+        Icon(
+            imageVector = if (isUser) Icons.Default.Person else Icons.Default.Face,
+            contentDescription = null,
+            modifier = Modifier.padding(5.dp),
+            tint = if (isUser) {
+                MaterialTheme.colorScheme.onPrimary
+            } else {
+                MaterialTheme.colorScheme.onTertiaryContainer
+            },
+        )
     }
 }
 
@@ -406,9 +624,21 @@ private fun CodeBlock(lang: String, code: String) {
                         clipboard.setText(AnnotatedString(code))
                         copied = true
                     },
-                    colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF7FD1FF)),
                 ) {
-                    Text(if (copied) "Скопировано" else "Копировать", fontSize = 11.sp)
+                    if (copied) {
+                        Icon(
+                            Icons.Default.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = Color(0xFF7FD1FF),
+                        )
+                        Spacer(Modifier.width(4.dp))
+                    }
+                    Text(
+                        if (copied) "Скопировано" else "Копировать",
+                        color = Color(0xFF7FD1FF),
+                        fontSize = 11.sp,
+                    )
                 }
             }
             Text(
