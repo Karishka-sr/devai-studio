@@ -52,6 +52,7 @@
 - Module `desktop/`: Kotlin JVM 1.8 + Swing, main `com.devai.studio.desktop.MainKt`.
 - Build jar: `./gradlew :desktop:fatJar` -> `desktop/build/libs/DevAIStudio-all.jar`.
 - Windows bundle: JRE 8u512 x64, stage `app/`, `runtime/`, `DevAI-Android.apk`, `icon.ico`.
+- Separate PC repository: https://github.com/Karishka-sr/devai-studio-pc
 - Installer: `desktop/installer.nsi` (NSIS), build with `makensis installer.nsi` from the stage directory. It selects Windows 7/10/11, writes `target.ini`, and has a custom components page (full/minimal).
 - Full components: Vexel APK, ADB platform-tools, desktop/Start-menu shortcuts, `Vexel.cmd` launcher.
 - The app resolves the bundled APK, ADB, and `target.ini` from the JAR's parent directory, so shortcuts do not depend on `user.dir`.
