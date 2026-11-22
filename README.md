@@ -2,14 +2,14 @@
 
 **Android-студия для разработки с ИИ.** Чат с ведущими моделями, генерация Android-проектов, рабочее пространство с файлами и офлайн-модели, которые работают без интернета.
 
-[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v2.11.0** · Android 12+ · arm64-v8a
+[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v2.11.1** · Android 12+ · arm64-v8a
 
 <p align="center">
   <a href="https://t.me/NeonBeatt">
     <img src="https://img.shields.io/badge/Telegram-@NeonBeatt-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram @NeonBeatt">
   </a>
   <a href="https://github.com/Karishka-sr/devai-studio/releases">
-    <img src="https://img.shields.io/badge/Download_APK-v2.11.0-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
+    <img src="https://img.shields.io/badge/Download_APK-v2.11.1-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
   </a>
   <a href="https://rytmix-live.pplx-2.app">
     <img src="https://img.shields.io/badge/Site-rytmix--live-0A66C2?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Сайт">
@@ -106,13 +106,13 @@
 - Активация промокодом. Оплата через Google Play Billing — в планах.
 
 ## Установка
-1. Скачайте `devai-studio-2.11.0.apk` в разделе [Releases](https://github.com/Karishka-sr/devai-studio/releases).
+1. Скачайте `devai-studio-2.11.1.apk` в разделе [Releases](https://github.com/Karishka-sr/devai-studio/releases).
 2. Разрешите установку из неизвестных источников.
 3. Требования: Android 12+ (minSdk 31), процессор arm64-v8a.
 
-Текущая сборка: **2.11.0** с конструктором Vexel (`devai-studio-2.11.0.apk`).
+Текущая сборка: **2.11.1** с конструктором Vexel (`devai-studio-2.11.1.apk`).
 
-> 2.4.0 не использовать: в ней был вылет при открытии Настроек. Исправлено в 2.4.1+, актуальная — 2.11.0.
+> 2.4.0 не использовать: в ней был вылет при открытии Настроек. Исправлено в 2.4.1+, актуальная — 2.11.1.
 
 APK подписан самоподписанным ключом, поэтому Play Protect может показать предупреждение.
 

@@ -65,7 +65,7 @@ object SearchClient {
             put("include_answer", true)
         }
         val json = postJson("https://api.tavily.com/search", payload)
-        val answer = json.optString("answer")
+        val answer = json.text("answer")
         val results = json.optJSONArray("results")
         val text = buildString {
             append("### Tavily (веб)\n")
@@ -76,7 +76,7 @@ object SearchClient {
                     append(i + 1).append(". ")
                     append(item.optString("title").ifBlank { "Без названия" }).append("\n")
                     append(item.optString("url")).append("\n")
-                    val content = item.optString("content")
+                    val content = item.text("content")
                     if (content.isNotBlank()) append(content.take(900)).append("\n")
                     append("\n")
                 }
@@ -140,11 +140,11 @@ object SearchClient {
                     append("- Репозиторий: ")
                     append(item.optString("full_name").ifBlank { "без имени" })
                     append(" · ★ ").append(item.optInt("stargazers_count"))
-                    item.optString("language").takeIf { it.isNotBlank() }?.let {
+                    item.text("language").takeIf { it.isNotBlank() }?.let {
                         append(" · ").append(it)
                     }
                     append("\n  ").append(item.optString("html_url")).append("\n")
-                    item.optString("description").takeIf { it.isNotBlank() }?.let {
+                    item.text("description").takeIf { it.isNotBlank() }?.let {
                         append("  ").append(it.take(400)).append("\n")
                     }
                 }
@@ -158,7 +158,7 @@ object SearchClient {
                     append(item.optString("title").ifBlank { "Без названия" })
                     append(" · ").append(item.optString("state"))
                     append("\n  ").append(item.optString("html_url")).append("\n")
-                    item.optString("body").takeIf { it.isNotBlank() }?.let {
+                    item.text("body").takeIf { it.isNotBlank() }?.let {
                         append("  ").append(it.replace('\n', ' ').take(300)).append("\n")
                     }
                 }
@@ -250,8 +250,8 @@ object SearchClient {
         )
         val text = buildString {
             append("### DuckDuckGo\n")
-            val abstract = json.optString("AbstractText")
-            val abstractUrl = json.optString("AbstractURL")
+            val abstract = json.text("AbstractText")
+            val abstractUrl = json.text("AbstractURL")
             var found = false
             if (abstract.isNotBlank()) {
                 found = true
@@ -313,7 +313,7 @@ object SearchClient {
                 val title = item.optString("title")
                 if (title.isBlank()) continue
                 append(i + 1).append(". ").append(title).append("\n")
-                val link = item.optString("url").ifBlank {
+                val link = item.text("url").ifBlank {
                     "https://news.ycombinator.com/item?id=" + item.optString("objectID")
                 }
                 append(link).append("\n")
@@ -362,6 +362,9 @@ object SearchClient {
             return JSONObject(body)
         }
     }
+
+    private fun JSONObject.text(key: String): String =
+        if (isNull(key)) "" else optString(key)
 
     private fun clean(value: String): String =
         value
