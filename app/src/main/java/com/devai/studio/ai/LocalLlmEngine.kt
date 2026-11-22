@@ -31,11 +31,11 @@ object LocalLlmEngine {
         val current = session
         if (current != null && loadedPath == path) return current
         closeLocked()
+        // Text-only .task models have no vision/audio encoder. Enabling these
+        // backends makes LiteRT-LM look for TF_LITE_VISION_ENCODER and fail.
         val config = EngineConfig(
             modelPath = path,
             backend = Backend.CPU,
-            visionBackend = Backend.CPU,
-            audioBackend = Backend.CPU,
             maxNumTokens = MAX_TOKENS,
             cacheDir = ctx.cacheDir.absolutePath
         )
