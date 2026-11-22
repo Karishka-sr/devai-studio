@@ -506,6 +506,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
             actions = {
                 DevAIActionIcon(Icons.AutoMirrored.Filled.List, "Сессии") { openSessions() }
                 DevAIActionIcon(Icons.Default.Add, "Новый чат") { newChat() }
+                DevAIActionIcon(Icons.Default.Share, "Экспорт") { exportChat() }
                 DevAIActionIcon(Icons.Default.Refresh, "Заново", enabled = !streaming) { regenerate() }
                 DevAIActionIcon(Icons.Default.Person, "Персонажи") {
                     requireFeature(PremiumFeature.CHARACTERS) {
