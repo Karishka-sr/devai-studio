@@ -1,13 +1,16 @@
 package com.devai.studio.ui
 
+import android.content.ClipboardManager
 import android.content.Context
 import android.net.Uri
 import android.text.InputType
+import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.ScrollView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.devai.studio.R
 import com.devai.studio.data.ApiKeyStore
@@ -23,16 +26,46 @@ object CommonDialogs {
             setText(ApiKeyStore.get(ctx, provider.id).orEmpty())
             setSelection(text.length)
         }
+        val paste = Button(ctx).apply {
+            text = "Вставить из буфера"
+            setOnClickListener {
+                val clipboard = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                val value = clipboard?.primaryClip
+                    ?.takeIf { it.itemCount > 0 }
+                    ?.getItemAt(0)
+                    ?.coerceToText(ctx)
+                    ?.toString()
+                    ?.trim()
+                    .orEmpty()
+                if (value.isBlank()) {
+                    Toast.makeText(ctx, "Буфер обмена пуст", Toast.LENGTH_SHORT).show()
+                } else {
+                    edit.setText(value)
+                    edit.setSelection(value.length)
+                }
+            }
+        }
+        val getKey = Button(ctx).apply {
+            text = "Получить ключ на сайте"
+            isEnabled = provider.getKeyUrl.isNotBlank()
+            setOnClickListener { AndroidUtils.openUrl(ctx, provider.getKeyUrl) }
+        }
+        val container = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(ctx, 20), dp(ctx, 8), dp(ctx, 20), dp(ctx, 8))
+            addView(edit)
+            addView(paste)
+            addView(getKey)
+        }
         AlertDialog.Builder(ctx)
             .setTitle("Ключ — " + provider.name)
-            .setView(padded(ctx, edit))
+            .setView(container)
             .setPositiveButton("Сохранить") { _, _ ->
                 val key = edit.text.toString().trim()
                 if (key.isEmpty()) ApiKeyStore.clear(ctx, provider.id)
                 else ApiKeyStore.save(ctx, provider.id, key)
                 onDone()
             }
-            .setNeutralButton("Получить ключ") { _, _ -> AndroidUtils.openUrl(ctx, provider.getKeyUrl) }
             .setNegativeButton("Отмена", null)
             .show()
     }

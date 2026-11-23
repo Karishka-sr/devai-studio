@@ -147,7 +147,7 @@ fun ProvidersScreen() {
             return
         }
         val needsKey = p.id != "custom" &&
-            (p.category != Category.FULLY_FREE || p.id == "openrouter-free") &&
+            (p.category != Category.FULLY_FREE || p.id == "openrouter-free" || p.id == "devai-core") &&
             !ApiKeyStore.has(context, p.id)
         if (needsKey) {
             CommonDialogs.keyDialog(context, p) { rev++ }
@@ -243,6 +243,8 @@ fun ProvidersScreen() {
                 is ProviderRow.Provider -> ProviderCard(
                     p = row.info,
                     active = row.info.id == activeId,
+                    model = AppPrefs.modelFor(context, row.info.id)
+                        ?: row.info.models.firstOrNull().orEmpty(),
                     onKey = { openKey(row.info) },
                     onModel = { openModel(row.info) },
                     onSite = {
@@ -260,6 +262,7 @@ fun ProvidersScreen() {
 private fun ProviderCard(
     p: ProviderInfo,
     active: Boolean,
+    model: String,
     onKey: () -> Unit,
     onModel: () -> Unit,
     onSite: () -> Unit,
@@ -301,6 +304,14 @@ private fun ProviderCard(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        if (model.isNotBlank()) {
+            Text(
+                text = "Модель: $model",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
         if (p.freeNote.isNotBlank()) {
             Text(
                 text = p.freeNote,
@@ -308,6 +319,7 @@ private fun ProviderCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        val hasKey = ApiKeyStore.has(LocalContext.current, p.id)
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(2.dp),
@@ -315,7 +327,7 @@ private fun ProviderCard(
             TextButton(onClick = onKey) {
                 Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(17.dp))
                 Spacer(Modifier.width(4.dp))
-                Text("Ключ")
+                Text(if (p.id == "devai-core" && !hasKey) "Вставить ключ" else "Ключ")
             }
             TextButton(onClick = onModel) {
                 Icon(Icons.AutoMirrored.Filled.List, contentDescription = null, modifier = Modifier.size(17.dp))
