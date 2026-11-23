@@ -32,6 +32,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
@@ -53,6 +54,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.devai.studio.data.AppPrefs
+import com.devai.studio.data.UiStyleCatalog
 import com.devai.studio.data.ChatMode
 import com.devai.studio.data.ChatSessionsStore
 import com.devai.studio.data.AppUpdate
@@ -231,11 +233,13 @@ fun DevAITheme(content: @Composable () -> Unit) {
     val context = LocalContext.current
     val revision = DevAIThemeState.revision
     val dark = isSystemInDarkTheme()
+    val style = UiStyleCatalog.byId(AppPrefs.uiStyle(context))
+    val classic = style.id == UiStyleCatalog.CLASSIC_ID
     val selected = AppPrefs.theme(context).let { id ->
         val feature = ThemeManager.featureFor(id)
         if (feature != null && !PremiumStore.hasFeature(context, feature)) ThemeManager.M3 else id
     }
-    val base = when {
+    val legacyBase = when {
         selected == ThemeManager.EXPRESSIVE -> if (dark) ExpressiveDark else ExpressiveLight
         selected == ThemeManager.RETRO -> if (dark) RetroDark else RetroLight
         AppPrefs.dynamicColor(context) -> if (dark) {
@@ -247,18 +251,31 @@ fun DevAITheme(content: @Composable () -> Unit) {
         else -> AuroraLight
     }
     val accent = ThemeManager.accents.firstOrNull { it.id == AppPrefs.accent(context) }
-    val scheme = if (accent == null || accent.id == "default") base else base.copy(
-        primary = Color(if (dark) accent.dark else accent.light),
-        onPrimary = if (dark) Color(0xFF111827) else Color.White,
-        primaryContainer = Color(if (dark) accent.dark else accent.light).copy(alpha = 0.18f),
-        onPrimaryContainer = if (dark) Color(0xFFE5E7EB) else Color(0xFF111827),
-    )
-    MaterialTheme(
-        colorScheme = scheme,
-        typography = DevAITypography,
-        shapes = DevAIShapes,
-        content = content,
-    )
+    val accentColor = accent?.takeIf { it.id != "default" }?.let {
+        Color(if (dark) it.dark else it.light)
+    }
+    val scheme = if (!classic) {
+        style.colorScheme(dark, accentColor)
+    } else if (accentColor != null) {
+        legacyBase.copy(
+            primary = accentColor,
+            onPrimary = if (dark) Color(0xFF111827) else Color.White,
+            primaryContainer = accentColor.copy(alpha = 0.18f),
+            onPrimaryContainer = if (dark) Color(0xFFE5E7EB) else Color(0xFF111827),
+        )
+    } else {
+        legacyBase
+    }
+    val shapes = if (classic) DevAIShapes else style.shapes()
+    val typography = if (classic) DevAITypography else style.typography(DevAITypography)
+    CompositionLocalProvider(LocalUiStyle provides style) {
+        MaterialTheme(
+            colorScheme = scheme,
+            typography = typography,
+            shapes = shapes,
+            content = content,
+        )
+    }
 }
 
 @Composable
@@ -347,20 +364,46 @@ private fun DevAIBottomBar(
     onTab: (String) -> Unit,
     onBuilder: () -> Unit,
 ) {
+    val style = LocalUiStyle.current
+    val nav = style.nav
+    val outerPadding = when (nav) {
+        com.devai.studio.data.StyleNav.FLAT_BAR -> 8.dp
+        com.devai.studio.data.StyleNav.MINIMAL -> 6.dp
+        else -> 12.dp
+    }
     Box(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = outerPadding, vertical = 8.dp),
     ) {
         Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
+            shape = when (nav) {
+                com.devai.studio.data.StyleNav.FLAT_BAR -> RoundedCornerShape(0.dp)
+                com.devai.studio.data.StyleNav.MINIMAL -> RoundedCornerShape(0.dp)
+                com.devai.studio.data.StyleNav.TERMINAL -> RoundedCornerShape(0.dp)
+                com.devai.studio.data.StyleNav.SEGMENTED -> RoundedCornerShape(24.dp)
+                else -> RoundedCornerShape(28.dp)
+            },
+            color = when (nav) {
+                com.devai.studio.data.StyleNav.MINIMAL -> Color.Transparent
+                com.devai.studio.data.StyleNav.SEGMENTED -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)
+                else -> MaterialTheme.colorScheme.surface.copy(
+                    alpha = if (style.background == com.devai.studio.data.StyleBackground.GLASS) 0.72f else 0.94f,
+                )
+            },
             contentColor = MaterialTheme.colorScheme.onSurface,
-            border = BorderStroke(
+            border = if (nav == com.devai.studio.data.StyleNav.MINIMAL) null else BorderStroke(
                 1.dp,
-                MaterialTheme.colorScheme.outline.copy(alpha = 0.18f),
+                if (nav == com.devai.studio.data.StyleNav.TERMINAL)
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+                else MaterialTheme.colorScheme.outline.copy(alpha = 0.18f),
             ),
-            shadowElevation = 18.dp,
+            shadowElevation = when (nav) {
+                com.devai.studio.data.StyleNav.MINIMAL -> 0.dp
+                com.devai.studio.data.StyleNav.TERMINAL -> 0.dp
+                com.devai.studio.data.StyleNav.FLAT_BAR -> 4.dp
+                else -> 18.dp
+            },
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(6.dp),
@@ -408,21 +451,30 @@ private fun RowScope.DevAINavItem(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    val shape = RoundedCornerShape(20.dp)
+    val style = LocalUiStyle.current
+    val sharp = style.nav == com.devai.studio.data.StyleNav.TERMINAL ||
+        style.nav == com.devai.studio.data.StyleNav.MINIMAL
+    val shape = if (sharp) RoundedCornerShape(0.dp) else RoundedCornerShape(20.dp)
     Column(
         modifier = Modifier
             .weight(1f)
             .clip(shape)
             .then(
                 if (selected) {
-                    Modifier.background(
-                        Brush.horizontalGradient(
-                            listOf(
-                                MaterialTheme.colorScheme.primary,
-                                MaterialTheme.colorScheme.tertiary,
+                    if (style.nav == com.devai.studio.data.StyleNav.TERMINAL ||
+                        style.nav == com.devai.studio.data.StyleNav.MINIMAL
+                    ) {
+                        Modifier.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f))
+                    } else {
+                        Modifier.background(
+                            Brush.horizontalGradient(
+                                listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.tertiary,
+                                )
                             )
                         )
-                    )
+                    }
                 } else {
                     Modifier
                 }

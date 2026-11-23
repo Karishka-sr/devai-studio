@@ -88,6 +88,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -782,8 +783,10 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
         }
 
         Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surface.copy(
+                alpha = if (LocalUiStyle.current.background == com.devai.studio.data.StyleBackground.GLASS) 0.68f else 0.92f,
+            ),
             contentColor = MaterialTheme.colorScheme.onSurface,
             border = androidx.compose.foundation.BorderStroke(
                 1.dp,
@@ -829,7 +832,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                     modifier = Modifier.weight(1f),
                     placeholder = { Text("Сообщение…") },
                     maxLines = 4,
-                    shape = RoundedCornerShape(22.dp),
+                    shape = MaterialTheme.shapes.large,
                     keyboardOptions = KeyboardOptions(
                         imeAction = if (sendOnEnter) ImeAction.Send else ImeAction.Default
                     ),
@@ -1272,6 +1275,34 @@ private fun MessageBubble(
     onShare: (String) -> Unit,
 ) {
     val isUser = message.role == "user"
+    val style = LocalUiStyle.current
+    val dark = style.effectiveDark(MaterialTheme.colorScheme.background.luminance() < 0.35f)
+    val userColor = style.userBubbleColor(dark)
+    val onUser = style.onUserBubbleColor(dark)
+    val aiColor = style.aiBubbleColor(dark)
+    val onAi = style.onAiBubbleColor(dark)
+    val transparentAi = style.bubble == com.devai.studio.data.StyleBubble.MINIMAL ||
+        style.bubble == com.devai.studio.data.StyleBubble.FLAT
+    val bubbleShape = when (style.bubble) {
+        com.devai.studio.data.StyleBubble.ROUNDED -> RoundedCornerShape(
+            topStart = if (isUser) 22.dp else 6.dp,
+            topEnd = if (isUser) 6.dp else 22.dp,
+            bottomStart = 22.dp,
+            bottomEnd = 22.dp,
+        )
+        com.devai.studio.data.StyleBubble.BUBBLE -> RoundedCornerShape(
+            topStart = if (isUser) 20.dp else 4.dp,
+            topEnd = if (isUser) 4.dp else 20.dp,
+            bottomStart = 20.dp,
+            bottomEnd = 20.dp,
+        )
+        com.devai.studio.data.StyleBubble.SOFT -> RoundedCornerShape(style.corner.dp)
+        com.devai.studio.data.StyleBubble.SHARP -> RoundedCornerShape(4.dp)
+        com.devai.studio.data.StyleBubble.TERMINAL,
+        com.devai.studio.data.StyleBubble.BORDER,
+        com.devai.studio.data.StyleBubble.FLAT -> RoundedCornerShape(0.dp)
+        com.devai.studio.data.StyleBubble.MINIMAL -> RoundedCornerShape(12.dp)
+    }
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
@@ -1281,38 +1312,45 @@ private fun MessageBubble(
             Avatar(isUser = false)
             Spacer(Modifier.width(8.dp))
         }
-        val bubbleShape = RoundedCornerShape(
-            topStart = if (isUser) 22.dp else 6.dp,
-            topEnd = if (isUser) 6.dp else 22.dp,
-            bottomStart = 22.dp,
-            bottomEnd = 22.dp,
-        )
         Surface(
             shape = bubbleShape,
-            color = if (isUser) {
-                Color.Transparent
-            } else {
-                MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
-            },
-            contentColor = if (isUser) MaterialTheme.colorScheme.onPrimary
-            else MaterialTheme.colorScheme.onSurface,
-            border = if (isUser) null else androidx.compose.foundation.BorderStroke(
-                1.dp,
-                MaterialTheme.colorScheme.outline.copy(alpha = 0.16f),
+            color = if (isUser || transparentAi) Color.Transparent else aiColor.copy(
+                alpha = if (style.background == com.devai.studio.data.StyleBackground.GLASS) 0.72f else 1f,
             ),
+            contentColor = if (isUser) onUser else onAi,
+            border = when {
+                isUser -> null
+                style.bubble == com.devai.studio.data.StyleBubble.MINIMAL ||
+                    style.bubble == com.devai.studio.data.StyleBubble.FLAT -> null
+                style.bubble == com.devai.studio.data.StyleBubble.BORDER ||
+                    style.bubble == com.devai.studio.data.StyleBubble.TERMINAL -> androidx.compose.foundation.BorderStroke(
+                    if (style.bubble == com.devai.studio.data.StyleBubble.BORDER) 2.dp else 1.dp,
+                    if (style.bubble == com.devai.studio.data.StyleBubble.TERMINAL)
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                    else MaterialTheme.colorScheme.outline,
+                )
+                else -> androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outline.copy(alpha = 0.16f),
+                )
+            },
             modifier = Modifier
                 .widthIn(max = bubbleWidth)
                 .then(
                     if (isUser) {
-                        Modifier.background(
-                            Brush.linearGradient(
-                                listOf(
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.82f),
-                                )
-                            ),
-                            bubbleShape,
-                        )
+                        if (style.id == com.devai.studio.data.UiStyleCatalog.CLASSIC_ID) {
+                            Modifier.background(
+                                Brush.linearGradient(
+                                    listOf(
+                                        MaterialTheme.colorScheme.primary,
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.82f),
+                                    )
+                                ),
+                                bubbleShape,
+                            )
+                        } else {
+                            Modifier.background(userColor, bubbleShape)
+                        }
                     } else {
                         Modifier
                     }
@@ -1326,19 +1364,19 @@ private fun MessageBubble(
                     SelectionContainer {
                         Text(
                             text = message.content,
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = onUser,
                             fontSize = fontSize,
                             fontFamily = fontFamily,
                         )
                     }
                 } else if (message.content.isBlank()) {
-                    Text("…", color = MaterialTheme.colorScheme.onSurface)
+                    Text("…", color = onAi)
                 } else {
                     val segments = remember(message.content) { parseSegments(message.content) }
                     if (segments.isEmpty()) {
                         Text(
                             message.content,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = onAi,
                             fontSize = fontSize,
                             fontFamily = fontFamily,
                         )
@@ -1355,7 +1393,7 @@ private fun MessageBubble(
                                 SelectionContainer {
                                     Text(
                                         text = segment.text,
-                                        color = MaterialTheme.colorScheme.onSurface,
+                                        color = onAi,
                                         fontSize = fontSize,
                                         fontFamily = fontFamily,
                                     )
@@ -1414,7 +1452,7 @@ private fun Avatar(isUser: Boolean) {
     Box(
         modifier = Modifier
             .size(30.dp)
-            .clip(CircleShape)
+            .clip(LocalUiStyle.current.avatarShape())
             .background(
                 Brush.linearGradient(
                     if (isUser) {

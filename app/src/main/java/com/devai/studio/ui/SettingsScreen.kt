@@ -105,6 +105,9 @@ import com.devai.studio.data.PremiumPlan
 import com.devai.studio.data.PhoneAuthManager
 import com.devai.studio.data.PhoneNumbers
 import com.devai.studio.data.PremiumStore
+import com.devai.studio.data.StylePalette
+import com.devai.studio.data.UiStyle
+import com.devai.studio.data.UiStyleCatalog
 import com.devai.studio.data.UpdateChecker
 import com.devai.studio.data.ProfileStore
 import com.devai.studio.data.PromptLibrary
@@ -135,6 +138,12 @@ private enum class SettingsCategory(
     LOOK(
         "Вид", "Тема, акцент и аватары", Icons.Default.Star, "Интерфейс",
         "тема оформление акцент цвет динамический аватары пузыри ширина обои",
+    ),
+    STYLES(
+        "Стили интерфейса", "ChatGPT, Claude, Glass и ещё 30+", Icons.Default.Star, "Интерфейс",
+        "стиль интерфейс chatgpt claude gemini copilot perplexity grok deepseek notion " +
+            "linear vercel github discord slack telegram whatsapp imessage material you " +
+            "expressive fluent macos liquid glass terminal nord solarized dracula cyberpunk paper",
     ),
     PROFILE(
         "Профиль", "Ник и номер телефона", Icons.Default.Settings, "Аккаунт",
@@ -229,6 +238,7 @@ fun SettingsScreen() {
     var customModel by remember { mutableStateOf(AppPrefs.customModel(context)) }
     var systemPrompt by remember { mutableStateOf(AppPrefs.systemPrompt(context)) }
     var themeId by remember { mutableStateOf(AppPrefs.theme(context)) }
+    var uiStyleId by remember { mutableStateOf(AppPrefs.uiStyle(context)) }
     var responseStyle by remember { mutableStateOf(AppPrefs.responseStyle(context)) }
     var responseLanguage by remember { mutableStateOf(AppPrefs.responseLanguage(context)) }
     var codeLanguageId by remember { mutableStateOf(AppPrefs.codeLanguage(context)) }
@@ -299,7 +309,9 @@ fun SettingsScreen() {
             return
         }
         AppPrefs.setTheme(context, id)
+        AppPrefs.setUiStyle(context, UiStyleCatalog.CLASSIC_ID)
         themeId = id
+        uiStyleId = UiStyleCatalog.CLASSIC_ID
         showTheme = false
         DevAIThemeState.refresh()
     }
@@ -329,6 +341,7 @@ fun SettingsScreen() {
         customModel = AppPrefs.customModel(context)
         systemPrompt = AppPrefs.systemPrompt(context)
         themeId = AppPrefs.theme(context)
+        uiStyleId = AppPrefs.uiStyle(context)
         responseStyle = AppPrefs.responseStyle(context)
         responseLanguage = AppPrefs.responseLanguage(context)
         codeLanguageId = AppPrefs.codeLanguage(context)
@@ -525,7 +538,11 @@ fun SettingsScreen() {
                 topP = topP,
                 maxTokens = maxTokens.toIntOrNull() ?: AppPrefs.maxTokens(context),
                 language = (CodeLanguages.byId(codeLanguageId) ?: CodeLanguages.default).name,
-                theme = context.getString(ThemeManager.labelRes(themeId)),
+                theme = if (uiStyleId == UiStyleCatalog.CLASSIC_ID) {
+                    context.getString(ThemeManager.labelRes(themeId))
+                } else {
+                    UiStyleCatalog.byId(uiStyleId).name
+                },
             ),
             quick = QuickToggles(
                 dynamicColor = dynamicColor,
@@ -1035,7 +1052,9 @@ fun SettingsScreen() {
 
                     SwitchSetting(
                         title = "Dynamic color",
-                        subtitle = "Цвета системы на Android 12+",
+                        subtitle = if (uiStyleId == UiStyleCatalog.CLASSIC_ID)
+                            "Цвета системы на Android 12+"
+                        else "Работает в классическом стиле; у стилей своя палитра",
                         checked = dynamicColor,
                         onCheckedChange = {
                             dynamicColor = it
@@ -1137,6 +1156,18 @@ fun SettingsScreen() {
                         },
                     )
                 }
+            }
+
+            SettingsCategory.STYLES -> {
+                UiStyleSettings(
+                    current = uiStyleId,
+                    onSelect = { style ->
+                        uiStyleId = style.id
+                        AppPrefs.setUiStyle(context, style.id)
+                        DevAIThemeState.refresh()
+                        toast("Стиль: ${style.name}")
+                    },
+                )
             }
 
             SettingsCategory.PROFILE -> {
@@ -1854,8 +1885,8 @@ private fun SettingsNavRow(
         SettingsCategory.GENERATION, SettingsCategory.ABOUT -> MaterialTheme.colorScheme.primary
         SettingsCategory.MODELS -> MaterialTheme.colorScheme.secondary
         SettingsCategory.CHAT -> MaterialTheme.colorScheme.primary
-        SettingsCategory.LOOK, SettingsCategory.PROFILE, SettingsCategory.PREMIUM ->
-            MaterialTheme.colorScheme.tertiary
+        SettingsCategory.LOOK, SettingsCategory.STYLES, SettingsCategory.PROFILE,
+        SettingsCategory.PREMIUM -> MaterialTheme.colorScheme.tertiary
         SettingsCategory.DATA -> MaterialTheme.colorScheme.secondary
     }
     Row(
@@ -2138,4 +2169,172 @@ private fun BoxScope.LockedFieldOverlay(onClick: () -> Unit) {
             .matchParentSize()
             .clickable(onClick = onClick)
     )
+}
+
+@Composable
+private fun UiStyleSettings(
+    current: String,
+    onSelect: (UiStyle) -> Unit,
+) {
+    var query by remember { mutableStateOf("") }
+    val styles = remember(query) {
+        val q = query.trim()
+        UiStyleCatalog.all.filter {
+            q.isBlank() || listOf(it.name, it.maker, it.description, it.id)
+                .any { value -> value.contains(q, ignoreCase = true) }
+        }
+    }
+
+    SettingsSection("Стили интерфейса") {
+        Text(
+            "${UiStyleCatalog.all.size} готовых стилей: ChatGPT, Claude, Gemini, Copilot, " +
+                "Perplexity, Grok, Glass, Liquid Glass, Material You, Material Expressive 3, " +
+                "Telegram, Discord, Terminal и другие.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            label = { Text("Поиск стиля") },
+            placeholder = { Text("chatgpt, glass, terminal…") },
+        )
+        Text(
+            "Найдено: ${styles.size}. Стили — интерфейсные интерпретации; Vexel не меняется.",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+
+    styles.chunked(2).forEach { row ->
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            row.forEach { style ->
+                StylePreviewCard(
+                    style = style,
+                    selected = style.id == current,
+                    onClick = { onSelect(style) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            if (row.size == 1) Spacer(Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun StylePreviewCard(
+    style: UiStyle,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val p: StylePalette = if (style.forceDark) style.dark else style.light
+    val bg = Color(p.background)
+    val surface = Color(p.surface)
+    val onBg = Color(p.onBackground)
+    val onVariant = Color(p.onSurfaceVariant)
+    Surface(
+        modifier = modifier
+            .heightIn(min = 156.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        color = bg,
+        contentColor = onBg,
+        border = if (selected) {
+            BorderStroke(2.dp, Color(p.primary))
+        } else {
+            BorderStroke(1.dp, Color(p.outline).copy(alpha = 0.7f))
+        },
+    ) {
+        Column(
+            modifier = Modifier.padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(7.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(26.dp)
+                        .clip(RoundedCornerShape(9.dp))
+                        .background(Color(p.primary)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        style.name.take(1),
+                        color = Color(p.onPrimary),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+                Spacer(Modifier.width(7.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        style.name,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = onBg,
+                        maxLines = 1,
+                    )
+                    Text(
+                        style.maker,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = onVariant,
+                        maxLines = 1,
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.Bottom,
+            ) {
+                Box(
+                    Modifier
+                        .width(54.dp)
+                        .height(16.dp)
+                        .background(
+                            Color(p.userBubble),
+                            RoundedCornerShape(if (style.corner == 0) 0.dp else 7.dp),
+                        ),
+                )
+                Box(
+                    Modifier
+                        .width(66.dp)
+                        .height(20.dp)
+                        .background(
+                            if (style.bubble == com.devai.studio.data.StyleBubble.MINIMAL)
+                                surface
+                            else Color(p.aiBubble),
+                            RoundedCornerShape(if (style.corner == 0) 0.dp else 7.dp),
+                        ),
+                )
+                Spacer(Modifier.weight(1f))
+                Text(
+                    style.id.uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(p.primary),
+                    maxLines = 1,
+                )
+            }
+
+            Text(
+                style.description,
+                style = MaterialTheme.typography.bodySmall,
+                color = onVariant,
+                maxLines = 2,
+            )
+
+            Text(
+                if (selected) "Выбран" else "Нажми, чтобы применить",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                color = if (selected) Color(p.primary) else onVariant,
+            )
+        }
+    }
 }

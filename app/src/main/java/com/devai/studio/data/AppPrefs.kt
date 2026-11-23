@@ -14,6 +14,7 @@ object AppPrefs {
     private const val KEY_CUSTOM_MODEL = "custom_model"
     private const val KEY_SYSTEM_PROMPT = "system_prompt"
     private const val KEY_THEME = "theme"
+    private const val KEY_UI_STYLE = "ui_style"
     private const val KEY_CHAT_MODE = "chat_mode"
     private const val KEY_TOP_P = "top_p"
     private const val KEY_HISTORY_LIMIT = "history_limit"
@@ -57,6 +58,11 @@ object AppPrefs {
 
     fun theme(ctx: Context): String = p(ctx).getString(KEY_THEME, "m3") ?: "m3"
     fun setTheme(ctx: Context, id: String) = p(ctx).edit().putString(KEY_THEME, id).apply()
+
+    fun uiStyle(ctx: Context): String =
+        p(ctx).getString(KEY_UI_STYLE, UiStyleCatalog.CLASSIC_ID) ?: UiStyleCatalog.CLASSIC_ID
+    fun setUiStyle(ctx: Context, id: String) =
+        p(ctx).edit().putString(KEY_UI_STYLE, id).apply()
 
     fun activeProvider(ctx: Context): String? = p(ctx).getString(KEY_PROVIDER, null)
     fun setActiveProvider(ctx: Context, id: String) = p(ctx).edit().putString(KEY_PROVIDER, id).apply()
@@ -255,6 +261,7 @@ object AppPrefs {
         put("chatWallpaper", chatWallpaper(ctx))
         put("chatWallpaperDim", chatWallpaperDim(ctx))
         put("theme", theme(ctx))
+        put("uiStyle", uiStyle(ctx))
         put("chatMode", chatMode(ctx))
         put("systemPrompt", systemPrompt(ctx))
         put("provider", activeProvider(ctx).orEmpty())

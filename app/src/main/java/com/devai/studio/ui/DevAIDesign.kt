@@ -66,36 +66,128 @@ fun DevAIBackground(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val dark = scheme.background.luminance() < 0.35f
-    val top = if (dark) scheme.background else scheme.background
-    val middle = if (dark) scheme.surface else Color(0xFFF2EFFF)
-    val glow = scheme.primary.copy(alpha = if (dark) 0.18f else 0.12f)
-    val glowTwo = scheme.tertiary.copy(alpha = if (dark) 0.12f else 0.08f)
+    val style = LocalUiStyle.current
+    val dark = style.effectiveDark(scheme.background.luminance() < 0.35f)
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val step = with(density) { 28.dp.toPx() }
     CompositionLocalProvider(LocalContentColor provides scheme.onBackground) {
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(top, middle, top))),
+                .background(
+                    when (style.background) {
+                        com.devai.studio.data.StyleBackground.AURORA ->
+                            Brush.verticalGradient(listOf(scheme.background, if (dark) scheme.surface else scheme.background, scheme.background))
+                        com.devai.studio.data.StyleBackground.MESH ->
+                            Brush.linearGradient(listOf(scheme.background, scheme.surfaceVariant, scheme.background))
+                        com.devai.studio.data.StyleBackground.GLASS ->
+                            Brush.verticalGradient(listOf(scheme.background, scheme.surface.copy(alpha = 0.92f), scheme.background))
+                        else -> Brush.verticalGradient(listOf(scheme.background, scheme.background))
+                    }
+                ),
         ) {
             Canvas(Modifier.fillMaxSize()) {
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(glow, Color.Transparent),
-                        center = Offset(size.width * 0.92f, size.height * 0.03f),
-                        radius = size.width * 0.75f,
-                    ),
-                    radius = size.width * 0.75f,
-                    center = Offset(size.width * 0.92f, size.height * 0.03f),
-                )
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(glowTwo, Color.Transparent),
-                        center = Offset(size.width * 0.05f, size.height * 0.85f),
-                        radius = size.width * 0.7f,
-                    ),
-                    radius = size.width * 0.7f,
-                    center = Offset(size.width * 0.05f, size.height * 0.85f),
-                )
+                when (style.background) {
+                    com.devai.studio.data.StyleBackground.AURORA -> {
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                listOf(scheme.primary.copy(alpha = if (dark) 0.18f else 0.12f), Color.Transparent),
+                                center = Offset(size.width * 0.92f, size.height * 0.03f),
+                                radius = size.width * 0.75f,
+                            ),
+                            radius = size.width * 0.75f,
+                            center = Offset(size.width * 0.92f, size.height * 0.03f),
+                        )
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                listOf(scheme.tertiary.copy(alpha = if (dark) 0.12f else 0.08f), Color.Transparent),
+                                center = Offset(size.width * 0.05f, size.height * 0.85f),
+                                radius = size.width * 0.7f,
+                            ),
+                            radius = size.width * 0.7f,
+                            center = Offset(size.width * 0.05f, size.height * 0.85f),
+                        )
+                    }
+                    com.devai.studio.data.StyleBackground.GRID -> {
+                        var x = 0f
+                        while (x < size.width) {
+                            drawLine(scheme.outline.copy(alpha = 0.22f), Offset(x, 0f), Offset(x, size.height), 1f)
+                            x += step
+                        }
+                        var y = 0f
+                        while (y < size.height) {
+                            drawLine(scheme.outline.copy(alpha = 0.22f), Offset(0f, y), Offset(size.width, y), 1f)
+                            y += step
+                        }
+                    }
+                    com.devai.studio.data.StyleBackground.DOTS -> {
+                        val dot = with(density) { 1.4.dp.toPx() }
+                        var y = step / 2
+                        while (y < size.height) {
+                            var x = step / 2
+                            while (x < size.width) {
+                                drawCircle(scheme.outline.copy(alpha = 0.35f), dot, Offset(x, y))
+                                x += step
+                            }
+                            y += step
+                        }
+                    }
+                    com.devai.studio.data.StyleBackground.PAPER -> {
+                        var y = step
+                        while (y < size.height) {
+                            drawLine(scheme.outline.copy(alpha = 0.18f), Offset(0f, y), Offset(size.width, y), 1f)
+                            y += step
+                        }
+                    }
+                    com.devai.studio.data.StyleBackground.TERMINAL -> {
+                        var y = 0f
+                        while (y < size.height) {
+                            drawRect(Color.Black.copy(alpha = 0.16f), Offset(0f, y), androidx.compose.ui.geometry.Size(size.width, 1f))
+                            y += with(density) { 5.dp.toPx() }
+                        }
+                    }
+                    com.devai.studio.data.StyleBackground.MESH, com.devai.studio.data.StyleBackground.GLASS -> {
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                listOf(scheme.primary.copy(alpha = if (dark) 0.16f else 0.10f), Color.Transparent),
+                                center = Offset(size.width * 0.15f, size.height * 0.12f),
+                                radius = size.width * 0.8f,
+                            ),
+                            radius = size.width * 0.8f,
+                            center = Offset(size.width * 0.15f, size.height * 0.12f),
+                        )
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                listOf(scheme.tertiary.copy(alpha = if (dark) 0.12f else 0.08f), Color.Transparent),
+                                center = Offset(size.width * 0.9f, size.height * 0.82f),
+                                radius = size.width * 0.75f,
+                            ),
+                            radius = size.width * 0.75f,
+                            center = Offset(size.width * 0.9f, size.height * 0.82f),
+                        )
+                    }
+                    com.devai.studio.data.StyleBackground.NEON -> {
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                listOf(scheme.secondary.copy(alpha = 0.18f), Color.Transparent),
+                                center = Offset(size.width * 0.2f, size.height * 0.25f),
+                                radius = size.width * 0.9f,
+                            ),
+                            radius = size.width * 0.9f,
+                            center = Offset(size.width * 0.2f, size.height * 0.25f),
+                        )
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                listOf(scheme.tertiary.copy(alpha = 0.12f), Color.Transparent),
+                                center = Offset(size.width * 0.85f, size.height * 0.7f),
+                                radius = size.width * 0.8f,
+                            ),
+                            radius = size.width * 0.8f,
+                            center = Offset(size.width * 0.85f, size.height * 0.7f),
+                        )
+                    }
+                    com.devai.studio.data.StyleBackground.SOLID -> Unit
+                }
             }
             content()
         }
@@ -211,13 +303,15 @@ fun DevAICard(
     accent: Color? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val shape = RoundedCornerShape(24.dp)
+    val shape = LocalUiStyle.current.cardShape()
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         shape = shape,
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+        color = MaterialTheme.colorScheme.surface.copy(
+            alpha = if (LocalUiStyle.current.background == com.devai.studio.data.StyleBackground.GLASS) 0.66f else 0.9f,
+        ),
         contentColor = MaterialTheme.colorScheme.onSurface,
         border = BorderStroke(
             1.dp,
@@ -253,7 +347,7 @@ fun DevAIIconTile(
     Box(
         modifier = modifier
             .size(size)
-            .clip(RoundedCornerShape(size * 0.32f))
+            .clip(if (LocalUiStyle.current.corner == 0) RoundedCornerShape(0.dp) else RoundedCornerShape(size * 0.32f))
             .background(
                 Brush.linearGradient(
                     listOf(tint.copy(alpha = 0.18f), tint.copy(alpha = 0.06f))
@@ -273,7 +367,7 @@ fun DevAIGradientButton(
     enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
-    val shape = RoundedCornerShape(18.dp)
+    val shape = LocalUiStyle.current.pillShape()
     val brush = Brush.horizontalGradient(
         listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
     )

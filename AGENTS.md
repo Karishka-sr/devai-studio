@@ -34,6 +34,13 @@
 - Premium UI: `ui/PremiumActivity.kt` (tier cards, feature matrix, activation, Stars buttons). Gates: themes, model tiers, chat export, search/MCP/plugins/TTS/characters, chat customization, prompt library, backups, QR, history limit.
 - Chat backups: `ChatSessionsStore.exportJson/importJson`; prompt library: `data/PromptLibrary.kt` (1024 prompts, searchable).
 
+## Interface styles (4.0.0)
+- `data/UiStyleCatalog.kt` is the single source for 38 interface presets. Each `UiStyle` carries light/dark `StylePalette`, corner radius, bubble/background/nav/font/avatar variants, and optional `forceDark`/`forceLight` (Terminal, Cyberpunk, Dracula, Discord/Nord/Midnight are dark-first; Paper and Neo-Brutalist stay light).
+- Required presets include `chatgpt`, `claude`, `gemini`, `copilot`, `perplexity`, `grok`, `deepseek`, `glass`, `liquid-glass`, `material-you`, `material-design`, `material-expressive`, plus Telegram/WhatsApp/iMessage/Slack/Discord, VS Code-era palettes (Nord/Solarized/Dracula), Terminal, Cyberpunk, Paper and DevAI originals.
+- Settings → «Стили интерфейса» (`SettingsCategory.STYLES`) is a searchable two-column preview grid. Selecting a style writes `AppPrefs.uiStyle` and calls `DevAIThemeState.refresh()`. `classic` keeps the old «Вид» theme/accent/dynamic-color system; «Вид» writes `classic` when a legacy theme is chosen, so old themes are never lost.
+- `ui/UiStyleTheme.kt` maps a style to MaterialTheme `ColorScheme`, `Shapes`, `Typography`, plus `LocalUiStyle`. `DevAITheme` provides `LocalUiStyle`; `DevAIBackground` renders AURORA/SOLID/GRID/DOTS/MESH/PAPER/TERMINAL/NEON/GLASS. `DevAICard`, chat bubbles/composer, avatars and the bottom bar read `LocalUiStyle`; Glass/Liquid Glass use translucent surfaces instead of opaque cards.
+- Keep all presets free; premium gating stays on the legacy themes only. Add a preset by adding one `UiStyle` entry to `UiStyleCatalog.all`, then test with `UiStyleCatalogTest`.
+
 ## Profile & Phone Auth (3.5.1)
 - `ProfileStore` keeps nickname/phone/uid in EncryptedSharedPreferences (fallback prefs).
 - `PhoneAuthManager` uses Firebase Phone Auth. Configure `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_PROJECT_ID` in `local.properties`; without them the profile UI is disabled with an explicit message. See `docs/PHONE_AUTH.md`.
