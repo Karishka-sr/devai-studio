@@ -92,6 +92,10 @@
 
       <div class="key-grid">
         <form class="panel form-panel" id="key-form" novalidate>
+          <div class="hp-field" aria-hidden="true">
+            <label for="website">Website</label>
+            <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+          </div>
           <label class="field">
             <span class="field-label">Как вас называть <small>необязательно</small></span>
             <input id="name" name="name" type="text" maxlength="80" autocomplete="nickname" placeholder="например, karishka">
@@ -112,7 +116,7 @@
             <span class="btn-arrow" aria-hidden="true">→</span>
           </button>
 
-          <p class="form-note">Лимит: 3 ключа в сутки с одного IP. Один ключ — 60 запросов в минуту.</p>
+          <p class="form-note">Лимит: 3 ключа в сутки с одного IP. Один ключ — 60 запросов в минуту. Защита: proof-of-work и проверка браузера.</p>
           <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
         </form>
 

@@ -48,7 +48,7 @@
 
 ## DevAI Core API & website (v0.2)
 - `server/devai_server.py` is an OpenAI-compatible stdlib server: `/v1/chat/completions` (SSE), `/v1/models`, `/health`, admin key CRUD.
-- Public signup: `POST /v1/keys/challenge` returns a proof-of-work challenge; `POST /v1/keys/register` verifies it, binds to the hashed client IP, and creates a key. Limits: 3/IP/day, 300/day global. Never expose the admin token in the static site.
+- Public signup: `POST /v1/keys/challenge` returns a proof-of-work challenge; `POST /v1/keys/register` verifies it, binds to the hashed client IP, and creates a key. Anti-bot: difficulty 4, 1.2s minimum age, honeypot `website`, 8 open challenges/IP, 3 keys/IP/day, 300/day global. Never expose the admin token in the static site.
 - `docs/` is the GitHub Pages site (`https://karishka-sr.github.io/devai-studio/`). It is static HTML/CSS/JS; the API base is stored in `localStorage` and defaults to the current work host. Update `DEFAULT_API` in `docs/app.js` when the server moves.
 - Tests: `python3 -m py_compile server/devai_server.py`; public flow is verified with challenge → SHA-256 nonce → register → `/v1/models`.
 

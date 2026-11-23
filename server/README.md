@@ -54,13 +54,14 @@ The static site in `docs/` creates keys without exposing the admin token:
 
 1. `POST /v1/keys/challenge` returns a random challenge and difficulty.
 2. The browser finds a nonce whose `sha256("<challenge>:<nonce>")` starts with
-   `000` (three hex zeroes).
+   `0000` (four hex zeroes).
 3. `POST /v1/keys/register` verifies the one-time challenge, binds it to the
    client IP, and returns a new key.
 
-Limits: 3 keys per IP per day, 300 keys per day globally. Challenges expire
-after 5 minutes and are consumed on first use. The client IP is hashed with
-the admin token before it is stored.
+Anti-bot controls: proof-of-work, a 1.2-second minimum challenge age, a hidden
+honeypot field, a cap of 8 open challenges per IP, and 3 keys per IP per day
+(300 per day globally). Challenges expire after 5 minutes and are consumed on
+first use. The client IP is hashed with the admin token before it is stored.
 
 ## Limits
 

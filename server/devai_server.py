@@ -38,7 +38,9 @@ MAX_TOKENS = 1024
 REGISTER_PER_IP_DAY = 3
 REGISTER_GLOBAL_DAY = 300
 CHALLENGE_TTL = 300
-CHALLENGE_DIFFICULTY = 3
+CHALLENGE_DIFFICULTY = 4
+CHALLENGE_MIN_AGE = 1.2
+CHALLENGE_PER_IP_ACTIVE = 8
 CHALLENGES: dict[str, tuple[float, str]] = {}
 CHALLENGE_LOCK = threading.Lock()
 
@@ -126,15 +128,18 @@ def ip_digest(ip: str) -> str:
     return hashlib.sha256((ADMIN_TOKEN + "|" + ip).encode()).hexdigest()
 
 
-def issue_challenge(ip: str) -> str:
+def issue_challenge(ip: str) -> str | None:
     now = time.time()
     challenge = secrets.token_hex(16)
+    digest = ip_digest(ip)
     with CHALLENGE_LOCK:
-        if len(CHALLENGES) > 10000:
-            for key, (ts, _) in list(CHALLENGES.items()):
-                if ts < now - CHALLENGE_TTL:
-                    del CHALLENGES[key]
-        CHALLENGES[challenge] = (now, ip_digest(ip))
+        for key, (ts, _) in list(CHALLENGES.items()):
+            if ts < now - CHALLENGE_TTL:
+                del CHALLENGES[key]
+        active = sum(1 for _, item_digest in CHALLENGES.values() if item_digest == digest)
+        if active >= CHALLENGE_PER_IP_ACTIVE:
+            return None
+        CHALLENGES[challenge] = (now, digest)
     return challenge
 
 
@@ -144,7 +149,8 @@ def verify_challenge(challenge: str, solution: str, ip: str) -> bool:
     if item is None:
         return False
     created, digest = item
-    if time.time() - created > CHALLENGE_TTL or digest != ip_digest(ip):
+    age = time.time() - created
+    if age < CHALLENGE_MIN_AGE or age > CHALLENGE_TTL or digest != ip_digest(ip):
         return False
     text = challenge + ":" + solution
     return hashlib.sha256(text.encode()).hexdigest().startswith("0" * CHALLENGE_DIFFICULTY)
@@ -413,11 +419,15 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/v1/keys/challenge":
             challenge = issue_challenge(self._client_ip())
+            if challenge is None:
+                self._error(429, "Too many open challenges. Try again in a few minutes.", "rate_limit_error")
+                return
             self._send_json(
                 200,
                 {
                     "challenge": challenge,
                     "difficulty": CHALLENGE_DIFFICULTY,
+                    "min_delay": CHALLENGE_MIN_AGE,
                     "expires_in": CHALLENGE_TTL,
                 },
             )
@@ -425,6 +435,9 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/v1/keys/register":
             ip = self._client_ip()
+            if str(body.get("website", "")).strip():
+                self._error(400, "Bot check failed.")
+                return
             challenge = str(body.get("challenge", "")).strip()
             solution = str(body.get("solution", "")).strip()
             if len(challenge) != 32 or not solution.isdigit() or len(solution) > 12:

@@ -6,6 +6,7 @@ const $ = (selector) => document.querySelector(selector);
 const apiInput = $("#api-base");
 const form = $("#key-form");
 const nameInput = $("#name");
+const websiteInput = $("#website");
 const generateButton = $("#generate");
 const formStatus = $("#form-status");
 const keyStatus = $("#key-status");
@@ -101,10 +102,15 @@ async function solveChallenge(challenge, difficulty, onProgress) {
   }
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function createKey(name) {
   let lastError = null;
   for (let attempt = 0; attempt < MAX_CHALLENGE_ATTEMPTS; attempt += 1) {
     setStatus(formStatus, "Готовлю защитную задачу…", "muted");
+    const challengeStarted = performance.now();
     const challenge = await fetchJson("/keys/challenge", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -116,6 +122,13 @@ async function createKey(name) {
       setStatus(formStatus, `Решаю защитную задачу… ${tries.toLocaleString("ru-RU")}`, "muted");
     });
 
+    const elapsed = (performance.now() - challengeStarted) / 1000;
+    const minDelay = Number(challenge.min_delay) || 0;
+    if (elapsed < minDelay) {
+      setStatus(formStatus, "Проверяю браузер…", "muted");
+      await sleep((minDelay - elapsed) * 1000);
+    }
+
     setStatus(formStatus, "Создаю ключ…", "muted");
     try {
       return await fetchJson("/keys/register", {
@@ -123,6 +136,7 @@ async function createKey(name) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
+          website: websiteInput.value,
           challenge: challenge.challenge,
           solution: String(solution),
         }),
@@ -255,6 +269,14 @@ function setupCopyButtons() {
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (busy) return;
+  if (websiteInput.value.trim() || navigator.webdriver) {
+    setStatus(formStatus, "Проверка не пройдена. Откройте страницу в обычном браузере.", "error");
+    return;
+  }
+  if (!window.crypto?.subtle) {
+    setStatus(formStatus, "Браузер не поддерживает Web Crypto. Откройте сайт по HTTPS.", "error");
+    return;
+  }
   busy = true;
   generateButton.disabled = true;
   const label = generateButton.querySelector(".btn-label");
