@@ -8,8 +8,8 @@
   "apk_name": "devai-studio-4.0.0.apk",
   "apk_size": 117472275,
   "apk_sha256": "be41a9b76a2ce68e814a00aa67cfc27d17dcc7ae06a507fca5b0e01a24139c21",
-  "languages_url": "",
-  "languages_name": "",
+  "languages_url": "https://github.com/Karishka-sr/devai-studio/releases/download/v4.0.0/devai-languages-4.0.0.zip",
+  "languages_name": "devai-languages-4.0.0.zip",
   "body": "Этот релиз подготовлен AI-агентом (OpenHands) от имени Karishka-sr.\n\n# DevAI Studio 4.0.0 — глобальные стили интерфейса\n\n## Что нового\n- Добавлен раздел «Стили интерфейса»: 38 готовых стилей с поиском и живым превью.\n- ChatGPT, Claude, Gemini, Copilot, Perplexity, Grok, DeepSeek, Notion, Linear, Vercel, GitHub, Discord, Slack, Telegram, WhatsApp, iMessage.\n- Glass, Liquid Glass, Material You, Material Design, Material Expressive 3, Fluent, macOS.\n- Terminal, Nord, Solarized, Dracula, Neo-Brutalist, Cyberpunk, Paper, Midnight, Mono, Sunset, Forest, Ocean, Rose и фирменная классика DevAI.\n- Стиль меняет палитру, форму карточек и пузырей, фон, типографику, аватары и нижнюю навигацию.\n- Старые темы из «Вид» сохранены: выбор классической темы автоматически возвращает старую систему.\n\n## Проверка\n- `:app:testDebugUnitTest` — 71 тест, 0 ошибок.\n- `:app:assembleRelease` — успешно; APK подписан ключом `devai`.\n- Vexel-конструктор не изменялся, атрибуция «Автор» на месте.\n\n## Файлы\n- `devai-studio-4.0.0.apk` — 112 МиБ, SHA-256 `be41a9b76a2ce68e814a00aa67cfc27d17dcc7ae06a507fca5b0e01a24139c21`.\n- `devai-languages-4.0.0.zip` — каталог языков.\n",
-  "generated_at": "2026-11-23T14:42:06Z"
+  "generated_at": "2026-11-23T14:42:20Z"
 }
