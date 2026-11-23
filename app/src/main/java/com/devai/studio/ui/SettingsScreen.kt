@@ -1,5 +1,6 @@
 package com.devai.studio.ui
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
@@ -100,7 +101,10 @@ import com.devai.studio.data.ChatSessionsStore
 import com.devai.studio.data.CodeLanguages
 import com.devai.studio.data.PremiumFeature
 import com.devai.studio.data.PremiumPlan
+import com.devai.studio.data.PhoneAuthManager
+import com.devai.studio.data.PhoneNumbers
 import com.devai.studio.data.PremiumStore
+import com.devai.studio.data.ProfileStore
 import com.devai.studio.data.PromptLibrary
 import com.devai.studio.util.PremiumDialogs
 import com.devai.studio.util.ThemeManager
@@ -128,6 +132,10 @@ private enum class SettingsCategory(
     LOOK(
         "Вид", "Тема, акцент и аватары", Icons.Default.Star, "Интерфейс",
         "тема оформление акцент цвет динамический аватары пузыри ширина обои",
+    ),
+    PROFILE(
+        "Профиль", "Ник и номер телефона", Icons.Default.Settings, "Аккаунт",
+        "профиль ник имя телефон номер регистрация sms аккаунт войти",
     ),
     PREMIUM(
         "Premium", "Тариф и возможности", Icons.Default.Favorite, "Аккаунт",
@@ -222,6 +230,14 @@ fun SettingsScreen() {
     var codeLanguageId by remember { mutableStateOf(AppPrefs.codeLanguage(context)) }
     var memoryText by remember { mutableStateOf("") }
     var memories by remember { mutableStateOf(MemoryStore.list(context)) }
+    var nickname by remember { mutableStateOf(ProfileStore.nickname(context)) }
+    var phone by remember { mutableStateOf(PhoneNumbers.pretty(ProfileStore.phone(context))) }
+    var phoneCode by remember { mutableStateOf("") }
+    var phoneRequested by remember { mutableStateOf(false) }
+    var phoneBusy by remember { mutableStateOf(false) }
+    var phoneStatus by remember {
+        mutableStateOf(if (ProfileStore.isVerified(context)) "Номер подтверждён" else "")
+    }
     var plan by remember { mutableStateOf(PremiumStore.plan(context)) }
     var categoryId by rememberSaveable { mutableStateOf(SettingsCategory.GENERATION.name) }
     val category = SettingsCategory.valueOf(categoryId)
@@ -363,6 +379,84 @@ fun SettingsScreen() {
         }
     }
 
+    fun saveNickname() {
+        val value = nickname.trim()
+        if (!Regex("^[\\p{L}\\p{N} _.-]{2,32}$").matches(value)) {
+            toast("Ник: 2–32 символа, буквы, цифры, пробел, точка, дефис или _")
+            return
+        }
+        ProfileStore.setNickname(context, value)
+        nickname = value
+        toast("Ник сохранён")
+    }
+
+    fun requestPhoneCode() {
+        val activity = context as? Activity
+        if (activity == null) {
+            toast("Не удалось открыть проверку номера")
+            return
+        }
+        phoneBusy = true
+        phoneStatus = "Отправляем SMS…"
+        PhoneAuthManager.start(
+            activity = activity,
+            rawPhone = phone,
+            onCodeSent = { pretty ->
+                phoneBusy = false
+                phoneRequested = true
+                phone = pretty
+                phoneStatus = "Код отправлен на $pretty"
+            },
+            onError = { message ->
+                phoneBusy = false
+                phoneStatus = message
+                toast(message)
+            },
+            onSignedIn = { session ->
+                phoneBusy = false
+                phoneRequested = false
+                phone = PhoneNumbers.pretty(session.phone)
+                phoneStatus = "Номер подтверждён"
+                toast("Регистрация завершена")
+            },
+        )
+    }
+
+    fun confirmPhoneCode() {
+        val activity = context as? Activity
+        if (activity == null) {
+            toast("Не удалось открыть проверку номера")
+            return
+        }
+        phoneBusy = true
+        PhoneAuthManager.confirm(
+            activity = activity,
+            code = phoneCode,
+            onSuccess = { session ->
+                phoneBusy = false
+                phoneRequested = false
+                phoneCode = ""
+                phone = PhoneNumbers.pretty(session.phone)
+                phoneStatus = "Номер подтверждён"
+                toast("Регистрация завершена")
+            },
+            onError = { message ->
+                phoneBusy = false
+                phoneStatus = message
+                toast(message)
+            },
+        )
+    }
+
+    fun signOutPhone() {
+        PhoneAuthManager.signOut(context)
+        phone = ""
+        phoneCode = ""
+        phoneRequested = false
+        phoneStatus = ""
+        toast("Вы вышли из аккаунта")
+    }
+
     fun shareSettings() {
         requireFeature(PremiumFeature.SETTINGS_BACKUP) {
             val intent = Intent(Intent.ACTION_SEND).apply {
@@ -419,6 +513,7 @@ fun SettingsScreen() {
         SettingsHome(
             plan = plan,
             version = appVersion(),
+            nickname = nickname,
             query = query,
             onQueryChange = { query = it },
             summary = SettingsSummary(
@@ -1040,6 +1135,124 @@ fun SettingsScreen() {
                 }
             }
 
+            SettingsCategory.PROFILE -> {
+                SettingsSection("Профиль") {
+                    OutlinedTextField(
+                        value = nickname,
+                        onValueChange = { nickname = it.take(32) },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Ник") },
+                        supportingText = { Text("2–32 символа: буквы, цифры, пробел, точка, дефис или _") },
+                        singleLine = true,
+                    )
+                    Button(
+                        onClick = ::saveNickname,
+                        enabled = nickname.trim().length >= 2,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("Сохранить ник")
+                    }
+                    Text(
+                        "Ник показывается в профиле и на главном экране настроек.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                SettingsSection("Телефон") {
+                    val verified = ProfileStore.isVerified(context)
+                    if (verified) {
+                        Text(
+                            "Номер подтверждён",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            PhoneNumbers.pretty(ProfileStore.phone(context)),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        Text(
+                            "Аккаунт привязан к Firebase uid. Номер хранится в зашифрованных prefs.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        OutlinedButton(
+                            onClick = ::signOutPhone,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text("Выйти из аккаунта")
+                        }
+                    } else {
+                        if (!PhoneAuthManager.isConfigured()) {
+                            Text(
+                                "SMS-регистрация не настроена",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                            Text(
+                                "Добавьте FIREBASE_API_KEY, FIREBASE_APP_ID и FIREBASE_PROJECT_ID " +
+                                    "в local.properties. Инструкция: docs/PHONE_AUTH.md",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        OutlinedTextField(
+                            value = phone,
+                            onValueChange = { phone = it.take(24) },
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text("Номер телефона") },
+                            placeholder = { Text("+7 999 123-45-67") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                            singleLine = true,
+                            enabled = !phoneBusy,
+                        )
+                        if (!phoneRequested) {
+                            Button(
+                                onClick = ::requestPhoneCode,
+                                enabled = PhoneAuthManager.isConfigured() && !phoneBusy,
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text(if (phoneBusy) "Отправляем…" else "Получить код по SMS")
+                            }
+                        } else {
+                            OutlinedTextField(
+                                value = phoneCode,
+                                onValueChange = { phoneCode = it.filter(Char::isDigit).take(6) },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("Код из SMS") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                singleLine = true,
+                                enabled = !phoneBusy,
+                            )
+                            Button(
+                                onClick = ::confirmPhoneCode,
+                                enabled = !phoneBusy && phoneCode.length == 6,
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text(if (phoneBusy) "Проверяем…" else "Подтвердить номер")
+                            }
+                            TextButton(
+                                onClick = {
+                                    phoneRequested = false
+                                    phoneCode = ""
+                                    phoneStatus = ""
+                                },
+                            ) {
+                                Text("Изменить номер")
+                            }
+                        }
+                    }
+                    if (phoneStatus.isNotBlank()) {
+                        Text(
+                            phoneStatus,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+
             SettingsCategory.PREMIUM -> {
                 SettingsSection("Premium") {
                     Button(
@@ -1357,6 +1570,7 @@ fun SettingsScreen() {
 private fun SettingsHome(
     plan: PremiumPlan,
     version: String,
+    nickname: String,
     query: String,
     onQueryChange: (String) -> Unit,
     summary: SettingsSummary,
@@ -1403,7 +1617,7 @@ private fun SettingsHome(
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
-                        "Miko",
+                        nickname,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                     )
@@ -1625,7 +1839,8 @@ private fun SettingsNavRow(
         SettingsCategory.GENERATION, SettingsCategory.ABOUT -> MaterialTheme.colorScheme.primary
         SettingsCategory.MODELS -> MaterialTheme.colorScheme.secondary
         SettingsCategory.CHAT -> MaterialTheme.colorScheme.primary
-        SettingsCategory.LOOK, SettingsCategory.PREMIUM -> MaterialTheme.colorScheme.tertiary
+        SettingsCategory.LOOK, SettingsCategory.PROFILE, SettingsCategory.PREMIUM ->
+            MaterialTheme.colorScheme.tertiary
         SettingsCategory.DATA -> MaterialTheme.colorScheme.secondary
     }
     Row(
@@ -1733,7 +1948,7 @@ private fun SettingsSection(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val icon = when (title) {
-        "Параметры запроса", "Быстрые настройки" -> Icons.Default.Settings
+        "Параметры запроса", "Быстрые настройки", "Профиль", "Телефон" -> Icons.Default.Settings
         "Свой провайдер" -> Icons.Default.Share
         "Системный промпт" -> Icons.Default.Edit
         "Локальные модели" -> Icons.Default.PlayArrow
@@ -1749,7 +1964,7 @@ private fun SettingsSection(
         else -> Icons.Default.Info
     }
     val tint = when (title) {
-        "Параметры запроса", "Быстрые настройки", "Системный промпт" ->
+        "Параметры запроса", "Быстрые настройки", "Профиль", "Телефон", "Системный промпт" ->
             MaterialTheme.colorScheme.primary
         "Локальные модели", "Чат", "Сообщения", "Поведение", "Резервные копии" ->
             MaterialTheme.colorScheme.secondary

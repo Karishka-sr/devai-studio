@@ -1,4 +1,15 @@
 import org.gradle.api.tasks.bundling.Zip
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
+fun buildSecret(name: String): String =
+    (localProperties.getProperty(name) ?: System.getenv(name) ?: "")
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
 
 plugins {
     id("com.android.application")
@@ -14,9 +25,12 @@ android {
         applicationId = "com.devai.studio"
         minSdk = 31
         targetSdk = 34
-        versionCode = 37
-        versionName = "3.4.0"
+        versionCode = 38
+        versionName = "3.5.0"
         vectorDrawables.useSupportLibrary = true
+        buildConfigField("String", "FIREBASE_API_KEY", "\"${buildSecret("FIREBASE_API_KEY")}\"")
+        buildConfigField("String", "FIREBASE_APP_ID", "\"${buildSecret("FIREBASE_APP_ID")}\"")
+        buildConfigField("String", "FIREBASE_PROJECT_ID", "\"${buildSecret("FIREBASE_PROJECT_ID")}\"")
         ndk {
             abiFilters += listOf("arm64-v8a")
         }
@@ -41,6 +55,7 @@ android {
     buildFeatures {
         viewBinding = true
         compose = true
+        buildConfig = true
     }
 }
 
@@ -69,6 +84,7 @@ dependencies {
     implementation("com.google.zxing:core:3.5.3")
     implementation("org.luaj:luaj-jse:3.0.1")
     implementation("com.google.ai.edge.litertlm:litertlm:0.0.0-alpha05")
+    implementation("com.google.firebase:firebase-auth:23.2.0")
 
     implementation(platform("androidx.compose:compose-bom:2026.03.01"))
     implementation("androidx.compose.ui:ui")
