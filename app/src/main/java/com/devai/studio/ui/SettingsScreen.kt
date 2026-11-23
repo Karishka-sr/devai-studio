@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -109,15 +111,69 @@ private enum class SettingsCategory(
     val subtitle: String,
     val icon: ImageVector,
     val group: String,
+    val keywords: String,
 ) {
-    GENERATION("Генерация", "Температура, лимиты и промпт", Icons.Default.Settings, "Основное"),
-    MODELS("Модели", "Локальные модели и контекст", Icons.Default.PlayArrow, "Основное"),
-    CHAT("Чат", "Шрифт, отправка и прокрутка", Icons.AutoMirrored.Filled.Send, "Основное"),
-    LOOK("Вид", "Тема, акцент и аватары", Icons.Default.Star, "Интерфейс"),
-    PREMIUM("Premium", "Тариф и возможности", Icons.Default.Favorite, "Аккаунт"),
-    DATA("Данные", "История, экспорт и сброс", Icons.Default.Lock, "Аккаунт"),
-    ABOUT("О приложении", "Версия, обновления и автор", Icons.Default.Info, "Приложение"),
+    GENERATION(
+        "Генерация", "Температура, лимиты и промпт", Icons.Default.Settings, "Основное",
+        "температура top-p top p токены лимит история таймаут провайдер base url модель промпт пресет",
+    ),
+    MODELS(
+        "Модели", "Локальные модели и контекст", Icons.Default.PlayArrow, "Основное",
+        "локальная модель контекст top-k top k память квантование скачать",
+    ),
+    CHAT(
+        "Чат", "Шрифт, отправка и прокрутка", Icons.AutoMirrored.Filled.Send, "Основное",
+        "шрифт размер код перенос отправка enter прокрутка аватары компактный вибрация",
+    ),
+    LOOK(
+        "Вид", "Тема, акцент и аватары", Icons.Default.Star, "Интерфейс",
+        "тема оформление акцент цвет динамический аватары пузыри ширина обои",
+    ),
+    PREMIUM(
+        "Premium", "Тариф и возможности", Icons.Default.Favorite, "Аккаунт",
+        "premium тариф подписка оплата возможности месяц год",
+    ),
+    DATA(
+        "Данные", "История, экспорт и сброс", Icons.Default.Lock, "Аккаунт",
+        "история чаты экспорт импорт бэкап backup сброс удалить ключи память",
+    ),
+    ABOUT(
+        "О приложении", "Версия, обновления и автор", Icons.Default.Info, "Приложение",
+        "версия обновление автор лицензия ссылки приложение",
+    ),
 }
+
+private enum class QuickToggle { DYNAMIC_COLOR, HAPTIC, CODE_WRAP, SEND_ON_ENTER }
+
+private data class QuickToggles(
+    val dynamicColor: Boolean,
+    val haptic: Boolean,
+    val codeWrap: Boolean,
+    val sendOnEnter: Boolean,
+)
+
+private data class SettingsSummary(
+    val temperature: Float,
+    val topP: Float,
+    val maxTokens: Int,
+    val language: String,
+    val theme: String,
+)
+
+private data class SettingsPreset(
+    val name: String,
+    val temperature: Float,
+    val topP: Float,
+    val maxTokens: Int,
+)
+
+private val settingsPresets = listOf(
+    SettingsPreset("Быстрый", 0.30f, 0.80f, 2048),
+    SettingsPreset("Баланс", 0.70f, 0.90f, 4096),
+    SettingsPreset("Творческий", 1.00f, 1.00f, 8192),
+    SettingsPreset("Локальный", 0.80f, 0.90f, 1024),
+    SettingsPreset("Код", 0.20f, 0.80f, 8192),
+)
 
 @Composable
 fun SettingsScreen() {
@@ -247,6 +303,37 @@ fun SettingsScreen() {
         plan = PremiumStore.plan(context)
     }
 
+    fun applyQuickPreset(name: String, temp: Float, p: Float, tokens: Int) {
+        temperature = temp
+        topP = p
+        maxTokens = tokens.toString()
+        AppPrefs.setTemperature(context, temp)
+        AppPrefs.setTopP(context, p)
+        AppPrefs.setMaxTokens(context, tokens)
+        toast("Профиль «$name»: T %.2f · Top-P %.2f · %d токенов".format(temp, p, tokens))
+    }
+
+    fun toggleQuick(key: QuickToggle, value: Boolean) {
+        when (key) {
+            QuickToggle.DYNAMIC_COLOR -> {
+                dynamicColor = value
+                AppPrefs.setDynamicColor(context, value)
+            }
+            QuickToggle.HAPTIC -> {
+                hapticFeedback = value
+                AppPrefs.setHapticFeedback(context, value)
+            }
+            QuickToggle.CODE_WRAP -> {
+                codeWrap = value
+                AppPrefs.setCodeWrap(context, value)
+            }
+            QuickToggle.SEND_ON_ENTER -> {
+                sendOnEnter = value
+                AppPrefs.setSendOnEnter(context, value)
+            }
+        }
+    }
+
     fun shareSettings() {
         requireFeature(PremiumFeature.SETTINGS_BACKUP) {
             val intent = Intent(Intent.ACTION_SEND).apply {
@@ -305,6 +392,21 @@ fun SettingsScreen() {
             version = appVersion(),
             query = query,
             onQueryChange = { query = it },
+            summary = SettingsSummary(
+                temperature = temperature,
+                topP = topP,
+                maxTokens = maxTokens.toIntOrNull() ?: AppPrefs.maxTokens(context),
+                language = (CodeLanguages.byId(codeLanguageId) ?: CodeLanguages.default).name,
+                theme = context.getString(ThemeManager.labelRes(themeId)),
+            ),
+            quick = QuickToggles(
+                dynamicColor = dynamicColor,
+                haptic = hapticFeedback,
+                codeWrap = codeWrap,
+                sendOnEnter = sendOnEnter,
+            ),
+            onPreset = ::applyQuickPreset,
+            onToggle = ::toggleQuick,
             onOpen = {
                 categoryId = it.name
                 home = false
@@ -1106,34 +1208,51 @@ fun SettingsScreen() {
             onDismissRequest = { showPromptLibrary = false },
             title = { Text("Библиотека промптов") },
             text = {
+                var promptQuery by remember { mutableStateOf("") }
+                val promptItems = remember(promptQuery) { PromptLibrary.search(promptQuery) }
                 Column(
                     modifier = Modifier
-                        .heightIn(max = 420.dp)
+                        .heightIn(max = 460.dp)
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
-                    PromptLibrary.items.forEach { item ->
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    systemPrompt = item.prompt
-                                    AppPrefs.setSystemPrompt(context, item.prompt)
-                                    showPromptLibrary = false
-                                    toast("Промпт «${item.title}» установлен")
-                                }
-                                .padding(vertical = 8.dp),
-                        ) {
-                            Text(
-                                item.title,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Text(
-                                item.prompt.take(90) + "…",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                    OutlinedTextField(
+                        value = promptQuery,
+                        onValueChange = { promptQuery = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text("Поиск: язык или задача") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    )
+                    Text(
+                        "${promptItems.size} из ${PromptLibrary.items.size} промптов",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    LazyColumn(Modifier.heightIn(max = 360.dp)) {
+                        items(promptItems) { item ->
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        systemPrompt = item.prompt
+                                        AppPrefs.setSystemPrompt(context, item.prompt)
+                                        showPromptLibrary = false
+                                        toast("Промпт «${item.title}» установлен")
+                                    }
+                                    .padding(vertical = 8.dp),
+                            ) {
+                                Text(
+                                    item.title,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                Text(
+                                    item.prompt.take(90) + "…",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                         }
                     }
                 }
@@ -1207,13 +1326,18 @@ private fun SettingsHome(
     version: String,
     query: String,
     onQueryChange: (String) -> Unit,
+    summary: SettingsSummary,
+    quick: QuickToggles,
+    onPreset: (String, Float, Float, Int) -> Unit,
+    onToggle: (QuickToggle, Boolean) -> Unit,
     onOpen: (SettingsCategory) -> Unit,
     onPremium: () -> Unit,
 ) {
     val filtered = SettingsCategory.entries.filter { item ->
         query.isBlank() ||
             item.title.contains(query, ignoreCase = true) ||
-            item.subtitle.contains(query, ignoreCase = true)
+            item.subtitle.contains(query, ignoreCase = true) ||
+            item.keywords.contains(query, ignoreCase = true)
     }
     val groups = listOf("Основное", "Интерфейс", "Аккаунт", "Приложение")
 
@@ -1275,11 +1399,38 @@ private fun SettingsHome(
             )
         }
 
+        DevAICard(contentPadding = PaddingValues(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "Сейчас",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Spacer(Modifier.weight(1f))
+                DevAIStatusPill("Live", accent = MaterialTheme.colorScheme.secondary)
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "T %.2f · Top-P %.2f · %d токенов".format(
+                    summary.temperature,
+                    summary.topP,
+                    summary.maxTokens,
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+            )
+            Text(
+                "Язык: ${summary.language} · Тема: ${summary.theme}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
         OutlinedTextField(
             value = query,
             onValueChange = onQueryChange,
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Поиск настроек") },
+            placeholder = { Text("Поиск: температура, тема, модель…") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             trailingIcon = {
                 if (query.isNotEmpty()) {
@@ -1292,6 +1443,54 @@ private fun SettingsHome(
             shape = RoundedCornerShape(18.dp),
         )
 
+        if (query.isBlank()) {
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                listOf("температура", "тема", "модель", "язык", "данные").forEach { term ->
+                    AssistChip(
+                        onClick = { onQueryChange(term) },
+                        label = { Text(term) },
+                    )
+                }
+            }
+
+            SettingsSection("Быстрые настройки") {
+                Text(
+                    "Один тап меняет профиль генерации.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    settingsPresets.forEach { preset ->
+                        AssistChip(
+                            onClick = {
+                                onPreset(preset.name, preset.temperature, preset.topP, preset.maxTokens)
+                            },
+                            leadingIcon = { Icon(Icons.Default.PlayArrow, contentDescription = null) },
+                            label = { Text(preset.name) },
+                        )
+                    }
+                }
+                QuickToggleRow("Динамические цвета", quick.dynamicColor) {
+                    onToggle(QuickToggle.DYNAMIC_COLOR, it)
+                }
+                QuickToggleRow("Вибрация", quick.haptic) {
+                    onToggle(QuickToggle.HAPTIC, it)
+                }
+                QuickToggleRow("Перенос кода", quick.codeWrap) {
+                    onToggle(QuickToggle.CODE_WRAP, it)
+                }
+                QuickToggleRow("Enter отправляет", quick.sendOnEnter) {
+                    onToggle(QuickToggle.SEND_ON_ENTER, it)
+                }
+            }
+        }
+
         if (filtered.isEmpty()) {
             DevAICard(contentPadding = PaddingValues(18.dp)) {
                 Text(
@@ -1300,13 +1499,13 @@ private fun SettingsHome(
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    "Попробуйте «тема», «чат», «модели» или «данные».",
+                    "Попробуйте «температура», «тема», «модели» или «данные».",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         } else if (query.isNotBlank()) {
-            SettingsGroup("Результаты", filtered, plan, onOpen)
+            SettingsGroup("Результаты · ${filtered.size}", filtered, plan, onOpen)
         } else {
             groups.forEach { group ->
                 val items = filtered.filter { it.group == group }
@@ -1321,6 +1520,21 @@ private fun SettingsHome(
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 8.dp),
         )
+    }
+}
+
+@Composable
+private fun QuickToggleRow(
+    title: String,
+    checked: Boolean,
+    onChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(title, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+        Switch(checked = checked, onCheckedChange = onChange)
     }
 }
 
@@ -1474,7 +1688,7 @@ private fun SettingsSection(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val icon = when (title) {
-        "Параметры запроса" -> Icons.Default.Settings
+        "Параметры запроса", "Быстрые настройки" -> Icons.Default.Settings
         "Свой провайдер" -> Icons.Default.Share
         "Системный промпт" -> Icons.Default.Edit
         "Локальные модели" -> Icons.Default.PlayArrow
@@ -1490,7 +1704,8 @@ private fun SettingsSection(
         else -> Icons.Default.Info
     }
     val tint = when (title) {
-        "Параметры запроса", "Системный промпт" -> MaterialTheme.colorScheme.primary
+        "Параметры запроса", "Быстрые настройки", "Системный промпт" ->
+            MaterialTheme.colorScheme.primary
         "Локальные модели", "Чат", "Сообщения", "Поведение", "Резервные копии" ->
             MaterialTheme.colorScheme.secondary
         "Оформление", "Кастомизация", "Premium", "Отклик", "Сброс" ->

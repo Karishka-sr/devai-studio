@@ -185,6 +185,8 @@ fun ChatPromptSheet(
     onUse: (String) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var query by remember { mutableStateOf("") }
+    val visible = remember(query) { PromptLibrary.search(query) }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
             Modifier
@@ -198,13 +200,22 @@ fun ChatPromptSheet(
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                "${PromptLibrary.items.size} готовых промптов для кода, текста и анализа.",
+                "${visible.size} из ${PromptLibrary.items.size} промптов: код, тесты, ревью и архитектура.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                label = { Text("Поиск: язык или задача") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+            )
+            Spacer(Modifier.height(8.dp))
             LazyColumn(Modifier.heightIn(max = 480.dp)) {
-                items(PromptLibrary.items) { item ->
+                items(visible) { item ->
                     ListItem(
                         headlineContent = { Text(item.title) },
                         supportingContent = {

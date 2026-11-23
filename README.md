@@ -6,7 +6,7 @@
 
 **Android-студия для разработки с ИИ.** Чат с ведущими моделями, генерация Android-проектов, рабочее пространство с файлами и офлайн-модели, которые работают без интернета.
 
-[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v3.3.1** · Android 12+ · arm64-v8a
+[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v3.4.0** · Android 12+ · arm64-v8a
 [Скачать PC-версию](https://github.com/Karishka-sr/devai-studio-pc/releases/latest) · **Windows 7/10/11 · 3.2.0** · JRE 8 внутри
 
 <p align="center">
@@ -14,7 +14,7 @@
     <img src="https://img.shields.io/badge/Telegram-@NeonBeatt-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram @NeonBeatt">
   </a>
   <a href="https://github.com/Karishka-sr/devai-studio/releases">
-    <img src="https://img.shields.io/badge/Download_APK-v3.3.1-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
+    <img src="https://img.shields.io/badge/Download_APK-v3.4.0-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
   </a>
   <a href="https://rytmix-live.pplx-2.app">
     <img src="https://img.shields.io/badge/Site-rytmix--live-0A66C2?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Сайт">
@@ -56,6 +56,8 @@
 - **MCP-инструменты**: подключение внешних серверов, токены, tool calling в чате.
 - **Веб-поиск Tavily**: результаты поиска добавляются в контекст ответа.
 - **TTS**: системное озвучивание ответов и кнопка «Озвучить» у каждого сообщения.
+- **Мега-настройки**: живая сводка T/Top-P/токены/язык/тема, 5 профилей генерации в один тап, 4 быстрых переключателя и поиск по смыслу (температура, тема, модель, вибрация, обои, ключи).
+- **Мега-библиотека промптов**: 1024 готовых промпта — 40 стеков (Kotlin, Python, Rust, Go, Docker, Kubernetes, SQL и другие) × 25 задач (API, тесты, ревью, CI/CD, безопасность и другие) + поиск.
 - **Карточки персонажей**: имя, характер, приветствие и системный промпт.
 - **QR-экспорт провайдера**: перенос профиля между устройствами без облака.
 - **Файлы в чате**: до 3 текстовых вложений, до 64 КБ каждое.
@@ -143,7 +145,7 @@
 Четыре тарифа: **Неделя**, **Месяц**, **Год**, **Навсегда**. Чем длиннее тариф, тем больше функций; на «Навсегда» открыты все 59 функций и будущие обновления.
 
 - **Неделя:** Expressive-тема, вибрация, экспорт чата, докачка моделей, LFM2.5 1.2B, TinyLlama 1.1B, Qwen2.5 1.5B.
-- **Месяц:** всё из недели + Retro-тема, 10 акцентов, шрифты, ширина пузырей, аватары, компактный чат, библиотека из 24 промптов, веб-поиск, персонажи, свой провайдер, Qwen2.5 Coder, Qwen3 1.7B.
+- **Месяц:** всё из недели + Retro-тема, 10 акцентов, шрифты, ширина пузырей, аватары, компактный чат, библиотека из 1024 промптов, веб-поиск, персонажи, свой провайдер, Qwen2.5 Coder, Qwen3 1.7B.
 - **Год:** всё из месяца + размер кода, TTS, вся история, свой системный промпт, бэкап настроек и всех чатов, QR-перенос, DeepSeek R1, SmolLM3 3B, Phi-4 Mini, ранний доступ.
 - **Навсегда:** все функции, включая MCP, плагины, будущие модели и темы, агентный режим, GitHub/GitLab, сборку APK, облачную синхронизацию, голос, vision и генерацию изображений (часть — в разработке).
 
