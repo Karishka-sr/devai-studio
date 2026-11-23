@@ -39,6 +39,13 @@
 - `PhoneAuthManager` uses Firebase Phone Auth. Configure `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_PROJECT_ID` in `local.properties`; without them the profile UI is disabled with an explicit message. See `docs/PHONE_AUTH.md`.
 - Settings category `PROFILE` edits nickname (2–32 chars) and runs SMS code request/confirm; `PhoneNumbers` normalizes RU formats and is unit-tested.
 
+## DevAI Core (3.6.0)
+- `ai/DevAICore.kt` is the custom assistant layer: local intent replies (memory, prompt search, profile/SMS/language/model help, status, time), `SYSTEM_PROMPT`, and `offlineReply`.
+- `ChatMode.CORE` is the third chat mode. `ChatScreen.send` runs `DevAICore.localReply` before provider config; if no provider/key is configured it falls back to `offlineReply` instead of failing.
+- `AppPrefs.systemPromptForMode(CORE)` returns `DevAICore.SYSTEM_PROMPT`; custom user prompt still wins.
+- `DevAICore.findPrompts` first uses `PromptLibrary.search`, then falls back to all-term matching with simple stemming for phrases like «Kotlin API» and «тестов».
+- Tests: `DevAICoreTest` checks identity and prompt search; keep the local skill replies deterministic and offline.
+
 ## Mega Settings (3.4.0)
 - `SettingsScreen` home has a live summary card, 5 one-tap generation presets, 8 quick toggles (dynamic color, haptics, code wrap, send-on-enter), popular query chips, and keyword search across `SettingsCategory.keywords`.
 - `SettingsHome` receives `SettingsSummary`, `QuickToggles`, `onPreset`, `onToggle`; `applyQuickPreset`/`toggleQuick` persist through `AppPrefs`.

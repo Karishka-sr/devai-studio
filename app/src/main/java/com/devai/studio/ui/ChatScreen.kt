@@ -111,6 +111,7 @@ import com.devai.studio.ai.AgentTool
 import com.devai.studio.ai.AiClientFactory
 import com.devai.studio.ai.AiFormat
 import com.devai.studio.ai.AiMessage
+import com.devai.studio.ai.DevAICore
 import com.devai.studio.ai.McpClient
 import com.devai.studio.ai.ToolAgent
 import com.devai.studio.data.ApiKeyStore
@@ -256,6 +257,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
     }
 
     fun currentModelLabel(): String {
+        if (mode == ChatMode.CORE) return "Core v${DevAICore.VERSION}"
         val p = AiSupport.provider(context)
         return when {
             p == null -> "Провайдер не выбран"
@@ -340,12 +342,6 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
         val files = attachments
         if (typed.isEmpty() && files.isEmpty()) return
         if (hapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-        val cfg = try {
-            AiSupport.config(context)
-        } catch (e: IllegalStateException) {
-            toast(e.message ?: context.getString(R.string.chat_no_key))
-            return
-        }
 
         val userContent = buildString {
             if (typed.isNotBlank()) append(typed)
@@ -360,6 +356,34 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
             }
         }.trim()
         if (userContent.isEmpty()) return
+
+        if (mode == ChatMode.CORE) {
+            val local = DevAICore.localReply(context, userContent)
+            if (local != null) {
+                input = ""
+                attachments = emptyList()
+                messages = messages + AiMessage("user", userContent) + AiMessage("assistant", local)
+                persist()
+                if (AppPrefs.ttsEnabled(context)) TtsManager.speak(context, local)
+                return
+            }
+        }
+
+        val cfg = try {
+            AiSupport.config(context)
+        } catch (e: IllegalStateException) {
+            if (mode == ChatMode.CORE) {
+                input = ""
+                attachments = emptyList()
+                val reply = DevAICore.offlineReply(context, userContent)
+                messages = messages + AiMessage("user", userContent) + AiMessage("assistant", reply)
+                persist()
+                if (AppPrefs.ttsEnabled(context)) TtsManager.speak(context, reply)
+                return
+            }
+            toast(e.message ?: context.getString(R.string.chat_no_key))
+            return
+        }
 
         val searchOn = searchEnabled
         val useMcp = mcpEnabled
@@ -1131,10 +1155,13 @@ private fun EmptyChat(
         )
         Spacer(Modifier.height(6.dp))
         Text(
-            if (mode == ChatMode.DEV) {
-                "Спросите про код, ошибки и ${language.name}. Основной язык: ${language.name}."
-            } else {
-                "Спросите что угодно — объяснения, тексты, идеи."
+            when (mode) {
+                ChatMode.DEV ->
+                    "Спросите про код, ошибки и ${language.name}. Основной язык: ${language.name}."
+                ChatMode.CORE ->
+                    "Свой ИИ: память, промпты и локальные команды. Напишите «что ты умеешь»."
+                ChatMode.CHAT ->
+                    "Спросите что угодно — объяснения, тексты, идеи."
             },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1145,14 +1172,19 @@ private fun EmptyChat(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            (if (mode == ChatMode.DEV) {
-                listOf(
+            (when (mode) {
+                ChatMode.DEV -> listOf(
                     "Напиши код на ${language.name}",
                     "Объясни ошибку",
                     "Сделай пример на ${language.name}",
                 )
-            } else {
-                listOf(
+                ChatMode.CORE -> listOf(
+                    "Что ты умеешь?",
+                    "Промпт для Kotlin API",
+                    "Запомни: я делаю DevAI Studio",
+                    "Проверь систему",
+                )
+                ChatMode.CHAT -> listOf(
                     "Объясни простыми словами",
                     "Помоги с текстом",
                     "Придумай идею",

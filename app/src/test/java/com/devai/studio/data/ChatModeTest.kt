@@ -8,6 +8,7 @@ class ChatModeTest {
     fun fromId_returnsKnownModes() {
         assertEquals(ChatMode.CHAT, ChatMode.fromId("chat"))
         assertEquals(ChatMode.DEV, ChatMode.fromId("dev"))
+        assertEquals(ChatMode.CORE, ChatMode.fromId("core"))
     }
 
     @Test

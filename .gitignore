@@ -15,3 +15,12 @@ app/build
 desktop/build
 
 google-services.json
+
+server/data/
+server/models/
+server/server.log
+server/server.pid
+server/__pycache__/
+server/*.tmp
+dist/
+server/models

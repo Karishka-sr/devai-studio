@@ -14,6 +14,11 @@ enum class ChatMode(
         id = "dev",
         title = "Разработка",
         subtitle = "Код, архитектура, ошибки и 50 языков программирования.",
+    ),
+    CORE(
+        id = "core",
+        title = "DevAI Core",
+        subtitle = "Свой ИИ: память, 1024 промпта и локальные навыки.",
     );
 
     companion object {

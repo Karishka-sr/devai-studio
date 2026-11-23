@@ -1,6 +1,7 @@
 package com.devai.studio.data
 
 import android.content.Context
+import com.devai.studio.ai.DevAICore
 
 object AppPrefs {
     private const val PREFS = "devai_prefs"
@@ -112,7 +113,11 @@ object AppPrefs {
         ) {
             return custom
         }
-        return if (mode == ChatMode.DEV) DEV_SYSTEM_PROMPT else DEFAULT_SYSTEM_PROMPT
+        return when (mode) {
+            ChatMode.DEV -> DEV_SYSTEM_PROMPT
+            ChatMode.CORE -> DevAICore.SYSTEM_PROMPT
+            ChatMode.CHAT -> DEFAULT_SYSTEM_PROMPT
+        }
     }
 
     fun topP(ctx: Context): Float = p(ctx).getFloat(KEY_TOP_P, 0.95f)

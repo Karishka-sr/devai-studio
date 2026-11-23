@@ -6,7 +6,7 @@
 
 **Android-студия для разработки с ИИ.** Чат с ведущими моделями, генерация Android-проектов, рабочее пространство с файлами и офлайн-модели, которые работают без интернета.
 
-[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v3.5.1** · Android 12+ · arm64-v8a
+[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v3.6.0** · Android 12+ · arm64-v8a
 [Скачать PC-версию](https://github.com/Karishka-sr/devai-studio-pc/releases/latest) · **Windows 7/10/11 · 3.2.0** · JRE 8 внутри
 
 <p align="center">
@@ -14,7 +14,7 @@
     <img src="https://img.shields.io/badge/Telegram-@NeonBeatt-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram @NeonBeatt">
   </a>
   <a href="https://github.com/Karishka-sr/devai-studio/releases">
-    <img src="https://img.shields.io/badge/Download_APK-v3.5.1-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
+    <img src="https://img.shields.io/badge/Download_APK-v3.6.0-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
   </a>
   <a href="https://rytmix-live.pplx-2.app">
     <img src="https://img.shields.io/badge/Site-rytmix--live-0A66C2?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Сайт">
@@ -51,6 +51,14 @@
 - Локальные серверы: Ollama, LM Studio, llama.cpp, Jan.
 - Свой OpenAI-совместимый сервер.
 - Стриминг ответов, история сессий, регенерация, Markdown и блоки кода с копированием.
+
+### 🧠 DevAI Core v0.1
+- Собственный ИИ-слой DevAI Studio: отдельный режим **«DevAI Core»**.
+- Локальные навыки без API-ключа: память, поиск по 1024 промптам, справка по нику/SMS/языкам/моделям, проверка системы и время.
+- Память на устройстве: «Запомни: ...», «Что ты помнишь?», «Забудь всё».
+- Если подключён провайдер, Core оркестрирует выбранную модель со своим системным промптом; если нет — отвечает локально и предлагает подключить модель.
+- Первая версия — это не обученная с нуля модель, а собственный слой ассистента с памятью, навыками и маршрутизацией.
+- **Сервер DevAI Core API** (`server/`): OpenAI-совместимый `/v1/chat/completions`, потоковые ответы и API-ключи с лимитами. Инструкция — `server/README.md`.
 
 ### 🧰 Инструменты и плагины
 - **MCP-инструменты**: подключение внешних серверов, токены, tool calling в чате.

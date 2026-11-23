@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -61,6 +62,13 @@ fun ModesScreen(
             icon = Icons.Default.Build,
             selected = current == ChatMode.DEV,
             accent = MaterialTheme.colorScheme.secondary,
+            onSelect = onSelect,
+        )
+        ModeCard(
+            mode = ChatMode.CORE,
+            icon = Icons.Default.Star,
+            selected = current == ChatMode.CORE,
+            accent = MaterialTheme.colorScheme.tertiary,
             onSelect = onSelect,
         )
 
