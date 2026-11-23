@@ -7,6 +7,7 @@
 **Android-студия для разработки с ИИ.** Чат с ведущими моделями, генерация Android-проектов, рабочее пространство с файлами и офлайн-модели, которые работают без интернета.
 
 [Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v3.6.0** · Android 12+ · arm64-v8a
+[Сайт API](https://karishka-sr.github.io/devai-studio/) · **DevAI Core API** · ключ за 10 секунд
 [Скачать PC-версию](https://github.com/Karishka-sr/devai-studio-pc/releases/latest) · **Windows 7/10/11 · 3.2.0** · JRE 8 внутри
 
 <p align="center">
@@ -18,6 +19,9 @@
   </a>
   <a href="https://rytmix-live.pplx-2.app">
     <img src="https://img.shields.io/badge/Site-rytmix--live-0A66C2?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Сайт">
+  </a>
+  <a href="https://karishka-sr.github.io/devai-studio/">
+    <img src="https://img.shields.io/badge/DevAI_Core-API_Key-c8ff3d?style=for-the-badge&logo=openai&logoColor=111111" alt="DevAI Core API">
   </a>
 </p>
 

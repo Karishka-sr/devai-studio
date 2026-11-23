@@ -1,4 +1,4 @@
-# DevAI Core API v0.1
+# DevAI Core API v0.2
 
 OpenAI-compatible HTTP API for DevAI Core. The first version runs a local
 Qwen2.5 0.5B GGUF model, so prompts do not leave the machine.
@@ -29,6 +29,8 @@ private: it can create and revoke API keys.
 - `GET /v1/models` — model list, key required.
 - `POST /v1/chat/completions` — OpenAI-compatible chat, key required.
   Supports `stream: true` (SSE).
+- `POST /v1/keys/challenge` — one-time proof-of-work challenge for public signup.
+- `POST /v1/keys/register` — create a key from the public website, rate-limited.
 - `POST /admin/keys` — create a key, admin token required.
 - `GET /admin/keys` — list key metadata, admin token required.
 - `DELETE /admin/keys/<id>` — revoke a key, admin token required.
@@ -46,8 +48,23 @@ curl -s -X POST http://127.0.0.1:12001/admin/keys \
 
 The response contains `key` once. The database stores only its SHA-256 hash.
 
+## Public website signup
+
+The static site in `docs/` creates keys without exposing the admin token:
+
+1. `POST /v1/keys/challenge` returns a random challenge and difficulty.
+2. The browser finds a nonce whose `sha256("<challenge>:<nonce>")` starts with
+   `000` (three hex zeroes).
+3. `POST /v1/keys/register` verifies the one-time challenge, binds it to the
+   client IP, and returns a new key.
+
+Limits: 3 keys per IP per day, 300 keys per day globally. Challenges expire
+after 5 minutes and are consumed on first use. The client IP is hashed with
+the admin token before it is stored.
+
 ## Limits
 
 - 60 requests/minute per key by default (`rpm` can be set up to 600).
 - 1024 output tokens per request.
 - One generation at a time per process; this is intentional for CPU inference.
+- Public signup: 3 keys per IP per day, 300 keys per day globally.

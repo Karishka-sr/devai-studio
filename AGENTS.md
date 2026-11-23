@@ -46,6 +46,12 @@
 - `DevAICore.findPrompts` first uses `PromptLibrary.search`, then falls back to all-term matching with simple stemming for phrases like «Kotlin API» and «тестов».
 - Tests: `DevAICoreTest` checks identity and prompt search; keep the local skill replies deterministic and offline.
 
+## DevAI Core API & website (v0.2)
+- `server/devai_server.py` is an OpenAI-compatible stdlib server: `/v1/chat/completions` (SSE), `/v1/models`, `/health`, admin key CRUD.
+- Public signup: `POST /v1/keys/challenge` returns a proof-of-work challenge; `POST /v1/keys/register` verifies it, binds to the hashed client IP, and creates a key. Limits: 3/IP/day, 300/day global. Never expose the admin token in the static site.
+- `docs/` is the GitHub Pages site (`https://karishka-sr.github.io/devai-studio/`). It is static HTML/CSS/JS; the API base is stored in `localStorage` and defaults to the current work host. Update `DEFAULT_API` in `docs/app.js` when the server moves.
+- Tests: `python3 -m py_compile server/devai_server.py`; public flow is verified with challenge → SHA-256 nonce → register → `/v1/models`.
+
 ## Mega Settings (3.4.0)
 - `SettingsScreen` home has a live summary card, 5 one-tap generation presets, 8 quick toggles (dynamic color, haptics, code wrap, send-on-enter), popular query chips, and keyword search across `SettingsCategory.keywords`.
 - `SettingsHome` receives `SettingsSummary`, `QuickToggles`, `onPreset`, `onToggle`; `applyQuickPreset`/`toggleQuick` persist through `AppPrefs`.

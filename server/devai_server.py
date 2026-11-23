@@ -18,7 +18,7 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-SERVER_VERSION = "0.1.0"
+SERVER_VERSION = "0.2.0"
 MODEL_ID = "devai-core-0.1"
 ROOT = Path(__file__).resolve().parent
 DATA = Path(os.environ.get("DEVAI_DATA_DIR", ROOT / "data"))
@@ -35,6 +35,12 @@ HOST = os.environ.get("DEVAI_HOST", "0.0.0.0")
 PORT = int(os.environ.get("DEVAI_PORT", "12001"))
 MAX_BODY = 2 * 1024 * 1024
 MAX_TOKENS = 1024
+REGISTER_PER_IP_DAY = 3
+REGISTER_GLOBAL_DAY = 300
+CHALLENGE_TTL = 300
+CHALLENGE_DIFFICULTY = 3
+CHALLENGES: dict[str, tuple[float, str]] = {}
+CHALLENGE_LOCK = threading.Lock()
 
 SYSTEM_PROMPT = """Ты — DevAI Core v0.1, собственный ИИ DevAI Studio.
 Ты помогаешь разработчику: код, архитектура, ошибки, тесты, интерфейс и тексты.
@@ -81,6 +87,13 @@ def init_db() -> None:
                 ts REAL NOT NULL
             );
             CREATE INDEX IF NOT EXISTS idx_usage_key_ts ON usage(key_id, ts);
+            CREATE TABLE IF NOT EXISTS signups (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ip_hash TEXT NOT NULL,
+                key_id TEXT NOT NULL,
+                created REAL NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_signups_ip_ts ON signups(ip_hash, created);
             """
         )
 
@@ -107,6 +120,34 @@ def hash_key(raw: str) -> str:
 def new_key() -> tuple[str, str]:
     raw = "devai-sk-" + secrets.token_urlsafe(32)
     return raw, hash_key(raw)
+
+
+def ip_digest(ip: str) -> str:
+    return hashlib.sha256((ADMIN_TOKEN + "|" + ip).encode()).hexdigest()
+
+
+def issue_challenge(ip: str) -> str:
+    now = time.time()
+    challenge = secrets.token_hex(16)
+    with CHALLENGE_LOCK:
+        if len(CHALLENGES) > 10000:
+            for key, (ts, _) in list(CHALLENGES.items()):
+                if ts < now - CHALLENGE_TTL:
+                    del CHALLENGES[key]
+        CHALLENGES[challenge] = (now, ip_digest(ip))
+    return challenge
+
+
+def verify_challenge(challenge: str, solution: str, ip: str) -> bool:
+    with CHALLENGE_LOCK:
+        item = CHALLENGES.pop(challenge, None)
+    if item is None:
+        return False
+    created, digest = item
+    if time.time() - created > CHALLENGE_TTL or digest != ip_digest(ip):
+        return False
+    text = challenge + ":" + solution
+    return hashlib.sha256(text.encode()).hexdigest().startswith("0" * CHALLENGE_DIFFICULTY)
 
 
 def model_ready() -> bool:
@@ -201,8 +242,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def _read_json(self) -> dict:
         length = int(self.headers.get("Content-Length", "0") or "0")
-        if length <= 0 or length > MAX_BODY:
-            raise ValueError("empty or too large body")
+        if length <= 0:
+            return {}
+        if length > MAX_BODY:
+            raise ValueError("too large body")
         raw = self.rfile.read(length)
         data = json.loads(raw.decode("utf-8"))
         if not isinstance(data, dict):
@@ -214,6 +257,12 @@ class Handler(BaseHTTPRequestHandler):
         if auth.lower().startswith("bearer "):
             return auth[7:].strip()
         return ""
+
+    def _client_ip(self) -> str:
+        forwarded = self.headers.get("X-Forwarded-For", "")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+        return self.client_address[0]
 
     def _is_admin(self) -> bool:
         token = self.headers.get("X-Admin-Token", "").strip() or self._bearer()
@@ -265,6 +314,7 @@ class Handler(BaseHTTPRequestHandler):
                     "model": MODEL_ID,
                     "model_ready": model_ready(),
                     "model_error": MODEL_ERROR,
+                    "signup_enabled": True,
                 },
             )
             return
@@ -279,7 +329,8 @@ class Handler(BaseHTTPRequestHandler):
                         "GET /health",
                         "GET /v1/models",
                         "POST /v1/chat/completions",
-                        "POST /admin/keys",
+                        "POST /v1/keys/challenge",
+                        "POST /v1/keys/register",
                     ],
                 },
             )
@@ -358,6 +409,71 @@ class Handler(BaseHTTPRequestHandler):
             if self._key_row() is None:
                 return
             self._chat(body)
+            return
+
+        if path == "/v1/keys/challenge":
+            challenge = issue_challenge(self._client_ip())
+            self._send_json(
+                200,
+                {
+                    "challenge": challenge,
+                    "difficulty": CHALLENGE_DIFFICULTY,
+                    "expires_in": CHALLENGE_TTL,
+                },
+            )
+            return
+
+        if path == "/v1/keys/register":
+            ip = self._client_ip()
+            challenge = str(body.get("challenge", "")).strip()
+            solution = str(body.get("solution", "")).strip()
+            if len(challenge) != 32 or not solution.isdigit() or len(solution) > 12:
+                self._error(400, "Invalid challenge solution.")
+                return
+            if not verify_challenge(challenge, solution, ip):
+                self._error(400, "Challenge failed or expired. Reload the page and try again.")
+                return
+            name = str(body.get("name", "devai-user")).strip()[:80] or "devai-user"
+            now = time.time()
+            digest = ip_digest(ip)
+            with DB_LOCK, db() as conn:
+                conn.execute("DELETE FROM signups WHERE created < ?", (now - 30 * 86400,))
+                per_ip = conn.execute(
+                    "SELECT COUNT(*) FROM signups WHERE ip_hash = ? AND created > ?",
+                    (digest, now - 86400),
+                ).fetchone()[0]
+                if per_ip >= REGISTER_PER_IP_DAY:
+                    self._error(429, "Too many keys from this address. Try again tomorrow.", "rate_limit_error")
+                    return
+                global_today = conn.execute(
+                    "SELECT COUNT(*) FROM signups WHERE created > ?", (now - 86400,)
+                ).fetchone()[0]
+                if global_today >= REGISTER_GLOBAL_DAY:
+                    self._error(429, "Daily key limit reached. Try again tomorrow.", "rate_limit_error")
+                    return
+                key_id = secrets.token_hex(8)
+                raw, key_digest = new_key()
+                prefix = raw[:18] + "..."
+                conn.execute(
+                    "INSERT INTO keys(id, name, prefix, hash, created, rpm) VALUES (?, ?, ?, ?, ?, ?)",
+                    (key_id, name, prefix, key_digest, now, 60),
+                )
+                conn.execute(
+                    "INSERT INTO signups(ip_hash, key_id, created) VALUES (?, ?, ?)",
+                    (digest, key_id, now),
+                )
+            self._send_json(
+                201,
+                {
+                    "id": key_id,
+                    "name": name,
+                    "key": raw,
+                    "prefix": prefix,
+                    "rpm": 60,
+                    "model": MODEL_ID,
+                    "warning": "Store this key now. The server keeps only its hash.",
+                },
+            )
             return
 
         if path == "/admin/keys":
