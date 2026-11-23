@@ -21,6 +21,7 @@ server/models/
 server/server.log
 server/server.pid
 server/__pycache__/
+scripts/__pycache__/
 server/*.tmp
 dist/
 server/models
