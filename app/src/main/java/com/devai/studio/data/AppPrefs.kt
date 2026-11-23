@@ -37,6 +37,7 @@ object AppPrefs {
     private const val KEY_CONFIRM_DELETE = "confirm_delete_chat"
     private const val KEY_RESPONSE_STYLE = "response_style"
     private const val KEY_RESPONSE_LANGUAGE = "response_language"
+    private const val KEY_CODE_LANGUAGE = "code_language"
     private const val KEY_CHAT_WALLPAPER = "chat_wallpaper"
     private const val KEY_CHAT_WALLPAPER_DIM = "chat_wallpaper_dim"
 
@@ -204,6 +205,11 @@ object AppPrefs {
     fun setResponseLanguage(ctx: Context, v: String) =
         p(ctx).edit().putString(KEY_RESPONSE_LANGUAGE, v).apply()
 
+    fun codeLanguage(ctx: Context): String =
+        p(ctx).getString(KEY_CODE_LANGUAGE, CodeLanguages.DEFAULT_ID) ?: CodeLanguages.DEFAULT_ID
+    fun setCodeLanguage(ctx: Context, v: String) =
+        p(ctx).edit().putString(KEY_CODE_LANGUAGE, v).apply()
+
     fun chatWallpaper(ctx: Context): String =
         p(ctx).getString(KEY_CHAT_WALLPAPER, "none") ?: "none"
     fun setChatWallpaper(ctx: Context, v: String) =
@@ -245,6 +251,7 @@ object AppPrefs {
         put("confirmDelete", confirmDelete(ctx))
         put("responseStyle", responseStyle(ctx))
         put("responseLanguage", responseLanguage(ctx))
+        put("codeLanguage", codeLanguage(ctx))
         put("chatWallpaper", chatWallpaper(ctx))
         put("chatWallpaperDim", chatWallpaperDim(ctx))
         put("theme", theme(ctx))

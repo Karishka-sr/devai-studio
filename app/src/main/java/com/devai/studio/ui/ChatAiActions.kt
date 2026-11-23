@@ -32,9 +32,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.devai.studio.ai.AiMessage
+import com.devai.studio.data.AppPrefs
+import com.devai.studio.data.CodeLanguages
 import com.devai.studio.data.PromptLibrary
 
 private data class AiAction(
@@ -53,8 +56,11 @@ fun ChatAiActionsSheet(
     onRun: (String) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val context = LocalContext.current
+    val language = CodeLanguages.byId(AppPrefs.codeLanguage(context)) ?: CodeLanguages.default
     val source = input.ifBlank { lastAnswer }.trim()
-    val actions = remember(source, lastAnswer, chatText) {
+    val actions = remember(source, lastAnswer, chatText, language.id) {
+        val testHint = if (language.testFramework == "—") "тесты" else "тесты на ${language.testFramework}"
         listOf(
             AiAction(
                 "Улучшить промпт",
@@ -96,8 +102,8 @@ fun ChatAiActionsSheet(
             ),
             AiAction(
                 "Сгенерировать тесты",
-                "Unit-тесты на Kotlin",
-                "Напиши unit-тесты на Kotlin/JUnit для этого кода. Покрой успех, границы и ошибки. " +
+                "Unit-тесты на ${language.name}",
+                "Напиши $testHint для этого кода на ${language.name}. Покрой успех, границы и ошибки. " +
                     "Не используй mocks без необходимости:\n\n$source",
             ),
             AiAction(

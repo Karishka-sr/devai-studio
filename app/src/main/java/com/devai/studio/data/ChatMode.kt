@@ -13,7 +13,7 @@ enum class ChatMode(
     DEV(
         id = "dev",
         title = "Разработка",
-        subtitle = "Код, архитектура, ошибки, Android, Kotlin и Compose.",
+        subtitle = "Код, архитектура, ошибки и 50 языков программирования.",
     );
 
     companion object {

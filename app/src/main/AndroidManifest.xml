@@ -84,6 +84,11 @@
             android:label="Обои чата" />
 
         <activity
+            android:name=".ui.CodeLanguagesActivity"
+            android:exported="false"
+            android:label="Языки кода" />
+
+        <activity
             android:name="com.qwenz.qwel.MainActivity"
             android:exported="false"
             android:label="@string/vexel_app_name"

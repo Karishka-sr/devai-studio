@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import com.devai.studio.data.ApiKeyStore
 import com.devai.studio.data.AppPrefs
 import com.devai.studio.data.CharacterStore
+import com.devai.studio.data.CodeLanguages
 import com.devai.studio.data.McpStore
 import com.devai.studio.data.PluginStore
 import com.devai.studio.data.PremiumFeature
@@ -102,17 +103,32 @@ fun ToolsScreen() {
             contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
         ) {
             Text(
-                "3.0.0 — глобальное обновление",
+                "3.1.0 — 50 языков кода",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                "24 обои чата в высоком разрешении, 56 локальных инструментов, " +
+                "50 языков программирования, 24 обои чата, 56 локальных инструментов, " +
                     "14 AI-действий, память, стили и языки ответа, голосовой ввод, " +
                     "временный чат, поиск по чату и библиотека промптов.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+
+        ToolCard(
+            "Языки кода · ${CodeLanguages.all.size}",
+            "Kotlin, Python, Java, Go, C++, SQL, Swift, PHP, Ruby и ещё десятки языков.",
+            icon = Icons.Default.Build,
+        ) {
+            Button(
+                onClick = { context.startActivity(Intent(context, CodeLanguagesActivity::class.java)) },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Default.Build, contentDescription = null)
+                Spacer(Modifier.width(6.dp))
+                Text("Выбрать язык")
+            }
         }
 
         ToolCard(

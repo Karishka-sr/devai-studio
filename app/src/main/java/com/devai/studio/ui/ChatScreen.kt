@@ -120,6 +120,8 @@ import com.devai.studio.data.CharacterStore
 import com.devai.studio.data.ChatMode
 import com.devai.studio.data.ChatSession
 import com.devai.studio.data.ChatSessionsStore
+import com.devai.studio.data.CodeLanguage
+import com.devai.studio.data.CodeLanguages
 import com.devai.studio.data.LocalModelStore
 import com.devai.studio.data.McpStore
 import com.devai.studio.data.MemoryStore
@@ -184,6 +186,8 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
     var incognito by rememberSaveable { mutableStateOf(false) }
     var wallpaperId by remember { mutableStateOf(AppPrefs.chatWallpaper(context)) }
     var wallpaperDim by remember { mutableFloatStateOf(AppPrefs.chatWallpaperDim(context)) }
+    var codeLanguageId by remember { mutableStateOf(AppPrefs.codeLanguage(context)) }
+    val codeLanguage = CodeLanguages.byId(codeLanguageId) ?: CodeLanguages.default
     var plugins by remember { mutableStateOf<List<Plugin>>(emptyList()) }
     val clipboard = LocalClipboardManager.current
     var characterName by remember {
@@ -243,6 +247,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                 mcpEnabled = AppPrefs.mcpEnabled(context)
                 wallpaperId = AppPrefs.chatWallpaper(context)
                 wallpaperDim = AppPrefs.chatWallpaperDim(context)
+                codeLanguageId = AppPrefs.codeLanguage(context)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -403,6 +408,9 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                             else -> "отвечай на русском языке."
                         }
                     )
+                    if (mode == ChatMode.DEV) {
+                        append("\n\n").append(CodeLanguages.instruction(codeLanguage))
+                    }
                     val memory = MemoryStore.promptText(context)
                     if (memory.isNotBlank()) {
                         append("\n\nЧто помнить о пользователе:\n").append(memory)
@@ -601,6 +609,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
             EmptyChat(
                 modifier = Modifier.weight(1f),
                 mode = mode,
+                language = codeLanguage,
                 onSuggestion = { input = it },
             )
         } else {
@@ -678,6 +687,13 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                 },
                 leadingIcon = { Icon(Icons.Default.Build, contentDescription = null) },
                 label = { Text("MCP") },
+            )
+            AssistChip(
+                onClick = {
+                    context.startActivity(Intent(context, CodeLanguagesActivity::class.java))
+                },
+                leadingIcon = { Icon(Icons.Default.Build, contentDescription = null) },
+                label = { Text(codeLanguage.short) },
             )
             AssistChip(
                 onClick = { showAiActions = true },
@@ -1077,6 +1093,7 @@ private fun ChatWallpaperLayer(id: String, dim: Float) {
 private fun EmptyChat(
     modifier: Modifier = Modifier,
     mode: ChatMode,
+    language: CodeLanguage,
     onSuggestion: (String) -> Unit,
 ) {
     Column(
@@ -1114,7 +1131,7 @@ private fun EmptyChat(
         Spacer(Modifier.height(6.dp))
         Text(
             if (mode == ChatMode.DEV) {
-                "Спросите про код, ошибки, Android, Kotlin или Compose."
+                "Спросите про код, ошибки и ${language.name}. Основной язык: ${language.name}."
             } else {
                 "Спросите что угодно — объяснения, тексты, идеи."
             },
@@ -1129,9 +1146,9 @@ private fun EmptyChat(
         ) {
             (if (mode == ChatMode.DEV) {
                 listOf(
-                    "Напиши код на Kotlin",
+                    "Напиши код на ${language.name}",
                     "Объясни ошибку",
-                    "Сделай UI на Compose",
+                    "Сделай пример на ${language.name}",
                 )
             } else {
                 listOf(

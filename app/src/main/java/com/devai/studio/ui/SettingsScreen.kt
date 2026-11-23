@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -94,6 +95,7 @@ import com.devai.studio.data.ApiKeyStore
 import com.devai.studio.data.AppPrefs
 import com.devai.studio.data.MemoryStore
 import com.devai.studio.data.ChatSessionsStore
+import com.devai.studio.data.CodeLanguages
 import com.devai.studio.data.PremiumFeature
 import com.devai.studio.data.PremiumPlan
 import com.devai.studio.data.PremiumStore
@@ -148,6 +150,7 @@ fun SettingsScreen() {
     var themeId by remember { mutableStateOf(AppPrefs.theme(context)) }
     var responseStyle by remember { mutableStateOf(AppPrefs.responseStyle(context)) }
     var responseLanguage by remember { mutableStateOf(AppPrefs.responseLanguage(context)) }
+    var codeLanguageId by remember { mutableStateOf(AppPrefs.codeLanguage(context)) }
     var memoryText by remember { mutableStateOf("") }
     var memories by remember { mutableStateOf(MemoryStore.list(context)) }
     var plan by remember { mutableStateOf(PremiumStore.plan(context)) }
@@ -239,6 +242,7 @@ fun SettingsScreen() {
         themeId = AppPrefs.theme(context)
         responseStyle = AppPrefs.responseStyle(context)
         responseLanguage = AppPrefs.responseLanguage(context)
+        codeLanguageId = AppPrefs.codeLanguage(context)
         memories = MemoryStore.list(context)
         plan = PremiumStore.plan(context)
     }
@@ -658,6 +662,25 @@ fun SettingsScreen() {
                             )
                         }
                     }
+                }
+
+                SettingsSection("Язык кода") {
+                    ActionRow(
+                        icon = Icons.Default.Build,
+                        title = "Основной язык",
+                        subtitle = (CodeLanguages.byId(codeLanguageId) ?: CodeLanguages.default).let {
+                            "${it.name} · .${it.extension} · ${it.testFramework}"
+                        },
+                        onClick = {
+                            context.startActivity(Intent(context, CodeLanguagesActivity::class.java))
+                        },
+                    )
+                    Text(
+                        "Язык подставляется в системный промпт режима «Разработка». " +
+                            "Доступно ${CodeLanguages.all.size} языков.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
 
                 SettingsSection("Память") {
