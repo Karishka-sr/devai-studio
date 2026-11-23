@@ -6,7 +6,7 @@
 
 **Android-студия для разработки с ИИ.** Чат с ведущими моделями, генерация Android-проектов, рабочее пространство с файлами и офлайн-модели, которые работают без интернета.
 
-[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v3.1.0** · Android 12+ · arm64-v8a
+[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v3.2.0** · Android 12+ · arm64-v8a
 [Скачать PC-версию](https://github.com/Karishka-sr/devai-studio-pc/releases/latest) · **Windows 7/10/11 · 3.1.0** · JRE 8 внутри
 
 <p align="center">
@@ -14,7 +14,7 @@
     <img src="https://img.shields.io/badge/Telegram-@NeonBeatt-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram @NeonBeatt">
   </a>
   <a href="https://github.com/Karishka-sr/devai-studio/releases">
-    <img src="https://img.shields.io/badge/Download_APK-v3.1.0-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
+    <img src="https://img.shields.io/badge/Download_APK-v3.2.0-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
   </a>
   <a href="https://rytmix-live.pplx-2.app">
     <img src="https://img.shields.io/badge/Site-rytmix--live-0A66C2?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Сайт">
@@ -37,7 +37,10 @@
 - Выбор основного языка: Kotlin, Java, Python, JavaScript, TypeScript, Dart, Swift, C, C++, C#, Go, PHP, Ruby, SQL, Bash, HTML/CSS и ещё десятки.
 - Язык подставляется в системный промпт: примеры, тесты и команды приходят на выбранном языке.
 - Экран выбора с поиском, примерами кода и копированием.
-- Работает в Android-версии и PC-версии.
+- Подсветка синтаксиса прямо в чате: ключевые слова, типы, строки, комментарии, числа, аннотации и функции.
+- Автоопределение языка для блоков кода без подписи и алиасы `js`, `ts`, `c++`, `c#`, `objective-c`.
+- Вложения принимают расширения всех 50 языков.
+- В Android-версии подсветка встроена в чат; в PC-версии выбор языка влияет на генерацию.
 
 ### 💬 Чат с ИИ
 - 25+ провайдеров: OpenAI, Anthropic Claude, Google Gemini, DeepSeek, Groq, Mistral, OpenRouter, Together AI, Cerebras, NVIDIA NIM, xAI, Cohere, Perplexity и другие.

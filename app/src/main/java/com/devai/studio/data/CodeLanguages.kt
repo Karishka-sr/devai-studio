@@ -521,7 +521,54 @@ object CodeLanguages {
 
     val default: CodeLanguage = all.first { it.id == DEFAULT_ID }
 
-    fun byId(id: String?): CodeLanguage? = all.firstOrNull { it.id == id }
+    private val aliases: Map<String, String> = mapOf(
+        "js" to "javascript", "jsx" to "javascript", "mjs" to "javascript",
+        "ts" to "typescript", "tsx" to "typescript",
+        "py" to "python", "python3" to "python",
+        "kt" to "kotlin", "kts" to "kotlin",
+        "c++" to "cpp", "cc" to "cpp", "cxx" to "cpp", "hpp" to "cpp",
+        "c#" to "csharp", "cs" to "csharp",
+        "objc" to "objectivec", "objective-c" to "objectivec",
+        "sh" to "bash", "shell" to "bash", "zsh" to "bash",
+        "pwsh" to "powershell", "ps1" to "powershell",
+        "yml" to "yaml", "rb" to "ruby",
+        "fs" to "fsharp", "fsx" to "fsharp",
+        "vb" to "vbnet", "vb.net" to "vbnet",
+        "asm" to "assembly", "nasm" to "assembly",
+        "sol" to "solidity", "pl" to "perl", "pm" to "perl",
+        "hs" to "haskell", "lhs" to "haskell",
+        "ex" to "elixir", "exs" to "elixir",
+        "erl" to "erlang", "hrl" to "erlang",
+        "clj" to "clojure", "cljs" to "clojure",
+        "ml" to "ocaml", "mli" to "ocaml",
+        "scm" to "scheme", "lisp" to "scheme",
+        "pas" to "pascal", "pp" to "pascal",
+        "vhd" to "vhdl", "vhdl" to "vhdl",
+        "v" to "verilog", "sv" to "verilog",
+        "f90" to "fortran", "f95" to "fortran",
+        "cob" to "cobol", "cbl" to "cobol",
+        "text" to "", "plaintext" to "", "txt" to "",
+    )
+
+    val supportedExtensions: Set<String> = buildSet {
+        all.forEach { add(it.extension.lowercase()) }
+        addAll(listOf("kts", "jsx", "mjs", "tsx", "cc", "cxx", "hpp", "h", "hh", "cs", "fsx", "vb", "asm", "s", "sol", "pl", "pm", "hs", "lhs", "exs", "erl", "hrl", "clj", "cljs", "ml", "mli", "scm", "lisp", "pas", "pp", "vhd", "v", "sv", "f90", "f95", "cob", "cbl", "yml", "zsh"))
+    }
+
+    fun byId(id: String?): CodeLanguage? {
+        val key = id?.trim()?.lowercase()?.removePrefix("language-") ?: return null
+        if (key.isBlank()) return null
+        return all.firstOrNull { it.id == key }
+            ?: all.firstOrNull { aliases[key] == it.id }
+            ?: all.firstOrNull { it.name.equals(key, ignoreCase = true) || it.short.equals(key, ignoreCase = true) }
+    }
+
+    fun fromFileName(name: String): CodeLanguage? {
+        val extension = name.substringAfterLast('.', "").lowercase()
+        if (extension.isBlank()) return null
+        return all.firstOrNull { it.extension.lowercase() == extension }
+            ?: all.firstOrNull { aliases[extension] == it.id }
+    }
 
     fun selected(ctx: Context): CodeLanguage =
         byId(AppPrefs.codeLanguage(ctx)) ?: default

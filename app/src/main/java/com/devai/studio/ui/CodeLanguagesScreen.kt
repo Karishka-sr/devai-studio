@@ -148,7 +148,7 @@ fun CodeLanguagesScreen(onBack: () -> Unit) {
                 ) {
                     SelectionContainer {
                         Text(
-                            current.example,
+                            highlightedCode(current.id, current.example),
                             modifier = Modifier
                                 .padding(12.dp)
                                 .horizontalScroll(rememberScrollState()),

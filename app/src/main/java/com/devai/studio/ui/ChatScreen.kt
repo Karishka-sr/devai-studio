@@ -122,6 +122,7 @@ import com.devai.studio.data.ChatSession
 import com.devai.studio.data.ChatSessionsStore
 import com.devai.studio.data.CodeLanguage
 import com.devai.studio.data.CodeLanguages
+import com.devai.studio.data.CodeSyntax
 import com.devai.studio.data.LocalModelStore
 import com.devai.studio.data.McpStore
 import com.devai.studio.data.MemoryStore
@@ -1389,6 +1390,9 @@ private fun Avatar(isUser: Boolean) {
 private fun CodeBlock(lang: String, code: String, fontSize: TextUnit, wrap: Boolean) {
     val clipboard = LocalClipboardManager.current
     var copied by remember { mutableStateOf(false) }
+    val highlighted = highlightedCode(lang, code)
+    val languageName = remember(lang, code) { CodeSyntax.displayName(lang, code) }
+    val lineCount = remember(code) { code.count { it == '\n' } + 1 }
     Surface(
         color = Color(0xFF1E1E1E),
         contentColor = Color(0xFFE6E6E6),
@@ -1397,7 +1401,7 @@ private fun CodeBlock(lang: String, code: String, fontSize: TextUnit, wrap: Bool
         Column(Modifier.padding(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = if (lang.isBlank()) "code" else lang,
+                    text = "$languageName · $lineCount стр.",
                     color = Color(0xFF9CDCFE),
                     fontSize = 11.sp,
                     fontFamily = FontFamily.Monospace,
@@ -1425,21 +1429,24 @@ private fun CodeBlock(lang: String, code: String, fontSize: TextUnit, wrap: Bool
                     )
                 }
             }
-            Text(
-                text = code,
-                color = Color(0xFFE6E6E6),
-                fontSize = fontSize,
-                fontFamily = FontFamily.Monospace,
-                softWrap = wrap,
-                modifier = if (wrap) {
-                    Modifier.fillMaxWidth()
-                } else {
-                    Modifier.horizontalScroll(rememberScrollState())
-                },
-            )
+            SelectionContainer {
+                Text(
+                    text = highlighted,
+                    color = Color(0xFFE6E6E6),
+                    fontSize = fontSize,
+                    fontFamily = FontFamily.Monospace,
+                    softWrap = wrap,
+                    modifier = if (wrap) {
+                        Modifier.fillMaxWidth()
+                    } else {
+                        Modifier.horizontalScroll(rememberScrollState())
+                    },
+                )
+            }
         }
     }
 }
+
 
 private fun readAttachment(context: android.content.Context, uri: android.net.Uri): Attachment {
     val name = context.contentResolver.query(
@@ -1453,10 +1460,8 @@ private fun readAttachment(context: android.content.Context, uri: android.net.Ur
     } ?: uri.lastPathSegment ?: "file.txt"
 
     val extension = name.substringAfterLast('.', "").lowercase()
-    val allowed = setOf(
-        "txt", "md", "json", "kt", "kts", "java", "xml", "yaml", "yml",
-        "csv", "log", "html", "css", "js", "ts", "py", "gradle",
-        "properties", "sql", "sh", "toml", "ini", "devai",
+    val allowed = CodeLanguages.supportedExtensions + setOf(
+        "txt", "md", "csv", "log", "gradle", "properties", "toml", "ini", "devai",
     )
     if (extension !in allowed) {
         error("формат .$extension не поддержан")
