@@ -13,7 +13,8 @@
 3. В разделе Authentication → Sign-in method включите **Phone**.
 4. Добавьте SHA-1 и SHA-256 вашего ключа подписи.
    Для release-ключа DevAI:
-   `54fe7482456c7cce0543c3ee700ef23a9f3583cc1bd82a980cdac1b045849d6a`.
+   - SHA-1: `8D:31:13:15:18:62:BF:20:39:B2:8A:A1:4F:76:9E:6C:DB:C6:54:EF`
+   - SHA-256: `54:FE:74:82:45:6C:7C:CE:05:43:C3:EE:70:0E:F2:3A:9F:35:83:CC:1B:D8:2A:98:0C:DA:C1:B0:45:84:9D:6A`
 5. Скопируйте `google-services.json` не нужен — приложению нужны только три строки.
 6. Откройте `local.properties` в корне проекта и добавьте:
 
