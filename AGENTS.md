@@ -39,7 +39,7 @@
 - `PhoneAuthManager` uses Firebase Phone Auth. Configure `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_PROJECT_ID` in `local.properties`; without them the profile UI is disabled with an explicit message. See `docs/PHONE_AUTH.md`.
 - Settings category `PROFILE` edits nickname (2–32 chars) and runs SMS code request/confirm; `PhoneNumbers` normalizes RU formats and is unit-tested.
 
-## DevAI Core (3.6.0)
+## DevAI Core (3.6.1)
 - `ai/DevAICore.kt` is the custom assistant layer: local intent replies (memory, prompt search, profile/SMS/language/model help, status, time), `SYSTEM_PROMPT`, and `offlineReply`.
 - `ChatMode.CORE` is the third chat mode. `ChatScreen.send` runs `DevAICore.localReply` before provider config; if no provider/key is configured it falls back to `offlineReply` instead of failing.
 - `AppPrefs.systemPromptForMode(CORE)` returns `DevAICore.SYSTEM_PROMPT`; custom user prompt still wins.
