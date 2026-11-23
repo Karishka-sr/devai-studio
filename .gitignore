@@ -13,3 +13,5 @@ app/build
 *.idsig
 
 desktop/build
+
+google-services.json

@@ -34,7 +34,7 @@
 - Premium UI: `ui/PremiumActivity.kt` (tier cards, feature matrix, activation, Stars buttons). Gates: themes, model tiers, chat export, search/MCP/plugins/TTS/characters, chat customization, prompt library, backups, QR, history limit.
 - Chat backups: `ChatSessionsStore.exportJson/importJson`; prompt library: `data/PromptLibrary.kt` (1024 prompts, searchable).
 
-## Profile & Phone Auth (3.5.0)
+## Profile & Phone Auth (3.5.1)
 - `ProfileStore` keeps nickname/phone/uid in EncryptedSharedPreferences (fallback prefs).
 - `PhoneAuthManager` uses Firebase Phone Auth. Configure `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_PROJECT_ID` in `local.properties`; without them the profile UI is disabled with an explicit message. See `docs/PHONE_AUTH.md`.
 - Settings category `PROFILE` edits nickname (2–32 chars) and runs SMS code request/confirm; `PhoneNumbers` normalizes RU formats and is unit-tested.
