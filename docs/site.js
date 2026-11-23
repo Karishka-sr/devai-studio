@@ -178,6 +178,19 @@
       ? `Скачать DevAI Studio ${version}`
       : `DevAI Studio ${version} — ИИ-студия для Android`;
 
+    const ldNode = one('script[type="application/ld+json"]');
+    if (ldNode) {
+      try {
+        const ld = JSON.parse(ldNode.textContent);
+        ld.softwareVersion = release.version;
+        ld.downloadUrl = release.apk_url || new URL(downloadPage, location.href).href;
+        if (release.published_at) ld.datePublished = release.published_at.slice(0, 10);
+        ldNode.textContent = JSON.stringify(ld);
+      } catch {
+        // Keep the static structured data if it is malformed.
+      }
+    }
+
     return true;
   }
 
