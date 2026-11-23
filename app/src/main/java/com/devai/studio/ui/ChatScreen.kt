@@ -1,9 +1,11 @@
 package com.devai.studio.ui
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.provider.OpenableColumns
+import android.speech.RecognizerIntent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -47,6 +49,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
@@ -115,6 +118,7 @@ import com.devai.studio.data.ChatSession
 import com.devai.studio.data.ChatSessionsStore
 import com.devai.studio.data.LocalModelStore
 import com.devai.studio.data.McpStore
+import com.devai.studio.data.MemoryStore
 import com.devai.studio.data.Plugin
 import com.devai.studio.data.PluginStore
 import com.devai.studio.data.PremiumFeature
@@ -170,7 +174,12 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
     var mcpEnabled by remember { mutableStateOf(AppPrefs.mcpEnabled(context)) }
     var attachments by remember { mutableStateOf<List<Attachment>>(emptyList()) }
     var showPlugins by remember { mutableStateOf(false) }
+    var showAiActions by remember { mutableStateOf(false) }
+    var showPromptLibrary by remember { mutableStateOf(false) }
+    var showChatSearch by remember { mutableStateOf(false) }
+    var incognito by rememberSaveable { mutableStateOf(false) }
     var plugins by remember { mutableStateOf<List<Plugin>>(emptyList()) }
+    val clipboard = LocalClipboardManager.current
     var characterName by remember {
         mutableStateOf(CharacterStore.active(context)?.name ?: "Без персонажа")
     }
@@ -196,6 +205,30 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
         }
     }
 
+    val voiceInput = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val spoken = result.data
+                ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                ?.firstOrNull()
+            if (!spoken.isNullOrBlank()) {
+                input = (input.trim() + " " + spoken).trim()
+            }
+        }
+    }
+
+    fun startVoiceInput() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ru-RU")
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Скажите сообщение")
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+        }
+        runCatching { voiceInput.launch(intent) }
+            .onFailure { toast("Голосовой ввод недоступен на этом устройстве") }
+    }
+
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -219,12 +252,13 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
     }
 
     fun persist() {
-        if (sessionId.isNotBlank()) {
+        if (!incognito && sessionId.isNotBlank()) {
             ChatSessionsStore.updateMessages(context, sessionId, messages)
         }
     }
 
     fun loadSession(session: ChatSession) {
+        incognito = false
         sessionId = session.id
         ChatSessionsStore.setCurrent(context, session.id)
         messages = session.messages
@@ -237,6 +271,20 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
         if (greeting.isNotBlank()) {
             messages = listOf(AiMessage("assistant", greeting))
             persist()
+        }
+    }
+
+    fun newTempChat() {
+        cancelled.set(true)
+        job?.cancel()
+        streaming = false
+        incognito = true
+        sessionId = ""
+        messages = emptyList()
+        modelLabel = currentModelLabel()
+        val greeting = CharacterStore.active(context)?.greeting.orEmpty()
+        if (greeting.isNotBlank()) {
+            messages = listOf(AiMessage("assistant", greeting))
         }
     }
 
@@ -329,6 +377,28 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                         append(it.systemText()).append("\n\n")
                     }
                     append(AppPrefs.systemPromptForMode(context, mode))
+                    val style = AppPrefs.responseStyle(context)
+                    append(
+                        "\n\nСтиль ответа: " + when (style) {
+                            "concise" -> "максимально кратко, только суть и код."
+                            "detailed" -> "подробно, с примерами, объяснениями и чек-листом."
+                            "friendly" -> "дружелюбно и просто, без канцелярита."
+                            "formal" -> "официально и структурированно."
+                            "creative" -> "смело и нестандартно, предлагай несколько идей."
+                            else -> "баланс краткости и полезных деталей."
+                        }
+                    )
+                    append(
+                        "\n\nЯзык ответа: " + when (AppPrefs.responseLanguage(context)) {
+                            "en" -> "отвечай на английском языке."
+                            "auto" -> "отвечай на языке пользователя."
+                            else -> "отвечай на русском языке."
+                        }
+                    )
+                    val memory = MemoryStore.promptText(context)
+                    if (memory.isNotBlank()) {
+                        append("\n\nЧто помнить о пользователе:\n").append(memory)
+                    }
                     if (searchBlock.isNotBlank()) {
                         append("\n\nАктуальные результаты поиска (веб, GitHub, Stack Overflow, Wikipedia, DuckDuckGo, Hacker News; используй, если это полезно):\n")
                         append(searchBlock)
@@ -480,6 +550,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
     }
 
     LaunchedEffect(Unit) {
+        if (incognito) return@LaunchedEffect
         val session = ChatSessionsStore.getOrCreateCurrent(context)
         sessionId = session.id
         messages = session.messages
@@ -502,7 +573,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
     Column(Modifier.fillMaxSize()) {
         DevAITopBar(
             title = "DevAI",
-            subtitle = "Studio · " + mode.title + " · " + modelLabel,
+            subtitle = "Studio · " + mode.title + (if (incognito) " · временный" else "") + " · " + modelLabel,
             actions = {
                 DevAIActionIcon(Icons.AutoMirrored.Filled.List, "Сессии") { openSessions() }
                 DevAIActionIcon(Icons.Default.Add, "Новый чат") { newChat() }
@@ -544,6 +615,19 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                             showAvatars = showAvatars,
                             fontFamily = chatFontFamily,
                             onSpeak = { TtsManager.speak(context, it) },
+                            onCopy = {
+                                clipboard.setText(AnnotatedString(it))
+                                toast("Скопировано")
+                            },
+                            onShare = { text ->
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, text)
+                                }
+                                context.startActivity(
+                                    Intent.createChooser(intent, "Поделиться сообщением")
+                                )
+                            },
                         )
                     }
                 }
@@ -584,6 +668,21 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                 },
                 leadingIcon = { Icon(Icons.Default.Build, contentDescription = null) },
                 label = { Text("MCP") },
+            )
+            AssistChip(
+                onClick = { showAiActions = true },
+                leadingIcon = { Icon(Icons.Default.Star, contentDescription = null) },
+                label = { Text("AI-действия") },
+            )
+            AssistChip(
+                onClick = { showPromptLibrary = true },
+                leadingIcon = { Icon(Icons.Default.Create, contentDescription = null) },
+                label = { Text("Промпты") },
+            )
+            AssistChip(
+                onClick = { showChatSearch = true },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                label = { Text("Поиск") },
             )
             AssistChip(
                 onClick = { openPlugins() },
@@ -640,6 +739,13 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                     Icon(
                         Icons.Default.Add,
                         contentDescription = "Прикрепить файл",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                IconButton(onClick = { startVoiceInput() }) {
+                    Icon(
+                        Icons.Default.PlayArrow,
+                        contentDescription = "Голосовой ввод",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -765,6 +871,19 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                         Text("Удалить")
                     }
                 }
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = {
+                        newTempChat()
+                        showSessions = false
+                        toast("Временный чат: сообщения не сохраняются")
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(Icons.Default.Star, contentDescription = null)
+                    Spacer(Modifier.width(6.dp))
+                    Text("Временный чат (не сохранять)")
+                }
             }
         }
     }
@@ -871,6 +990,45 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                 }
             }
         }
+    }
+
+    if (showAiActions) {
+        ChatAiActionsSheet(
+            chatText = messages.filter { it.content.isNotBlank() }
+                .joinToString("\n\n") { message ->
+                    (if (message.role == "user") "Пользователь" else "DevAI") + ": " + message.content
+                }
+                .takeLast(12000),
+            input = input,
+            lastAnswer = messages.lastOrNull { it.role == "assistant" && it.content.isNotBlank() }
+                ?.content.orEmpty(),
+            onDismiss = { showAiActions = false },
+            onRun = { prompt ->
+                showAiActions = false
+                send(prompt)
+            },
+        )
+    }
+
+    if (showPromptLibrary) {
+        ChatPromptSheet(
+            onDismiss = { showPromptLibrary = false },
+            onUse = { prompt ->
+                input = prompt
+                showPromptLibrary = false
+            },
+        )
+    }
+
+    if (showChatSearch) {
+        ChatSearchSheet(
+            messages = messages,
+            onDismiss = { showChatSearch = false },
+            onJump = { index ->
+                showChatSearch = false
+                scope.launch { listState.animateScrollToItem(index) }
+            },
+        )
     }
 }
 
@@ -996,6 +1154,8 @@ private fun MessageBubble(
     showAvatars: Boolean,
     fontFamily: FontFamily,
     onSpeak: (String) -> Unit,
+    onCopy: (String) -> Unit,
+    onShare: (String) -> Unit,
 ) {
     val isUser = message.role == "user"
     Row(
@@ -1090,11 +1250,40 @@ private fun MessageBubble(
                         }
                     }
                 }
-                if (!isUser && message.content.isNotBlank()) {
-                    TextButton(onClick = { onSpeak(message.content) }) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text("Озвучить")
+                if (message.content.isNotBlank()) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                        IconButton(
+                            onClick = { onCopy(message.content) },
+                            modifier = Modifier.size(34.dp),
+                        ) {
+                            Icon(
+                                Icons.Default.Create,
+                                contentDescription = "Копировать",
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
+                        IconButton(
+                            onClick = { onShare(message.content) },
+                            modifier = Modifier.size(34.dp),
+                        ) {
+                            Icon(
+                                Icons.Default.Share,
+                                contentDescription = "Поделиться",
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
+                        if (!isUser) {
+                            IconButton(
+                                onClick = { onSpeak(message.content) },
+                                modifier = Modifier.size(34.dp),
+                            ) {
+                                Icon(
+                                    Icons.Default.PlayArrow,
+                                    contentDescription = "Озвучить",
+                                    modifier = Modifier.size(16.dp),
+                                )
+                            }
+                        }
                     }
                 }
             }

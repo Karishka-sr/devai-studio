@@ -92,6 +92,7 @@ import com.devai.studio.R
 import com.devai.studio.ai.LocalLlmEngine
 import com.devai.studio.data.ApiKeyStore
 import com.devai.studio.data.AppPrefs
+import com.devai.studio.data.MemoryStore
 import com.devai.studio.data.ChatSessionsStore
 import com.devai.studio.data.PremiumFeature
 import com.devai.studio.data.PremiumPlan
@@ -145,6 +146,10 @@ fun SettingsScreen() {
     var customModel by remember { mutableStateOf(AppPrefs.customModel(context)) }
     var systemPrompt by remember { mutableStateOf(AppPrefs.systemPrompt(context)) }
     var themeId by remember { mutableStateOf(AppPrefs.theme(context)) }
+    var responseStyle by remember { mutableStateOf(AppPrefs.responseStyle(context)) }
+    var responseLanguage by remember { mutableStateOf(AppPrefs.responseLanguage(context)) }
+    var memoryText by remember { mutableStateOf("") }
+    var memories by remember { mutableStateOf(MemoryStore.list(context)) }
     var plan by remember { mutableStateOf(PremiumStore.plan(context)) }
     var categoryId by rememberSaveable { mutableStateOf(SettingsCategory.GENERATION.name) }
     val category = SettingsCategory.valueOf(categoryId)
@@ -232,6 +237,9 @@ fun SettingsScreen() {
         customModel = AppPrefs.customModel(context)
         systemPrompt = AppPrefs.systemPrompt(context)
         themeId = AppPrefs.theme(context)
+        responseStyle = AppPrefs.responseStyle(context)
+        responseLanguage = AppPrefs.responseLanguage(context)
+        memories = MemoryStore.list(context)
         plan = PremiumStore.plan(context)
     }
 
@@ -596,6 +604,115 @@ fun SettingsScreen() {
                             AppPrefs.setCodeWrap(context, it)
                         },
                     )
+                }
+
+                SettingsSection("Стиль ответа") {
+                    val styles = listOf(
+                        "balanced" to "Баланс",
+                        "concise" to "Кратко",
+                        "detailed" to "Подробно",
+                        "friendly" to "Дружелюбно",
+                        "formal" to "Официально",
+                        "creative" to "Креативно",
+                    )
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        styles.forEach { (id, label) ->
+                            FilterChip(
+                                selected = responseStyle == id,
+                                onClick = {
+                                    responseStyle = id
+                                    AppPrefs.setResponseStyle(context, id)
+                                },
+                                label = { Text(label) },
+                            )
+                        }
+                    }
+                    Text(
+                        "Стиль добавляется к системному промпту и влияет на длину и тон ответа.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                SettingsSection("Язык ответа") {
+                    val languages = listOf(
+                        "ru" to "Русский",
+                        "en" to "English",
+                        "auto" to "Как в запросе",
+                    )
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        languages.forEach { (id, label) ->
+                            FilterChip(
+                                selected = responseLanguage == id,
+                                onClick = {
+                                    responseLanguage = id
+                                    AppPrefs.setResponseLanguage(context, id)
+                                },
+                                label = { Text(label) },
+                            )
+                        }
+                    }
+                }
+
+                SettingsSection("Память") {
+                    Text(
+                        "Факты о вас, которые DevAI будет учитывать в каждом чате. Хранятся только на телефоне.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    OutlinedTextField(
+                        value = memoryText,
+                        onValueChange = { memoryText = it },
+                        label = { Text("Новый факт") },
+                        placeholder = { Text("Например: пишу на Kotlin, проект DevAI Studio") },
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 3,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = {
+                                if (MemoryStore.add(context, memoryText)) {
+                                    memories = MemoryStore.list(context)
+                                    memoryText = ""
+                                    toast("Факт добавлен в память")
+                                } else {
+                                    toast("Пустой факт или уже есть в памяти")
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                        ) { Text("Добавить") }
+                        OutlinedButton(
+                            onClick = {
+                                MemoryStore.clear(context)
+                                memories = emptyList()
+                                toast("Память очищена")
+                            },
+                            modifier = Modifier.weight(1f),
+                        ) { Text("Очистить") }
+                    }
+                    memories.forEach { fact ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                fact,
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                            IconButton(
+                                onClick = {
+                                    MemoryStore.remove(context, fact)
+                                    memories = MemoryStore.list(context)
+                                },
+                            ) {
+                                Icon(Icons.Default.Delete, contentDescription = "Удалить факт")
+                            }
+                        }
+                    }
                 }
 
                 SettingsSection("Поведение") {

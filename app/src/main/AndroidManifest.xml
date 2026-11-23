@@ -8,6 +8,9 @@
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
         </intent>
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+        </intent>
     </queries>
 
     <application
@@ -68,6 +71,12 @@
             android:name=".ui.QrExportActivity"
             android:exported="false"
             android:label="QR-экспорт провайдера" />
+
+        <activity
+            android:name=".ui.ExtraToolsActivity"
+            android:exported="false"
+            android:label="Лаборатория инструментов"
+            android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name="com.qwenz.qwel.MainActivity"

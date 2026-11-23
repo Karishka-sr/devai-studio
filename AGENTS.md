@@ -19,7 +19,7 @@
 - `ai/ResponseGuard.kt` answers simple greetings without inference, filters leaked benchmark/task text from streamed local responses, and drops such assistant turns from prompt history.
 - `data/ModelDownloader.kt` retries, resumes, and falls back to `hf-mirror.com` for Hugging Face URLs.
 
-## Themes & Premium (v2.16.1)
+## Themes & Premium (v2.17.0)
 - `ui/DevAIDesign.kt` is the shared Aurora design system: gradient background, logo/top bar, rounded bordered cards, icon tiles, status pills, gradient buttons. Use these composables instead of raw `Card`/`TopAppBar` on new screens.
 - Contrast is enforced at the container level: `DevAIBackground` provides `LocalContentColor = onBackground`; `DevAICard`, top-bar buttons, bottom bar, chat bubbles and custom `Surface`s set an explicit `contentColor`. Do not rely on `contentColorFor()` for translucent colors (`surface.copy(alpha = ...)`) — it returns `Unspecified` and can inherit an unreadable color.
 - `ui/DevAIApp.kt` owns the palette, typography, shapes, and the floating rounded bottom bar. Default M3 is now Aurora (indigo/mint/coral); Expressive/Retro remain premium themes.
@@ -33,6 +33,15 @@
 - `data/TelegramStars.kt`: order text and `t.me/FemClaudeMrrr` payment link; codes are issued manually after Stars payment.
 - Premium UI: `ui/PremiumActivity.kt` (tier cards, feature matrix, activation, Stars buttons). Gates: themes, model tiers, chat export, search/MCP/plugins/TTS/characters, chat customization, prompt library, backups, QR, history limit.
 - Chat backups: `ChatSessionsStore.exportJson/importJson`; prompt library: `data/PromptLibrary.kt` (24 prompts).
+
+## Feature Pack 2.17.0
+- `data/QuickTools.kt` contains 56 local utilities (Base64, URL, JSON/CSV, JWT, hashes, text, regex, diff, numbers, time, colors, generators, MIME/HTTP reference). Add new tools there, not as ad-hoc UI code.
+- `ui/ExtraToolsScreen.kt` is the generic workbench: search, category chips, one input + optional second input, output, copy and share. `ExtraToolsActivity` hosts it from «Ещё → Лаборатория».
+- `ui/ChatAiActions.kt` holds three sheets: AI actions (14 prompt-based operations), prompt library, and chat search. Chat exposes them as horizontally scrolling chips.
+- `data/MemoryStore.kt` stores local facts. Chat injects them into the system prompt; Settings → Чат → Память manages them.
+- `AppPrefs.responseStyle` / `responseLanguage` append style and language rules to the system prompt. Settings → Чат exposes both.
+- Chat also supports temporary (non-persisted) sessions, voice input via `RecognizerIntent`, per-message copy/share, and a prompt-library shortcut.
+- `QuickToolsTest` exercises every tool with a valid sample and asserts the catalog stays at 50+ entries. It uses the real `org.json` test dependency because Android's stub throws in JVM tests.
 
 ## Compose UI (v2.4.0)
 - Compose BOM 2026.03.01 (UI/foundation 1.10.6, Material3 1.4.0), `androidx.activity:activity-compose:1.10.1`, `androidx.graphics:graphics-shapes:1.1.0`, Compose compiler plugin 2.2.20.

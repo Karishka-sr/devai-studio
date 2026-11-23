@@ -53,6 +53,7 @@ import com.devai.studio.data.McpStore
 import com.devai.studio.data.PluginStore
 import com.devai.studio.data.PremiumFeature
 import com.devai.studio.data.PremiumStore
+import com.devai.studio.data.QuickTools
 import com.devai.studio.data.SearchClient
 import com.devai.studio.util.AndroidUtils
 import com.devai.studio.util.PremiumDialogs
@@ -91,9 +92,41 @@ fun ToolsScreen() {
         )
         DevAISectionTitle(
             title = "Инструменты",
-            subtitle = "Поиск, MCP, озвучивание, персонажи, плагины и QR.",
+            subtitle = "Поиск, MCP, озвучивание, персонажи, плагины, QR и лаборатория.",
             icon = Icons.Default.Build,
         )
+
+        DevAICard(
+            accent = MaterialTheme.colorScheme.primary,
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+        ) {
+            Text(
+                "В 2.17.0 добавлено 70+ функций",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                "56 локальных инструментов, 14 AI-действий, память, стили и языки ответа, " +
+                    "голосовой ввод, временный чат, поиск по чату и библиотека промптов.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        ToolCard(
+            "Лаборатория · ${QuickTools.all.size} инструментов",
+            "Base64, JSON, хеши, regex, diff, timestamp, цвета, пароли, кубики и ещё десятки утилит.",
+            icon = Icons.Default.Build,
+        ) {
+            Button(
+                onClick = { context.startActivity(Intent(context, ExtraToolsActivity::class.java)) },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Default.Build, contentDescription = null)
+                Spacer(Modifier.width(6.dp))
+                Text("Открыть лабораторию")
+            }
+        }
 
         ToolCard(
             "Веб-поиск",

@@ -35,6 +35,8 @@ object AppPrefs {
     private const val KEY_HAPTIC = "haptic_feedback"
     private const val KEY_CODE_FONT_SIZE = "code_font_size"
     private const val KEY_CONFIRM_DELETE = "confirm_delete_chat"
+    private const val KEY_RESPONSE_STYLE = "response_style"
+    private const val KEY_RESPONSE_LANGUAGE = "response_language"
 
     const val DEFAULT_SYSTEM_PROMPT =
         "Ты — DevAI, полезный ИИ-ассистент разработчика. Отвечай по делу, давай рабочие примеры кода. " +
@@ -190,6 +192,16 @@ object AppPrefs {
     fun setConfirmDelete(ctx: Context, v: Boolean) =
         p(ctx).edit().putBoolean(KEY_CONFIRM_DELETE, v).apply()
 
+    fun responseStyle(ctx: Context): String =
+        p(ctx).getString(KEY_RESPONSE_STYLE, "balanced") ?: "balanced"
+    fun setResponseStyle(ctx: Context, v: String) =
+        p(ctx).edit().putString(KEY_RESPONSE_STYLE, v).apply()
+
+    fun responseLanguage(ctx: Context): String =
+        p(ctx).getString(KEY_RESPONSE_LANGUAGE, "ru") ?: "ru"
+    fun setResponseLanguage(ctx: Context, v: String) =
+        p(ctx).edit().putString(KEY_RESPONSE_LANGUAGE, v).apply()
+
     fun reset(ctx: Context) {
         p(ctx).edit().clear().apply()
     }
@@ -219,6 +231,8 @@ object AppPrefs {
         put("hapticFeedback", hapticFeedback(ctx))
         put("codeFontSize", codeFontSize(ctx))
         put("confirmDelete", confirmDelete(ctx))
+        put("responseStyle", responseStyle(ctx))
+        put("responseLanguage", responseLanguage(ctx))
         put("theme", theme(ctx))
         put("chatMode", chatMode(ctx))
         put("systemPrompt", systemPrompt(ctx))

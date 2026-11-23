@@ -12,8 +12,8 @@ android {
         applicationId = "com.devai.studio"
         minSdk = 31
         targetSdk = 34
-        versionCode = 30
-        versionName = "2.16.1"
+        versionCode = 31
+        versionName = "2.17.0"
         vectorDrawables.useSupportLibrary = true
         ndk {
             abiFilters += listOf("arm64-v8a")
@@ -68,4 +68,5 @@ dependencies {
     implementation("androidx.graphics:graphics-shapes:1.1.0")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
 }
