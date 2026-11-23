@@ -51,6 +51,7 @@
 - В Android-версии подсветка встроена в чат; в PC-версии выбор языка влияет на генерацию.
 
 ### 💬 Чат с ИИ
+- **DevAI Core** — собственный провайдер: модель `devai-core-0.1`, бесплатный ключ с сайта и вставка ключа из буфера в приложении.
 - 25+ провайдеров: OpenAI, Anthropic Claude, Google Gemini, DeepSeek, Groq, Mistral, OpenRouter, Together AI, Cerebras, NVIDIA NIM, xAI, Cohere, Perplexity и другие.
 - Локальные серверы: Ollama, LM Studio, llama.cpp, Jan.
 - Свой OpenAI-совместимый сервер.
