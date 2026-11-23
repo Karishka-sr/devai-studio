@@ -3,6 +3,11 @@ name: Build APK
 on:
   push:
     branches: [ main, master ]
+    paths-ignore:
+      - 'docs/**'
+      - 'scripts/**'
+      - '**/*.md'
+      - '.github/workflows/site-release.yml'
   workflow_dispatch:
 
 jobs:

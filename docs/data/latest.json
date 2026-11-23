@@ -1,0 +1,15 @@
+{
+  "tag": "v3.6.4",
+  "version": "3.6.4",
+  "name": "DevAI Studio 3.6.4 — окно обновления поверх приложения",
+  "published_at": "2026-11-23T11:18:01Z",
+  "page_url": "https://github.com/Karishka-sr/devai-studio/releases/tag/v3.6.4",
+  "apk_url": "https://github.com/Karishka-sr/devai-studio/releases/download/v3.6.4/devai-studio-3.6.4.apk",
+  "apk_name": "devai-studio-3.6.4.apk",
+  "apk_size": 117390355,
+  "apk_sha256": "cbfda2c82af30fd9e8e7a3c503f4658e347572a50160a4f523edd4084f710dec",
+  "languages_url": "https://github.com/Karishka-sr/devai-studio/releases/download/v3.6.4/devai-languages-3.6.4.zip",
+  "languages_name": "devai-languages-3.6.4.zip",
+  "body": "Этот релиз подготовлен AI-агентом (OpenHands) от имени Karishka-sr.\n\n# DevAI Studio 3.6.4 — окно обновления поверх приложения\n\n## Что нового\n- Уведомление об обновлении теперь открывается модальным окном поверх приложения, а не тонкой полосой сверху.\n- Окно использует Vexel-макет с формой-клевером, мягкой вспышкой и градиентной карточкой.\n- Кнопка «Скачать» открывает APK, «Позже» закрывает окно.\n- На маленьких экранах окно автоматически масштабируется, чтобы не обрезаться.\n\n## Проверка\n- `:app:compileDebugKotlin` и `:app:testDebugUnitTest` прошли.\n- Vexel-конструктор не изменялся, «Автор» на месте.\n\n## Файлы\n- `devai-studio-3.6.4.apk`\n- `devai-languages-3.6.4.zip`\n",
+  "generated_at": "2026-11-23T11:42:07Z"
+}

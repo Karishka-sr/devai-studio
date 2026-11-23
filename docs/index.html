@@ -3,279 +3,285 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>DevAI Core API — ключ за 10 секунд</title>
-  <meta name="description" content="Бесплатный API-ключ DevAI Core. OpenAI-совместимый чат, потоковые ответы, модель devai-core-0.1.">
-  <meta name="theme-color" content="#0a0c0b">
-  <meta property="og:title" content="DevAI Core API">
-  <meta property="og:description" content="Получите API-ключ и подключите DevAI Core к любому стеку.">
+  <title>DevAI Studio — ИИ-студия для Android</title>
+  <meta name="description" content="DevAI Studio — Android-приложение для кода и идей: ИИ-чат с интернет-поиском, конструктор интерфейсов Vexel, локальные модели и 75 языков. Скачать последнюю версию APK.">
+  <meta name="theme-color" content="#080b09">
+  <meta property="og:title" content="DevAI Studio — ИИ-студия для Android">
+  <meta property="og:description" content="Чат с ИИ, Vexel, локальные модели и 75 языков в одном Android-приложении. Скачать последнюю версию.">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://karishka-sr.github.io/devai-studio/">
+  <meta property="og:image" content="https://karishka-sr.github.io/devai-studio/devai-icon.png">
+  <link rel="canonical" href="https://karishka-sr.github.io/devai-studio/">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Unbounded:wght@500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="site.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "DevAI Studio",
+    "operatingSystem": "Android 12+",
+    "applicationCategory": "DeveloperApplication",
+    "description": "Android-приложение для кода и идей: ИИ-чат с интернет-поиском, конструктор интерфейсов Vexel, локальные модели и 75 языков.",
+    "downloadUrl": "https://github.com/Karishka-sr/devai-studio/releases/latest",
+    "author": { "@type": "Person", "name": "Karishka-sr" },
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "RUB" }
+  }
+  </script>
 </head>
 <body>
   <div class="grain" aria-hidden="true"></div>
 
-  <header class="topbar">
-    <a class="brand" href="#top" aria-label="DevAI Core — на главную">
-      <span class="brand-mark" aria-hidden="true"></span>
-      <span class="brand-text">DEVAI<span>/</span>CORE</span>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="DevAI Studio — на главную">
+      <img src="favicon.svg" alt="" width="38" height="38">
+      <span class="brand-name">DEVAI<span>/</span>STUDIO</span>
     </a>
-    <div class="topbar-right">
-      <div class="server-state" id="server-state" title="Статус сервера">
-        <span class="dot" id="status-dot" aria-hidden="true"></span>
-        <span id="status-text">проверяю</span>
-      </div>
-      <a class="ghost-link" href="https://github.com/Karishka-sr/devai-studio" target="_blank" rel="noreferrer">GitHub ↗</a>
+    <nav class="site-nav" aria-label="Основная навигация">
+      <a href="#features">Возможности</a>
+      <a href="#why">Зачем</a>
+      <a href="#release">Обновления</a>
+      <a href="#install">Установка</a>
+      <a href="api.html">API</a>
+    </nav>
+    <div class="header-actions">
+      <span class="version-pill"><i class="live-dot" aria-hidden="true"></i><span data-version>v3.6.4</span></span>
+      <a class="header-gh" href="https://github.com/Karishka-sr/devai-studio" target="_blank" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
     </div>
   </header>
 
   <main id="top">
     <section class="hero">
-      <div class="hero-copy reveal">
-        <p class="eyebrow"><span class="eyebrow-line"></span> DevAI Core API · v0.2</p>
-        <h1>Ваш ИИ.<br><span class="accent">Один ключ.</span><br>Любой стек.</h1>
-        <p class="lede">OpenAI-совместимый API для чата, кода и текстов. Локальная модель, потоковые ответы и ключ, который создаётся прямо здесь — без карты и регистрации.</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="#key">Получить ключ <span aria-hidden="true">→</span></a>
-          <a class="btn btn-ghost" href="#docs">Смотреть API</a>
+      <div class="hero-grid" aria-hidden="true"></div>
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="container hero-inner">
+        <div class="hero-copy">
+          <p class="eyebrow"><i class="eyebrow-dot" aria-hidden="true"></i> ANDROID · AI-СТУДИЯ · <span data-version>v3.6.4</span></p>
+          <h1>Код. Идеи.<br>Своя модель.<br><span class="outline">В кармане.</span></h1>
+          <p class="lede">DevAI Studio — Android-приложение для разработки и экспериментов: ИИ-чат с интернет-поиском, конструктор интерфейсов Vexel, локальные модели и 75 языков.</p>
+          <div class="hero-actions">
+            <a class="btn btn-lime" href="download.html" data-download-link>Скачать с сайта <span aria-hidden="true">↓</span></a>
+            <a class="btn btn-ghost" href="https://github.com/Karishka-sr/devai-studio/releases/latest" data-github-link target="_blank" rel="noreferrer">Скачать с GitHub <span aria-hidden="true">↗</span></a>
+          </div>
+          <div class="hero-meta" aria-label="Системные требования">
+            <span>Android 12+</span>
+            <span>arm64-v8a</span>
+            <span><b data-apk-size>112 МБ</b> APK</span>
+          </div>
         </div>
-        <dl class="stats">
-          <div><dt>60</dt><dd>запросов / мин</dd></div>
-          <div><dt>1024</dt><dd>токена / ответ</dd></div>
-          <div><dt>SSE</dt><dd>стриминг</dd></div>
-        </dl>
-      </div>
 
-      <div class="terminal reveal delay-2" aria-label="Пример запроса к API">
-        <div class="terminal-bar">
-          <span class="terminal-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="terminal-title">devai-core / quickstart</span>
-          <span class="terminal-tag">bash</span>
-        </div>
-        <pre><code><span class="c"># 1. Получите ключ на этой странице</span>
-<span class="c"># 2. Отправьте первый запрос</span>
-<span class="p">$</span> curl <span class="s">"<span data-base>https://work-2-nizvyfgvcqicrkif.prod-runtime.all-hands.dev/v1</span>/chat/completions"</span> \
-  -H <span class="s">"Authorization: Bearer $DEVAI_KEY"</span> \
-  -H <span class="s">"Content-Type: application/json"</span> \
-  -d <span class="s">'{
-    "model": "devai-core-0.1",
-    "messages": [
-      {"role": "user", "content": "Привет!"}
-    ]
-  }'</span></code></pre>
-        <div class="terminal-foot">
-          <span class="ok">200 OK</span>
-          <span>application/json</span>
+        <div class="device-stage" aria-label="Макет интерфейса DevAI Studio">
+          <div class="stage-note"><i class="live-dot" aria-hidden="true"></i> LIVE BUILD <span data-version>v3.6.4</span></div>
+          <div class="phone">
+            <div class="phone-notch" aria-hidden="true"></div>
+            <div class="phone-screen">
+              <div class="app-top">
+                <img src="favicon.svg" alt="" width="30" height="30">
+                <div class="app-title"><strong>DevAI Studio</strong><span>DevAI Core · online</span></div>
+                <span class="app-status" aria-hidden="true"></span>
+              </div>
+              <div class="chat">
+                <div class="bubble bubble-user">Сделай экран входа в Vexel</div>
+                <div class="bubble bubble-ai">
+                  <span class="ai-label">DEVAI</span>
+                  <p>Собрал каркас. Material 3, тёмная тема, готово к экспорту.</p>
+                  <pre><code>@Composable
+fun LoginScreen() {
+  Surface(shape = ...) {
+    Text("Вход")
+  }
+}</code></pre>
+                  <span class="bubble-tag">VEXEL / COMPOSE</span>
+                </div>
+              </div>
+              <div class="composer"><span>Спроси DevAI...</span><b aria-hidden="true">↑</b></div>
+            </div>
+          </div>
+          <div class="float-tag float-tag-one">VEXEL / READY</div>
+          <div class="float-tag float-tag-two">LOCAL / ON</div>
         </div>
       </div>
     </section>
 
     <div class="ticker" aria-hidden="true">
       <div class="ticker-track">
-        <span>OPENAI-COMPATIBLE</span><span>·</span><span>LOCAL MODEL</span><span>·</span><span>STREAMING</span><span>·</span><span>HASHED KEYS</span><span>·</span><span>DEVAI CORE 0.1</span><span>·</span>
-        <span>OPENAI-COMPATIBLE</span><span>·</span><span>LOCAL MODEL</span><span>·</span><span>STREAMING</span><span>·</span><span>HASHED KEYS</span><span>·</span><span>DEVAI CORE 0.1</span><span>·</span>
+        <span>ИИ-ЧАТ</span><span>·</span><span>VEXEL</span><span>·</span><span>LOCAL MODELS</span><span>·</span><span>75 ЯЗЫКОВ</span><span>·</span><span>GITHUB RELEASES</span><span>·</span><span>ИИ-ЧАТ</span><span>·</span><span>VEXEL</span><span>·</span><span>LOCAL MODELS</span><span>·</span><span>75 ЯЗЫКОВ</span><span>·</span><span>GITHUB RELEASES</span><span>·</span>
       </div>
     </div>
 
-    <section class="section key-section" id="key">
-      <div class="section-head">
-        <span class="index">01</span>
-        <div>
-          <p class="kicker">Доступ</p>
-          <h2>Ключ за <em>10 секунд</em></h2>
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-head">
+          <span class="section-index">01 / ВОЗМОЖНОСТИ</span>
+          <h2>Одна студия.<br><span class="dim">Много режимов.</span></h2>
+          <p class="section-lede">От быстрого вопроса до готового экрана. DevAI Studio собирает инструменты, которые обычно разбросаны по пяти приложениям.</p>
         </div>
-        <p class="section-note">Без email и телефона. Ключ показывается один раз — сохраните его.</p>
-      </div>
 
-      <div class="key-grid">
-        <form class="panel form-panel" id="key-form" novalidate>
-          <div class="hp-field" aria-hidden="true">
-            <label for="website">Website</label>
-            <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
-          </div>
-          <label class="field">
-            <span class="field-label">Как вас называть <small>необязательно</small></span>
-            <input id="name" name="name" type="text" maxlength="80" autocomplete="nickname" placeholder="например, karishka">
-          </label>
-
-          <details class="advanced">
-            <summary>Адрес сервера <span aria-hidden="true">+</span></summary>
-            <label class="field field-mono">
-              <span class="field-label">Base URL</span>
-              <input id="api-base" type="url" spellcheck="false" inputmode="url" aria-describedby="api-base-hint">
-            </label>
-            <p class="hint" id="api-base-hint">Нужен, если сервер переехал. Оставьте по умолчанию, если не уверены.</p>
-            <button class="text-button" type="button" id="reset-base">Сбросить адрес</button>
-          </details>
-
-          <button class="btn btn-primary btn-wide" type="submit" id="generate">
-            <span class="btn-label">Создать ключ</span>
-            <span class="btn-arrow" aria-hidden="true">→</span>
-          </button>
-
-          <p class="form-note">Лимит: 3 ключа в сутки с одного IP. Один ключ — 60 запросов в минуту. Защита: proof-of-work и проверка браузера.</p>
-          <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
-        </form>
-
-        <div class="panel result-panel" id="result" hidden>
-          <div class="result-head">
-            <span class="result-icon" aria-hidden="true">✓</span>
-            <div>
-              <p class="kicker">Ключ создан</p>
-              <h3 id="result-name">devai-user</h3>
+        <div class="bento">
+          <article class="bento-card bento-wide">
+            <div class="card-top"><span class="card-num">01</span><span class="card-tag">LIVE SEARCH</span></div>
+            <h3>Чат, который знает, что происходит</h3>
+            <p>Новости, курсы валют, погода и документация — с источниками. Приветствие не запускает поиск, а реальный вопрос получает свежий ответ.</p>
+            <div class="search-demo">
+              <span class="search-query">курс доллара сегодня</span>
+              <span class="search-source">CBR</span>
+              <span class="search-source">Google News</span>
+              <span class="search-source">wttr.in</span>
             </div>
-          </div>
-          <div class="key-box">
-            <code id="api-key"></code>
-            <button class="copy-btn" type="button" id="copy-key">Копировать</button>
-          </div>
-          <p class="warning"><strong>Показывается один раз.</strong> Сервер хранит только SHA-256. Если потеряете — создайте новый.</p>
-          <div class="result-actions">
-            <button class="btn btn-ghost btn-small" type="button" id="check-key">Проверить ключ</button>
-            <button class="btn btn-ghost btn-small" type="button" id="download-key">Скачать .txt</button>
-          </div>
-          <p class="form-status" id="key-status" role="status" aria-live="polite"></p>
-        </div>
+          </article>
 
-        <div class="panel empty-panel" id="empty-result">
-          <div class="empty-glyph" aria-hidden="true">↳</div>
-          <p>Здесь появится ваш ключ.<br><span>Скопируйте его сразу — второй раз сервер его не покажет.</span></p>
+          <article class="bento-card bento-vexel">
+            <div class="card-top"><span class="card-num">02</span><span class="card-tag">CONSTRUCTOR</span></div>
+            <h3>Vexel</h3>
+            <p>Экраны из настоящих Material 3 виджетов. Слои, координаты, формы и экспорт в Compose.</p>
+            <div class="mini-canvas" aria-hidden="true">
+              <span class="mini-block mini-block-a"></span>
+              <span class="mini-block mini-block-b"></span>
+              <span class="mini-block mini-block-c"></span>
+              <span class="mini-cursor"></span>
+            </div>
+          </article>
+
+          <article class="bento-card">
+            <div class="card-top"><span class="card-num">03</span><span class="card-tag">OFFLINE</span></div>
+            <h3>Своя модель</h3>
+            <p>Локальные модели через LiteRT-LM. Работают без облака и без отправки запросов наружу.</p>
+            <div class="toggle-row"><span>LOCAL MODEL</span><span class="toggle is-on" aria-hidden="true"><i></i></span></div>
+          </article>
+
+          <article class="bento-card">
+            <div class="card-top"><span class="card-num">04</span><span class="card-tag">CODE</span></div>
+            <h3>75 языков</h3>
+            <p>Редактор, подсветка, примеры и тестовые фреймворки. Языки можно добавлять файлами без пересборки.</p>
+            <div class="code-lines" aria-hidden="true">
+              <span><b>fun</b> main() {</span>
+              <span class="indent">println(<em>"Hello"</em>)</span>
+              <span>}</span>
+            </div>
+          </article>
+
+          <article class="bento-card">
+            <div class="card-top"><span class="card-num">05</span><span class="card-tag">EXTEND</span></div>
+            <h3>Плагины .devai</h3>
+            <p>Свои команды и инструменты для ИИ на Lua 5.2. Песочница, JSON Schema и понятный формат.</p>
+            <div class="terminal-mini" aria-hidden="true"><span><b>$</b> devai run weather</span><span class="ok">✓ plugin loaded</span></div>
+          </article>
+
+          <article class="bento-card bento-release">
+            <div class="card-top"><span class="card-num">06</span><span class="card-tag">UPDATES</span></div>
+            <h3>Всегда последняя</h3>
+            <p>Сайт читает GitHub Releases и сам подставляет актуальную версию, размер и ссылку на APK.</p>
+            <div class="release-chip"><i class="live-dot" aria-hidden="true"></i> auto-update <span data-version>v3.6.4</span></div>
+          </article>
         </div>
       </div>
     </section>
 
-    <section class="section docs-section" id="docs">
-      <div class="section-head">
-        <span class="index">02</span>
-        <div>
-          <p class="kicker">Интеграция</p>
-          <h2>Подключение за <em>одну минуту</em></h2>
+    <section class="section section-why" id="why">
+      <div class="container why-grid">
+        <div class="why-intro">
+          <span class="section-index">02 / ЗАЧЕМ</span>
+          <h2>Когда<br>Android Studio<br><span class="lime">слишком далеко.</span></h2>
+          <p>Не замена IDE. Скорее карманный пульт для идей, которые нельзя отложить до возвращения за компьютер.</p>
         </div>
-        <p class="section-note">Любой клиент, который умеет OpenAI Chat Completions, подойдёт без изменений.</p>
-      </div>
-
-      <div class="code-shell">
-        <div class="tabs" role="tablist" aria-label="Примеры кода">
-          <button class="tab is-active" type="button" role="tab" aria-selected="true" aria-controls="panel-curl" id="tab-curl">curl</button>
-          <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-python" id="tab-python">Python</button>
-          <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-js" id="tab-js">JavaScript</button>
+        <div class="why-list">
+          <article class="why-item">
+            <span class="why-num">01</span>
+            <div><h3>Собрать экран на ходу</h3><p>Набросать вход, карточку или дашборд в Vexel, проверить ритм и отступы, а потом забрать код в проект.</p></div>
+          </article>
+          <article class="why-item">
+            <span class="why-num">02</span>
+            <div><h3>Спросить про код</h3><p>Разобрать ошибку, сравнить подходы, получить пример на нужном языке — без переключения вкладок и контекста.</p></div>
+          </article>
+          <article class="why-item">
+            <span class="why-num">03</span>
+            <div><h3>Работать без сети</h3><p>Локальная модель остаётся на устройстве. Полезно в дороге, в самолёте и там, где облако недоступно.</p></div>
+          </article>
+          <article class="why-item">
+            <span class="why-num">04</span>
+            <div><h3>Держать всё вместе</h3><p>Чат, языки, плагины, MCP и обновления — в одном приложении с понятными настройками.</p></div>
+          </article>
         </div>
-
-        <div class="code-panel is-active" id="panel-curl" role="tabpanel" aria-labelledby="tab-curl">
-          <button class="copy-code" type="button" data-copy="code-curl">Копировать</button>
-          <pre><code id="code-curl"><span class="p">$</span> curl <span class="s">"<span data-base>https://work-2-nizvyfgvcqicrkif.prod-runtime.all-hands.dev/v1</span>/chat/completions"</span> \
-  -H <span class="s">"Authorization: Bearer $DEVAI_KEY"</span> \
-  -H <span class="s">"Content-Type: application/json"</span> \
-  -d <span class="s">'{
-    "model": "devai-core-0.1",
-    "messages": [{"role": "user", "content": "Напиши hello world на Kotlin"}],
-    "stream": false
-  }'</span></code></pre>
-        </div>
-
-        <div class="code-panel" id="panel-python" role="tabpanel" aria-labelledby="tab-python" hidden>
-          <button class="copy-code" type="button" data-copy="code-python">Копировать</button>
-          <pre><code id="code-python"><span class="k">from</span> openai <span class="k">import</span> OpenAI
-
-client = OpenAI(
-    base_url=<span class="s">"<span data-base>https://work-2-nizvyfgvcqicrkif.prod-runtime.all-hands.dev/v1</span>"</span>,
-    api_key=<span class="s">"devai-sk-..."</span>,
-)
-
-response = client.chat.completions.create(
-    model=<span class="s">"devai-core-0.1"</span>,
-    messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: <span class="s">"Привет!"</span>}],
-)
-<span class="k">print</span>(response.choices[<span class="n">0</span>].message.content)</code></pre>
-        </div>
-
-        <div class="code-panel" id="panel-js" role="tabpanel" aria-labelledby="tab-js" hidden>
-          <button class="copy-code" type="button" data-copy="code-js">Копировать</button>
-          <pre><code id="code-js"><span class="k">const</span> response = <span class="k">await</span> fetch(
-  <span class="s">"<span data-base>https://work-2-nizvyfgvcqicrkif.prod-runtime.all-hands.dev/v1</span>/chat/completions"</span>,
-  {
-    method: <span class="s">"POST"</span>,
-    headers: {
-      <span class="s">"Authorization"</span>: <span class="s">`Bearer ${DEVAI_KEY}`</span>,
-      <span class="s">"Content-Type"</span>: <span class="s">"application/json"</span>,
-    },
-    body: JSON.stringify({
-      model: <span class="s">"devai-core-0.1"</span>,
-      messages: [{ role: <span class="s">"user"</span>, content: <span class="s">"Привет!"</span> }],
-    }),
-  },
-);
-
-<span class="k">const</span> data = <span class="k">await</span> response.json();
-console.log(data.choices[<span class="n">0</span>].message.content);</code></pre>
-        </div>
-      </div>
-
-      <div class="cards">
-        <article class="card">
-          <span class="card-num">01</span>
-          <h3>OpenAI-совместимость</h3>
-          <p>Работает с OpenAI SDK, LangChain, LlamaIndex, Ollama-клиентами и любым HTTP-клиентом.</p>
-        </article>
-        <article class="card">
-          <span class="card-num">02</span>
-          <h3>Потоковые ответы</h3>
-          <p>Передайте <code>stream: true</code> и получайте SSE-чанки по мере генерации.</p>
-        </article>
-        <article class="card">
-          <span class="card-num">03</span>
-          <h3>Ключи без хранения</h3>
-          <p>Сервер хранит только SHA-256 ключа. Сам ключ показывается один раз.</p>
-        </article>
-        <article class="card">
-          <span class="card-num">04</span>
-          <h3>Локальная модель</h3>
-          <p>Qwen2.5 0.5B работает на сервере. Запросы не уходят сторонним провайдерам.</p>
-        </article>
       </div>
     </section>
 
-    <section class="section limits-section">
-      <div class="section-head">
-        <span class="index">03</span>
-        <div>
-          <p class="kicker">Правила</p>
-          <h2>Лимиты и <em>честность</em></h2>
+    <section class="release" id="release">
+      <div class="container release-grid">
+        <div class="release-main">
+          <span class="release-kicker"><i class="live-dot" aria-hidden="true"></i> LIVE FROM GITHUB</span>
+          <h2>Последний релиз</h2>
+          <div class="release-title"><strong data-version>v3.6.4</strong><span data-release-name>DevAI Studio 3.6.4</span></div>
+          <div class="release-meta"><span data-release-date>23 ноября 2026</span><span data-apk-size>112 МБ</span><span>Android 12+</span></div>
+          <div class="release-notes" data-release-notes>Загружаем описание последнего релиза…</div>
+          <div class="release-actions">
+            <a class="btn btn-dark" href="download.html" data-download-link>Скачать с сайта <span aria-hidden="true">↓</span></a>
+            <a class="btn btn-outline-dark" href="https://github.com/Karishka-sr/devai-studio/releases/latest" data-github-link target="_blank" rel="noreferrer">Скачать с GitHub <span aria-hidden="true">↗</span></a>
+          </div>
+          <p class="release-foot">Данные обновлены <span data-generated>только что</span> · <a data-release-link href="https://github.com/Karishka-sr/devai-studio/releases/latest" target="_blank" rel="noreferrer">страница релиза</a> · <a data-languages-link href="https://github.com/Karishka-sr/devai-studio/releases/latest" target="_blank" rel="noreferrer">языковой пакет</a></p>
         </div>
+        <aside class="release-side">
+          <span class="side-label">SHA-256 APK</span>
+          <code data-apk-sha>загружается…</code>
+          <span class="side-label">ИМЯ ФАЙЛА</span>
+          <span data-apk-name>devai-studio-3.6.4.apk</span>
+          <div class="side-note">Кнопка «Скачать с сайта» открывает страницу загрузки и берёт APK из последнего GitHub Release. Кнопка «Скачать с GitHub» ведёт на страницу релиза.</div>
+        </aside>
       </div>
-      <div class="limits-grid">
-        <div class="limit"><span class="limit-key">60 rpm</span><p>Запросов в минуту на ключ. Достаточно для чата и небольших ботов.</p></div>
-        <div class="limit"><span class="limit-key">1024 tok</span><p>Максимум новых токенов в одном ответе. Входной контекст — до 2048 токенов.</p></div>
-        <div class="limit"><span class="limit-key">3 / day</span><p>Новых ключей с одного IP в сутки. Это защита от автоматического спама.</p></div>
-        <div class="limit"><span class="limit-key">1 / proc</span><p>Одна генерация одновременно. Модель работает на CPU — ответ может занять несколько секунд.</p></div>
-      </div>
-      <p class="fair-use">Ключ — личный. Не публикуйте его в открытых репозиториях, не вставляйте в клиентские приложения и не перепродавайте доступ. При злоупотреблении ключ можно отозвать.</p>
     </section>
 
-    <section class="cta">
-      <p class="kicker">Готовы?</p>
-      <h2>Соберите что-то<br><span class="accent">с DevAI Core.</span></h2>
-      <a class="btn btn-primary" href="#key">Создать ключ <span aria-hidden="true">→</span></a>
+    <section class="section" id="install">
+      <div class="container">
+        <div class="section-head">
+          <span class="section-index">03 / УСТАНОВКА</span>
+          <h2>Три шага<br><span class="dim">до студии.</span></h2>
+          <p class="section-lede">APK подписан. Обновления приходят через GitHub Releases, а приложение показывает окно, когда выходит новая версия.</p>
+        </div>
+        <div class="steps">
+          <article class="step"><span class="step-num">01</span><h3>Скачай APK</h3><p>С сайта или со страницы релиза GitHub. Файл весит около <span data-apk-size>112 МБ</span>.</p></article>
+          <article class="step"><span class="step-num">02</span><h3>Разреши установку</h3><p>Android спросит разрешение для браузера или файлового менеджера. Это стандартная установка APK.</p></article>
+          <article class="step"><span class="step-num">03</span><h3>Открой и настрой</h3><p>Выбери провайдера или локальную модель, добавь ключ, если нужен облачный ИИ.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-faq" id="faq">
+      <div class="container faq-grid">
+        <div class="faq-intro"><span class="section-index">04 / ВОПРОСЫ</span><h2>Коротко<br><span class="dim">о главном.</span></h2></div>
+        <div class="faq-list">
+          <details><summary>DevAI Studio бесплатный?</summary><p>APK можно скачать бесплатно. Для облачных провайдеров нужен свой API-ключ; локальные модели работают на устройстве без облака. Часть функций может быть в Premium.</p></details>
+          <details><summary>Почему APK такой большой?</summary><p>Внутри обои, набор иконок, шрифты, код приложения и нативная библиотека LiteRT-LM для локальных моделей. Это цена автономности.</p></details>
+          <details><summary>Куда уходят данные?</summary><p>Зависит от выбранного провайдера. Локальные модели не отправляют запросы наружу. Для облачных моделей действуют правила выбранного сервиса.</p></details>
+          <details><summary>Vexel изменён?</summary><p>Нет. Оригинальный конструктор Vexel не изменялся. Автор Vexel — <a href="https://t.me/cheburek_dev" target="_blank" rel="noreferrer">t.me/cheburek_dev</a>.</p></details>
+          <details><summary>Где API для разработчиков?</summary><p>На отдельной странице: <a href="api.html">DevAI Core API</a>. Ключ создаётся в браузере, запросы совместимы с OpenAI Chat Completions.</p></details>
+          <details><summary>Как приходят обновления?</summary><p>Через GitHub Releases. Сайт читает последний релиз и обновляет версию и ссылку автоматически; в приложении есть окно обновления.</p></details>
+        </div>
+      </div>
     </section>
   </main>
 
-  <footer class="footer">
-    <div class="footer-brand">
-      <span class="brand-mark" aria-hidden="true"></span>
-      <span>DevAI Studio</span>
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="#top"><img src="favicon.svg" alt="" width="34" height="34"><span class="brand-name">DEVAI<span>/</span>STUDIO</span></a>
+        <p>Android-студия для кода и идей. Автор — <a href="https://github.com/Karishka-sr" target="_blank" rel="noreferrer">Karishka-sr</a>.</p>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/Karishka-sr/devai-studio" target="_blank" rel="noreferrer">Исходники ↗</a>
+        <a href="https://github.com/Karishka-sr/devai-studio/releases" target="_blank" rel="noreferrer">Релизы ↗</a>
+        <a href="api.html">API</a>
+        <a href="https://github.com/Karishka-sr/devai-studio/blob/master/docs/PLUGINS.md" target="_blank" rel="noreferrer">Плагины</a>
+        <a href="https://github.com/Karishka-sr/devai-studio/blob/master/docs/PHONE_AUTH.md" target="_blank" rel="noreferrer">SMS-вход</a>
+      </div>
     </div>
-    <p>Сделано автором DevAI Studio. Модель: <code>devai-core-0.1</code>.</p>
-    <div class="footer-links">
-      <a href="https://github.com/Karishka-sr/devai-studio" target="_blank" rel="noreferrer">Исходники</a>
-      <a href="https://github.com/Karishka-sr/devai-studio/releases" target="_blank" rel="noreferrer">APK</a>
-      <a href="#top">Наверх ↑</a>
+    <div class="container footer-fine">
+      <span>Vexel — отдельный конструктор, автор <a href="https://t.me/cheburek_dev" target="_blank" rel="noreferrer">t.me/cheburek_dev</a>. В DevAI Studio не изменялся.</span>
+      <span>© <span id="year">2026</span> DevAI Studio</span>
     </div>
   </footer>
 
-  <noscript><div class="noscript">Для создания ключа нужен JavaScript. Включите его и обновите страницу.</div></noscript>
-  <script src="app.js" defer></script>
+  <noscript><div class="noscript">Для обновления версии и ссылок нужен JavaScript. Скачать APK можно на <a href="https://github.com/Karishka-sr/devai-studio/releases/latest">странице релизов</a>.</div></noscript>
+  <script src="site.js" defer></script>
 </body>
 </html>

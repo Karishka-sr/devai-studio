@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DevAI Core API — ключ за 10 секунд</title>
+  <meta name="description" content="Бесплатный API-ключ DevAI Core. OpenAI-совместимый чат, потоковые ответы, модель devai-core-0.1.">
+  <meta name="theme-color" content="#0a0c0b">
+  <meta property="og:title" content="DevAI Core API">
+  <meta property="og:description" content="Получите API-ключ и подключите DevAI Core к любому стеку.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Unbounded:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="DevAI Core — на главную">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-text">DEVAI<span>/</span>CORE</span>
+    </a>
+    <div class="topbar-right">
+      <div class="server-state" id="server-state" title="Статус сервера">
+        <span class="dot" id="status-dot" aria-hidden="true"></span>
+        <span id="status-text">проверяю</span>
+      </div>
+      <a class="ghost-link" href="index.html">← DevAI Studio</a>
+      <a class="ghost-link" href="https://github.com/Karishka-sr/devai-studio" target="_blank" rel="noreferrer">GitHub ↗</a>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy reveal">
+        <p class="eyebrow"><span class="eyebrow-line"></span> DevAI Core API · v0.2</p>
+        <h1>Ваш ИИ.<br><span class="accent">Один ключ.</span><br>Любой стек.</h1>
+        <p class="lede">OpenAI-совместимый API для чата, кода и текстов. Локальная модель, потоковые ответы и ключ, который создаётся прямо здесь — без карты и регистрации.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#key">Получить ключ <span aria-hidden="true">→</span></a>
+          <a class="btn btn-ghost" href="#docs">Смотреть API</a>
+        </div>
+        <dl class="stats">
+          <div><dt>60</dt><dd>запросов / мин</dd></div>
+          <div><dt>1024</dt><dd>токена / ответ</dd></div>
+          <div><dt>SSE</dt><dd>стриминг</dd></div>
+        </dl>
+      </div>
+
+      <div class="terminal reveal delay-2" aria-label="Пример запроса к API">
+        <div class="terminal-bar">
+          <span class="terminal-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="terminal-title">devai-core / quickstart</span>
+          <span class="terminal-tag">bash</span>
+        </div>
+        <pre><code><span class="c"># 1. Получите ключ на этой странице</span>
+<span class="c"># 2. Отправьте первый запрос</span>
+<span class="p">$</span> curl <span class="s">"<span data-base>https://work-2-nizvyfgvcqicrkif.prod-runtime.all-hands.dev/v1</span>/chat/completions"</span> \
+  -H <span class="s">"Authorization: Bearer $DEVAI_KEY"</span> \
+  -H <span class="s">"Content-Type: application/json"</span> \
+  -d <span class="s">'{
+    "model": "devai-core-0.1",
+    "messages": [
+      {"role": "user", "content": "Привет!"}
+    ]
+  }'</span></code></pre>
+        <div class="terminal-foot">
+          <span class="ok">200 OK</span>
+          <span>application/json</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker-track">
+        <span>OPENAI-COMPATIBLE</span><span>·</span><span>LOCAL MODEL</span><span>·</span><span>STREAMING</span><span>·</span><span>HASHED KEYS</span><span>·</span><span>DEVAI CORE 0.1</span><span>·</span>
+        <span>OPENAI-COMPATIBLE</span><span>·</span><span>LOCAL MODEL</span><span>·</span><span>STREAMING</span><span>·</span><span>HASHED KEYS</span><span>·</span><span>DEVAI CORE 0.1</span><span>·</span>
+      </div>
+    </div>
+
+    <section class="section key-section" id="key">
+      <div class="section-head">
+        <span class="index">01</span>
+        <div>
+          <p class="kicker">Доступ</p>
+          <h2>Ключ за <em>10 секунд</em></h2>
+        </div>
+        <p class="section-note">Без email и телефона. Ключ показывается один раз — сохраните его.</p>
+      </div>
+
+      <div class="key-grid">
+        <form class="panel form-panel" id="key-form" novalidate>
+          <div class="hp-field" aria-hidden="true">
+            <label for="website">Website</label>
+            <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+          </div>
+          <label class="field">
+            <span class="field-label">Как вас называть <small>необязательно</small></span>
+            <input id="name" name="name" type="text" maxlength="80" autocomplete="nickname" placeholder="например, karishka">
+          </label>
+
+          <details class="advanced">
+            <summary>Адрес сервера <span aria-hidden="true">+</span></summary>
+            <label class="field field-mono">
+              <span class="field-label">Base URL</span>
+              <input id="api-base" type="url" spellcheck="false" inputmode="url" aria-describedby="api-base-hint">
+            </label>
+            <p class="hint" id="api-base-hint">Нужен, если сервер переехал. Оставьте по умолчанию, если не уверены.</p>
+            <button class="text-button" type="button" id="reset-base">Сбросить адрес</button>
+          </details>
+
+          <button class="btn btn-primary btn-wide" type="submit" id="generate">
+            <span class="btn-label">Создать ключ</span>
+            <span class="btn-arrow" aria-hidden="true">→</span>
+          </button>
+
+          <p class="form-note">Лимит: 3 ключа в сутки с одного IP. Один ключ — 60 запросов в минуту. Защита: proof-of-work и проверка браузера.</p>
+          <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+        </form>
+
+        <div class="panel result-panel" id="result" hidden>
+          <div class="result-head">
+            <span class="result-icon" aria-hidden="true">✓</span>
+            <div>
+              <p class="kicker">Ключ создан</p>
+              <h3 id="result-name">devai-user</h3>
+            </div>
+          </div>
+          <div class="key-box">
+            <code id="api-key"></code>
+            <button class="copy-btn" type="button" id="copy-key">Копировать</button>
+          </div>
+          <p class="warning"><strong>Показывается один раз.</strong> Сервер хранит только SHA-256. Если потеряете — создайте новый.</p>
+          <div class="result-actions">
+            <button class="btn btn-ghost btn-small" type="button" id="check-key">Проверить ключ</button>
+            <button class="btn btn-ghost btn-small" type="button" id="download-key">Скачать .txt</button>
+          </div>
+          <p class="form-status" id="key-status" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="panel empty-panel" id="empty-result">
+          <div class="empty-glyph" aria-hidden="true">↳</div>
+          <p>Здесь появится ваш ключ.<br><span>Скопируйте его сразу — второй раз сервер его не покажет.</span></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section docs-section" id="docs">
+      <div class="section-head">
+        <span class="index">02</span>
+        <div>
+          <p class="kicker">Интеграция</p>
+          <h2>Подключение за <em>одну минуту</em></h2>
+        </div>
+        <p class="section-note">Любой клиент, который умеет OpenAI Chat Completions, подойдёт без изменений.</p>
+      </div>
+
+      <div class="code-shell">
+        <div class="tabs" role="tablist" aria-label="Примеры кода">
+          <button class="tab is-active" type="button" role="tab" aria-selected="true" aria-controls="panel-curl" id="tab-curl">curl</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-python" id="tab-python">Python</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-js" id="tab-js">JavaScript</button>
+        </div>
+
+        <div class="code-panel is-active" id="panel-curl" role="tabpanel" aria-labelledby="tab-curl">
+          <button class="copy-code" type="button" data-copy="code-curl">Копировать</button>
+          <pre><code id="code-curl"><span class="p">$</span> curl <span class="s">"<span data-base>https://work-2-nizvyfgvcqicrkif.prod-runtime.all-hands.dev/v1</span>/chat/completions"</span> \
+  -H <span class="s">"Authorization: Bearer $DEVAI_KEY"</span> \
+  -H <span class="s">"Content-Type: application/json"</span> \
+  -d <span class="s">'{
+    "model": "devai-core-0.1",
+    "messages": [{"role": "user", "content": "Напиши hello world на Kotlin"}],
+    "stream": false
+  }'</span></code></pre>
+        </div>
+
+        <div class="code-panel" id="panel-python" role="tabpanel" aria-labelledby="tab-python" hidden>
+          <button class="copy-code" type="button" data-copy="code-python">Копировать</button>
+          <pre><code id="code-python"><span class="k">from</span> openai <span class="k">import</span> OpenAI
+
+client = OpenAI(
+    base_url=<span class="s">"<span data-base>https://work-2-nizvyfgvcqicrkif.prod-runtime.all-hands.dev/v1</span>"</span>,
+    api_key=<span class="s">"devai-sk-..."</span>,
+)
+
+response = client.chat.completions.create(
+    model=<span class="s">"devai-core-0.1"</span>,
+    messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: <span class="s">"Привет!"</span>}],
+)
+<span class="k">print</span>(response.choices[<span class="n">0</span>].message.content)</code></pre>
+        </div>
+
+        <div class="code-panel" id="panel-js" role="tabpanel" aria-labelledby="tab-js" hidden>
+          <button class="copy-code" type="button" data-copy="code-js">Копировать</button>
+          <pre><code id="code-js"><span class="k">const</span> response = <span class="k">await</span> fetch(
+  <span class="s">"<span data-base>https://work-2-nizvyfgvcqicrkif.prod-runtime.all-hands.dev/v1</span>/chat/completions"</span>,
+  {
+    method: <span class="s">"POST"</span>,
+    headers: {
+      <span class="s">"Authorization"</span>: <span class="s">`Bearer ${DEVAI_KEY}`</span>,
+      <span class="s">"Content-Type"</span>: <span class="s">"application/json"</span>,
+    },
+    body: JSON.stringify({
+      model: <span class="s">"devai-core-0.1"</span>,
+      messages: [{ role: <span class="s">"user"</span>, content: <span class="s">"Привет!"</span> }],
+    }),
+  },
+);
+
+<span class="k">const</span> data = <span class="k">await</span> response.json();
+console.log(data.choices[<span class="n">0</span>].message.content);</code></pre>
+        </div>
+      </div>
+
+      <div class="cards">
+        <article class="card">
+          <span class="card-num">01</span>
+          <h3>OpenAI-совместимость</h3>
+          <p>Работает с OpenAI SDK, LangChain, LlamaIndex, Ollama-клиентами и любым HTTP-клиентом.</p>
+        </article>
+        <article class="card">
+          <span class="card-num">02</span>
+          <h3>Потоковые ответы</h3>
+          <p>Передайте <code>stream: true</code> и получайте SSE-чанки по мере генерации.</p>
+        </article>
+        <article class="card">
+          <span class="card-num">03</span>
+          <h3>Ключи без хранения</h3>
+          <p>Сервер хранит только SHA-256 ключа. Сам ключ показывается один раз.</p>
+        </article>
+        <article class="card">
+          <span class="card-num">04</span>
+          <h3>Локальная модель</h3>
+          <p>Qwen2.5 0.5B работает на сервере. Запросы не уходят сторонним провайдерам.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section limits-section">
+      <div class="section-head">
+        <span class="index">03</span>
+        <div>
+          <p class="kicker">Правила</p>
+          <h2>Лимиты и <em>честность</em></h2>
+        </div>
+      </div>
+      <div class="limits-grid">
+        <div class="limit"><span class="limit-key">60 rpm</span><p>Запросов в минуту на ключ. Достаточно для чата и небольших ботов.</p></div>
+        <div class="limit"><span class="limit-key">1024 tok</span><p>Максимум новых токенов в одном ответе. Входной контекст — до 2048 токенов.</p></div>
+        <div class="limit"><span class="limit-key">3 / day</span><p>Новых ключей с одного IP в сутки. Это защита от автоматического спама.</p></div>
+        <div class="limit"><span class="limit-key">1 / proc</span><p>Одна генерация одновременно. Модель работает на CPU — ответ может занять несколько секунд.</p></div>
+      </div>
+      <p class="fair-use">Ключ — личный. Не публикуйте его в открытых репозиториях, не вставляйте в клиентские приложения и не перепродавайте доступ. При злоупотреблении ключ можно отозвать.</p>
+    </section>
+
+    <section class="cta">
+      <p class="kicker">Готовы?</p>
+      <h2>Соберите что-то<br><span class="accent">с DevAI Core.</span></h2>
+      <a class="btn btn-primary" href="#key">Создать ключ <span aria-hidden="true">→</span></a>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>DevAI Studio</span>
+    </div>
+    <p>Сделано автором DevAI Studio. Модель: <code>devai-core-0.1</code>.</p>
+    <div class="footer-links">
+      <a href="https://github.com/Karishka-sr/devai-studio" target="_blank" rel="noreferrer">Исходники</a>
+      <a href="https://github.com/Karishka-sr/devai-studio/releases" target="_blank" rel="noreferrer">APK</a>
+      <a href="index.html">Сайт</a>
+      <a href="#top">Наверх ↑</a>
+    </div>
+  </footer>
+
+  <noscript><div class="noscript">Для создания ключа нужен JavaScript. Включите его и обновите страницу.</div></noscript>
+  <script src="app.js" defer></script>
+</body>
+</html>
