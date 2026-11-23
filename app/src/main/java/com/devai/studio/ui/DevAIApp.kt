@@ -33,6 +33,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -206,9 +207,19 @@ private val DevAIShapes = androidx.compose.material3.Shapes(
     extraLarge = RoundedCornerShape(32.dp),
 )
 
+object DevAIThemeState {
+    var revision by mutableIntStateOf(0)
+        private set
+
+    fun refresh() {
+        revision++
+    }
+}
+
 @Composable
 fun DevAITheme(content: @Composable () -> Unit) {
     val context = LocalContext.current
+    val revision = DevAIThemeState.revision
     val dark = isSystemInDarkTheme()
     val selected = AppPrefs.theme(context).let { id ->
         val feature = ThemeManager.featureFor(id)

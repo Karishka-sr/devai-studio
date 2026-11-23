@@ -1,6 +1,5 @@
 package com.devai.studio.ui
 
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
@@ -120,7 +119,6 @@ private enum class SettingsCategory(
 @Composable
 fun SettingsScreen() {
     val context = LocalContext.current
-    val activity = context as? Activity
     val lifecycleOwner = LocalLifecycleOwner.current
 
     var temperature by remember { mutableFloatStateOf(AppPrefs.temperature(context)) }
@@ -148,7 +146,8 @@ fun SettingsScreen() {
     var systemPrompt by remember { mutableStateOf(AppPrefs.systemPrompt(context)) }
     var themeId by remember { mutableStateOf(AppPrefs.theme(context)) }
     var plan by remember { mutableStateOf(PremiumStore.plan(context)) }
-    var category by remember { mutableStateOf(SettingsCategory.GENERATION) }
+    var categoryId by rememberSaveable { mutableStateOf(SettingsCategory.GENERATION.name) }
+    val category = SettingsCategory.valueOf(categoryId)
     var home by rememberSaveable { mutableStateOf(true) }
     var query by rememberSaveable { mutableStateOf("") }
     var showTheme by remember { mutableStateOf(false) }
@@ -205,7 +204,35 @@ fun SettingsScreen() {
         AppPrefs.setTheme(context, id)
         themeId = id
         showTheme = false
-        activity?.recreate()
+        DevAIThemeState.refresh()
+    }
+
+    fun reloadPrefs() {
+        temperature = AppPrefs.temperature(context)
+        topP = AppPrefs.topP(context)
+        maxTokens = AppPrefs.maxTokens(context).toString()
+        historyLimit = AppPrefs.historyLimit(context).toString()
+        timeout = AppPrefs.timeoutSeconds(context).toString()
+        localContext = AppPrefs.localContextTokens(context).toFloat()
+        localTopK = AppPrefs.localTopK(context).toString()
+        chatFont = AppPrefs.chatFontSize(context)
+        codeFont = AppPrefs.codeFontSize(context)
+        codeWrap = AppPrefs.codeWrap(context)
+        sendOnEnter = AppPrefs.sendOnEnter(context)
+        autoScroll = AppPrefs.autoScroll(context)
+        dynamicColor = AppPrefs.dynamicColor(context)
+        accent = AppPrefs.accent(context)
+        chatFontFamily = AppPrefs.chatFontFamily(context)
+        bubbleWidth = AppPrefs.bubbleWidth(context).toFloat()
+        showAvatars = AppPrefs.showAvatars(context)
+        compactChat = AppPrefs.compactChat(context)
+        hapticFeedback = AppPrefs.hapticFeedback(context)
+        confirmDelete = AppPrefs.confirmDelete(context)
+        customBase = AppPrefs.customBase(context)
+        customModel = AppPrefs.customModel(context)
+        systemPrompt = AppPrefs.systemPrompt(context)
+        themeId = AppPrefs.theme(context)
+        plan = PremiumStore.plan(context)
     }
 
     fun shareSettings() {
@@ -267,7 +294,7 @@ fun SettingsScreen() {
             query = query,
             onQueryChange = { query = it },
             onOpen = {
-                category = it
+                categoryId = it.name
                 home = false
             },
             onPremium = {
@@ -639,7 +666,7 @@ fun SettingsScreen() {
                         onCheckedChange = {
                             dynamicColor = it
                             AppPrefs.setDynamicColor(context, it)
-                            activity?.recreate()
+                            DevAIThemeState.refresh()
                         },
                     )
                 }
@@ -657,7 +684,7 @@ fun SettingsScreen() {
                                     requireFeature(PremiumFeature.ACCENT_COLORS) {
                                         accent = option.id
                                         AppPrefs.setAccent(context, option.id)
-                                        activity?.recreate()
+                                        DevAIThemeState.refresh()
                                     }
                                 },
                                 label = { Text(option.label, style = MaterialTheme.typography.labelSmall) },
@@ -681,7 +708,7 @@ fun SettingsScreen() {
                                     requireFeature(PremiumFeature.CHAT_FONTS) {
                                         chatFontFamily = id
                                         AppPrefs.setChatFontFamily(context, id)
-                                        activity?.recreate()
+                                        DevAIThemeState.refresh()
                                     }
                                 },
                                 label = { Text(label, style = MaterialTheme.typography.labelSmall) },
@@ -1011,8 +1038,10 @@ fun SettingsScreen() {
             confirmButton = {
                 TextButton(onClick = {
                     AppPrefs.reset(context)
+                    reloadPrefs()
                     showReset = false
-                    activity?.recreate()
+                    DevAIThemeState.refresh()
+                    toast("Настройки сброшены")
                 }) { Text("Сбросить") }
             },
             dismissButton = {

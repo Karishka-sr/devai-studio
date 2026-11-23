@@ -19,12 +19,13 @@
 - `ai/ResponseGuard.kt` answers simple greetings without inference, filters leaked benchmark/task text from streamed local responses, and drops such assistant turns from prompt history.
 - `data/ModelDownloader.kt` retries, resumes, and falls back to `hf-mirror.com` for Hugging Face URLs.
 
-## Themes & Premium (v2.16.0)
+## Themes & Premium (v2.16.1)
 - `ui/DevAIDesign.kt` is the shared Aurora design system: gradient background, logo/top bar, rounded bordered cards, icon tiles, status pills, gradient buttons. Use these composables instead of raw `Card`/`TopAppBar` on new screens.
 - Contrast is enforced at the container level: `DevAIBackground` provides `LocalContentColor = onBackground`; `DevAICard`, top-bar buttons, bottom bar, chat bubbles and custom `Surface`s set an explicit `contentColor`. Do not rely on `contentColorFor()` for translucent colors (`surface.copy(alpha = ...)`) — it returns `Unspecified` and can inherit an unreadable color.
 - `ui/DevAIApp.kt` owns the palette, typography, shapes, and the floating rounded bottom bar. Default M3 is now Aurora (indigo/mint/coral); Expressive/Retro remain premium themes.
 - `res/values/themes.xml` sets `android:forceDarkAllowed=false` and explicit `colorOnSurface`, `colorOnSurfaceVariant`, `colorOnBackground`, `colorOutline*`, `colorOnSecondary`/`colorOnTertiary`. Keep these explicit: the XML `Theme.DevAIStudio` is DayNight but its surface palette is intentionally light.
 - Settings is a two-level Claude/ChatGPT-style screen (`ui/SettingsScreen.kt`): `SettingsHome` has a profile card, search field and grouped navigation rows; each category opens a detail page with a back arrow and `SettingsSection` cards. Add new settings to a category, not to the home list.
+- Theme/accent/font changes call `DevAIThemeState.refresh()` instead of `activity.recreate()`. `DevAITheme` reads `DevAIThemeState.revision`, so colors update in place and the selected tab/category is never lost. Do not reintroduce `recreate()` for settings changes.
 - Settings categories: Основное (Генерация, Модели, Чат), Интерфейс (Вид), Аккаунт (Premium, Данные), Приложение (О приложении). «Чат» is split into Сообщения / Поведение / Отклик; «Данные» into История / Резервные копии / Сброс.
 - `util/ThemeManager.kt`: M3/Aurora (free, dynamic color), Expressive/Retro (premium).
 - `data/PremiumPlan.kt`: `PremiumPlan` (FREE/WEEK/MONTH/YEAR/LIFETIME) and 59 `PremiumFeature` entries with `minPlan`.
