@@ -1,6 +1,7 @@
 package com.devai.studio.data
 
 import android.content.Context
+import org.json.JSONObject
 
 data class CodeLanguage(
     val id: String,
@@ -11,12 +12,13 @@ data class CodeLanguage(
     val testFramework: String,
     val description: String,
     val example: String,
+    val order: Int = 0,
 )
 
 object CodeLanguages {
     const val DEFAULT_ID = "kotlin"
 
-    val all: List<CodeLanguage> = listOf(
+    private val builtIn: List<CodeLanguage> = listOf(
         CodeLanguage(
             id = "kotlin",
             name = "Kotlin",
@@ -519,7 +521,42 @@ object CodeLanguages {
         ),
     )
 
-    val default: CodeLanguage = all.first { it.id == DEFAULT_ID }
+    /** Каталог языков: по умолчанию встроенный, после [load] - из JSON-файлов assets/languages. */
+    var all: List<CodeLanguage> = builtIn
+        private set
+
+    /** Читает языки из файлов сборки. Если файлов нет, остаётся встроенный список. */
+    fun load(ctx: Context) {
+        val loaded = runCatching {
+            ctx.assets.list("languages").orEmpty()
+                .filter { it.endsWith(".json") }
+                .mapNotNull { file ->
+                    runCatching {
+                        ctx.assets.open("languages/$file").use { input ->
+                            val json = JSONObject(input.bufferedReader().readText())
+                            val id = json.optString("id").trim()
+                            if (id.isBlank()) return@use null
+                            CodeLanguage(
+                                id = id,
+                                name = json.optString("name", id),
+                                short = json.optString("short", id),
+                                extension = json.optString("extension"),
+                                comment = json.optString("comment", "//"),
+                                testFramework = json.optString("testFramework", "—"),
+                                description = json.optString("description"),
+                                example = json.optString("example"),
+                                order = json.optInt("order", 0),
+                            )
+                        }
+                    }.getOrNull()
+                }
+                .sortedWith(compareBy({ it.order }, { it.name }))
+        }.getOrNull()
+        if (!loaded.isNullOrEmpty()) all = loaded
+    }
+
+    val default: CodeLanguage
+        get() = all.firstOrNull { it.id == DEFAULT_ID } ?: all.first()
 
     private val aliases: Map<String, String> = mapOf(
         "js" to "javascript", "jsx" to "javascript", "mjs" to "javascript",
@@ -548,11 +585,16 @@ object CodeLanguages {
         "f90" to "fortran", "f95" to "fortran",
         "cob" to "cobol", "cbl" to "cobol",
         "text" to "", "plaintext" to "", "txt" to "",
+        "hx" to "haxe", "bal" to "ballerina", "rkt" to "racket",
+        "mk" to "makefile", "docker" to "dockerfile", "tex" to "latex",
+        "gd" to "gdscript", "vy" to "vyper", "purs" to "purescript",
+        "re" to "reasonml", "res" to "rescript",
     )
 
-    val supportedExtensions: Set<String> = buildSet {
+    val supportedExtensions: Set<String>
+        get() = buildSet {
         all.forEach { add(it.extension.lowercase()) }
-        addAll(listOf("kts", "jsx", "mjs", "tsx", "cc", "cxx", "hpp", "h", "hh", "cs", "fsx", "vb", "asm", "s", "sol", "pl", "pm", "hs", "lhs", "exs", "erl", "hrl", "clj", "cljs", "ml", "mli", "scm", "lisp", "pas", "pp", "vhd", "v", "sv", "f90", "f95", "cob", "cbl", "yml", "zsh"))
+        addAll(listOf("kts", "jsx", "mjs", "tsx", "cc", "cxx", "hpp", "h", "hh", "cs", "fsx", "vb", "asm", "s", "sol", "pl", "pm", "hs", "lhs", "exs", "erl", "hrl", "clj", "cljs", "ml", "mli", "scm", "lisp", "pas", "pp", "vhd", "v", "sv", "f90", "f95", "cob", "cbl", "yml", "zsh", "hx", "vala", "bal", "rkt", "tcl", "awk", "mk", "dockerfile", "cmake", "tex", "glsl", "hlsl", "wgsl", "gd", "qml", "vy", "move", "cairo", "elm", "purs", "re", "res", "vue", "svelte", "astro"))
     }
 
     fun byId(id: String?): CodeLanguage? {
@@ -564,6 +606,11 @@ object CodeLanguages {
     }
 
     fun fromFileName(name: String): CodeLanguage? {
+        when (name.lowercase()) {
+            "dockerfile" -> return byId("dockerfile")
+            "makefile" -> return byId("makefile")
+            "cmakelists.txt" -> return byId("cmake")
+        }
         val extension = name.substringAfterLast('.', "").lowercase()
         if (extension.isBlank()) return null
         return all.firstOrNull { it.extension.lowercase() == extension }

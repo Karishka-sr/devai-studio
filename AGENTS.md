@@ -19,7 +19,7 @@
 - `ai/ResponseGuard.kt` answers simple greetings without inference, filters leaked benchmark/task text from streamed local responses, and drops such assistant turns from prompt history.
 - `data/ModelDownloader.kt` retries, resumes, and falls back to `hf-mirror.com` for Hugging Face URLs.
 
-## Themes & Premium (v3.2.0)
+## Themes & Premium (v3.3.0)
 - `ui/DevAIDesign.kt` is the shared Aurora design system: gradient background, logo/top bar, rounded bordered cards, icon tiles, status pills, gradient buttons. Use these composables instead of raw `Card`/`TopAppBar` on new screens.
 - Contrast is enforced at the container level: `DevAIBackground` provides `LocalContentColor = onBackground`; `DevAICard`, top-bar buttons, bottom bar, chat bubbles and custom `Surface`s set an explicit `contentColor`. Do not rely on `contentColorFor()` for translucent colors (`surface.copy(alpha = ...)`) — it returns `Unspecified` and can inherit an unreadable color.
 - `ui/DevAIApp.kt` owns the palette, typography, shapes, and the floating rounded bottom bar. Default M3 is now Aurora (indigo/mint/coral); Expressive/Retro remain premium themes.
@@ -34,7 +34,7 @@
 - Premium UI: `ui/PremiumActivity.kt` (tier cards, feature matrix, activation, Stars buttons). Gates: themes, model tiers, chat export, search/MCP/plugins/TTS/characters, chat customization, prompt library, backups, QR, history limit.
 - Chat backups: `ChatSessionsStore.exportJson/importJson`; prompt library: `data/PromptLibrary.kt` (24 prompts).
 
-## Feature Pack 2.17.0 → 3.2.0
+## Feature Pack 2.17.0 → 3.3.0
 - `data/QuickTools.kt` contains 56 local utilities (Base64, URL, JSON/CSV, JWT, hashes, text, regex, diff, numbers, time, colors, generators, MIME/HTTP reference). Add new tools there, not as ad-hoc UI code.
 - `ui/ExtraToolsScreen.kt` is the generic workbench: search, category chips, one input + optional second input, output, copy and share. `ExtraToolsActivity` hosts it from «Ещё → Лаборатория».
 - `ui/ChatAiActions.kt` holds three sheets: AI actions (14 prompt-based operations), prompt library, and chat search. Chat exposes them as horizontally scrolling chips.
@@ -42,7 +42,7 @@
 - `AppPrefs.responseStyle` / `responseLanguage` append style and language rules to the system prompt. Settings → Чат exposes both.
 - Chat also supports temporary (non-persisted) sessions, voice input via `RecognizerIntent`, per-message copy/share, and a prompt-library shortcut.
 - `QuickToolsTest` exercises every tool with a valid sample and asserts the catalog stays at 50+ entries. It uses the real `org.json` test dependency because Android's stub throws in JVM tests.
-- `data/CodeLanguages.kt` is the 50-language catalog (Kotlin default), with aliases and `fromFileName`. The chat injects `CodeLanguages.instruction` into the DEV system prompt; `CodeLanguagesActivity` is the picker; `ChatAiActions` uses the selected language for test generation.
+- `app/src/main/assets/languages/*.json` is the source of truth for 75 languages (Kotlin default). `CodeLanguages.load(ctx)` reads them at startup; the hardcoded list is only a fallback. Add a language by adding one JSON file with `id/name/short/extension/comment/testFramework/description/example/order`. `data/CodeLanguages.kt` provides aliases and `fromFileName`. The chat injects `CodeLanguages.instruction` into the DEV system prompt; `CodeLanguagesActivity` is the picker; `ChatAiActions` uses the selected language for test generation.
 - `data/CodeSyntax.kt` is the offline lexer for 50 languages: keywords, types, strings, comments, numbers, annotations, functions and markup. `ui/CodeHighlight.kt` renders it in chat code blocks and language previews. Aliases (`js`, `ts`, `c++`, `c#`, `objective-c`) and auto-detection for untagged fences are supported.
 - `ui/ChatWallpapers.kt` lists 24 offline wallpapers; `WallpaperActivity`/`WallpaperScreen` is the picker. Full images live in `res/drawable-nodpi/chat_wall_XX.png`, thumbnails in `chat_wall_thumb_XX.png`. Chat reads `AppPrefs.chatWallpaper`/`chatWallpaperDim` and renders the selected image behind the message list.
 
@@ -77,7 +77,7 @@
 - Settings → «Вид»: theme previews (Aurora/Expressive/Retro), dynamic color, accent palette, chat font family, bubble width, avatars, compact mode; «Чат» also has code font size, haptics and delete confirmation.
 - Keep Vexel untouched: verify `git diff v2.9.0 -- app/src/main/kotlin/com/qwenz/qwel app/src/main/assets/{icons,fonts,fun,lang}` is empty on every release.
 
-## PC version (v3.1.0)
+## PC version (v3.2.0)
 - Module `desktop/`: Kotlin JVM 1.8 + Swing, main `com.devai.studio.desktop.MainKt`.
 - PC language selector uses `desktop/.../CodeLanguages.kt` (same 50 languages); `AppSettings.codeLanguage` persists in `settings.properties` and is appended to the system prompt.
 - Build jar: `./gradlew :desktop:fatJar` -> `desktop/build/libs/DevAIStudio-all.jar`.

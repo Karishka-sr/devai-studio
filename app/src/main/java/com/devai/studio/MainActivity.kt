@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import com.devai.studio.data.CodeLanguages
 import com.devai.studio.ui.DevAIApp
 import com.devai.studio.ui.DevAITheme
 import com.devai.studio.ui.SplashScreen
@@ -20,6 +21,7 @@ class MainActivity : AppCompatActivity() {
         ThemeManager.apply(this)
         super.onCreate(savedInstanceState)
         ThemeManager.applyDynamicIfAvailable(this)
+        CodeLanguages.load(this)
         setContent {
             var showSplash by rememberSaveable { mutableStateOf(true) }
             DevAITheme {

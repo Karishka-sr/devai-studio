@@ -322,10 +322,55 @@ object CodeSyntax {
             strings = listOf("\""),
             caseInsensitive = true,
         ),
+        "latex" to profile(
+            """documentclass usepackage begin end section subsection subsubsection paragraph textbf textit emph label ref cite item includegraphics caption title author date maketitle tableofcontents newcommand renewcommand""",
+            lineComments = listOf("%"),
+            blockComments = emptyList(),
+            strings = emptyList(),
+        ),
+        "dockerfile" to profile(
+            """FROM RUN CMD ENTRYPOINT COPY ADD ENV ARG WORKDIR EXPOSE VOLUME USER LABEL HEALTHCHECK SHELL ONBUILD AS""",
+            lineComments = listOf("#"),
+            blockComments = emptyList(),
+            strings = listOf("\""),
+        ),
+        "makefile" to profile(
+            """all clean install build test run include define endef ifeq ifneq ifdef ifndef else endif export unexport override""",
+            lineComments = listOf("#"),
+            blockComments = emptyList(),
+            strings = listOf("\"", "'"),
+        ),
+        "cmake" to profile(
+            """cmake_minimum_required project add_executable add_library target_link_libraries target_include_directories set message find_package include install option if else elseif endif foreach endforeach function endfunction""",
+            lineComments = listOf("#"),
+            blockComments = emptyList(),
+            strings = listOf("\""),
+        ),
+        "tcl" to profile(
+            """proc set unset if else elseif for foreach while return puts expr incr lappend list array source package namespace""",
+            lineComments = listOf("#"),
+            blockComments = emptyList(),
+            strings = listOf("\"", "'"),
+        ),
+        "awk" to profile(
+            """BEGIN END if else for while do print printf function next exit delete in getline""",
+            lineComments = listOf("#"),
+            blockComments = emptyList(),
+            strings = listOf("\"", "'"),
+        ),
         "verilog" to profile(
             """always and assign automatic begin buf case casex casez default defparam disable do edge else end endcase endfunction endgenerate endmodule endtask event for force forever fork function generate genvar if initial inout input integer join localparam module nand negedge nor not or output parameter posedge primitive real reg repeat signed task time unsigned wait while wire xnor xor""",
             """wire reg logic bit byte int integer real time""",
         ),
+    )
+
+    private val profileAliases: Map<String, String> = mapOf(
+        "haxe" to "java", "vala" to "csharp", "ballerina" to "java",
+        "racket" to "scheme", "glsl" to "c", "hlsl" to "c", "wgsl" to "c",
+        "gdscript" to "python", "qml" to "javascript", "vyper" to "python",
+        "move" to "java", "cairo" to "java", "elm" to "haskell",
+        "purescript" to "haskell", "reasonml" to "javascript", "rescript" to "javascript",
+        "vue" to "html", "svelte" to "html", "astro" to "html",
     )
 
     fun languageId(tag: String, code: String): String? {
@@ -335,6 +380,7 @@ object CodeSyntax {
             .substringBefore(' ')
             .trim()
         if (key.isNotBlank()) {
+            if (key in profiles || key in profileAliases) return key
             CodeLanguages.byId(key)?.id?.let { return it }
             when (key) {
                 "html5" -> return "html"
@@ -354,7 +400,7 @@ object CodeSyntax {
 
     fun highlight(tag: String, code: String): List<SyntaxSpan> {
         val id = languageId(tag, code) ?: return emptyList()
-        val syntax = profiles[id] ?: generic
+        val syntax = profiles[id] ?: profiles[profileAliases[id]] ?: generic
         if (syntax.markup) return highlightMarkup(code)
         if (id == "yaml") return merge(lex(code, syntax) + yamlKeys(code))
         return lex(code, syntax)
