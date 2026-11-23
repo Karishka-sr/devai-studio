@@ -35,7 +35,7 @@
 - Chat backups: `ChatSessionsStore.exportJson/importJson`; prompt library: `data/PromptLibrary.kt` (1024 prompts, searchable).
 
 ## Mega Settings (3.4.0)
-- `SettingsScreen` home has a live summary card, 5 one-tap generation presets, 4 quick toggles (dynamic color, haptics, code wrap, send-on-enter), popular query chips, and keyword search across `SettingsCategory.keywords`.
+- `SettingsScreen` home has a live summary card, 5 one-tap generation presets, 8 quick toggles (dynamic color, haptics, code wrap, send-on-enter), popular query chips, and keyword search across `SettingsCategory.keywords`.
 - `SettingsHome` receives `SettingsSummary`, `QuickToggles`, `onPreset`, `onToggle`; `applyQuickPreset`/`toggleQuick` persist through `AppPrefs`.
 
 ## Mega Prompt Library (3.4.0)

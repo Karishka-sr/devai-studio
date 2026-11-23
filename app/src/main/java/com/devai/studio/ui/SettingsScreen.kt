@@ -143,13 +143,26 @@ private enum class SettingsCategory(
     ),
 }
 
-private enum class QuickToggle { DYNAMIC_COLOR, HAPTIC, CODE_WRAP, SEND_ON_ENTER }
+private enum class QuickToggle {
+    DYNAMIC_COLOR,
+    HAPTIC,
+    CODE_WRAP,
+    SEND_ON_ENTER,
+    SHOW_AVATARS,
+    COMPACT_CHAT,
+    AUTO_SCROLL,
+    CONFIRM_DELETE,
+}
 
 private data class QuickToggles(
     val dynamicColor: Boolean,
     val haptic: Boolean,
     val codeWrap: Boolean,
     val sendOnEnter: Boolean,
+    val showAvatars: Boolean,
+    val compactChat: Boolean,
+    val autoScroll: Boolean,
+    val confirmDelete: Boolean,
 )
 
 private data class SettingsSummary(
@@ -331,6 +344,22 @@ fun SettingsScreen() {
                 sendOnEnter = value
                 AppPrefs.setSendOnEnter(context, value)
             }
+            QuickToggle.SHOW_AVATARS -> {
+                showAvatars = value
+                AppPrefs.setShowAvatars(context, value)
+            }
+            QuickToggle.COMPACT_CHAT -> {
+                compactChat = value
+                AppPrefs.setCompactChat(context, value)
+            }
+            QuickToggle.AUTO_SCROLL -> {
+                autoScroll = value
+                AppPrefs.setAutoScroll(context, value)
+            }
+            QuickToggle.CONFIRM_DELETE -> {
+                confirmDelete = value
+                AppPrefs.setConfirmDelete(context, value)
+            }
         }
     }
 
@@ -404,6 +433,10 @@ fun SettingsScreen() {
                 haptic = hapticFeedback,
                 codeWrap = codeWrap,
                 sendOnEnter = sendOnEnter,
+                showAvatars = showAvatars,
+                compactChat = compactChat,
+                autoScroll = autoScroll,
+                confirmDelete = confirmDelete,
             ),
             onPreset = ::applyQuickPreset,
             onToggle = ::toggleQuick,
@@ -1487,6 +1520,18 @@ private fun SettingsHome(
                 }
                 QuickToggleRow("Enter отправляет", quick.sendOnEnter) {
                     onToggle(QuickToggle.SEND_ON_ENTER, it)
+                }
+                QuickToggleRow("Показывать аватары", quick.showAvatars) {
+                    onToggle(QuickToggle.SHOW_AVATARS, it)
+                }
+                QuickToggleRow("Компактный чат", quick.compactChat) {
+                    onToggle(QuickToggle.COMPACT_CHAT, it)
+                }
+                QuickToggleRow("Автопрокрутка", quick.autoScroll) {
+                    onToggle(QuickToggle.AUTO_SCROLL, it)
+                }
+                QuickToggleRow("Подтверждать удаление", quick.confirmDelete) {
+                    onToggle(QuickToggle.CONFIRM_DELETE, it)
                 }
             }
         }
