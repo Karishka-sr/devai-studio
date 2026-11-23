@@ -179,6 +179,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var sessions by remember { mutableStateOf<List<ChatSession>>(emptyList()) }
     var searchEnabled by remember { mutableStateOf(AppPrefs.searchEnabled(context)) }
+    val autoWeb = mode == ChatMode.CORE || AiSupport.provider(context)?.id == "devai-core"
     var mcpEnabled by remember { mutableStateOf(AppPrefs.mcpEnabled(context)) }
     var attachments by remember { mutableStateOf<List<Attachment>>(emptyList()) }
     var showPlugins by remember { mutableStateOf(false) }
@@ -385,7 +386,8 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
             return
         }
 
-        val searchOn = searchEnabled
+        val autoWeb = mode == ChatMode.CORE || AiSupport.provider(context)?.id == "devai-core"
+        val searchOn = searchEnabled || autoWeb
         val useMcp = mcpEnabled
         input = ""
         attachments = emptyList()
@@ -404,8 +406,15 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
 
                 var searchBlock = ""
                 if (searchOn && typed.isNotBlank()) {
-                    runCatching { SearchClient.search(context, typed, 5) }
-                        .onSuccess { searchBlock = it.take(6000) }
+                    if (autoWeb) {
+                        messages = messages.toMutableList().also {
+                            if (assistantIndex in it.indices) {
+                                it[assistantIndex] = AiMessage("assistant", "Ищу в интернете…")
+                            }
+                        }
+                    }
+                    runCatching { SearchClient.search(context, typed.take(300), 6) }
+                        .onSuccess { searchBlock = it.take(8000) }
                         .onFailure { toast("Поиск: ${it.message ?: "ошибка"}") }
                 }
 
@@ -433,6 +442,12 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                             else -> "отвечай на русском языке."
                         }
                     )
+                    val now = java.text.SimpleDateFormat(
+                        "d MMMM yyyy, HH:mm",
+                        java.util.Locale("ru", "RU"),
+                    ).format(java.util.Date())
+                    append("\n\nСейчас: ").append(now)
+                    append(" (").append(java.util.TimeZone.getDefault().id).append(").")
                     if (mode == ChatMode.DEV) {
                         append("\n\n").append(CodeLanguages.instruction(codeLanguage))
                     }
@@ -441,8 +456,13 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                         append("\n\nЧто помнить о пользователе:\n").append(memory)
                     }
                     if (searchBlock.isNotBlank()) {
-                        append("\n\nАктуальные результаты поиска (веб, GitHub, Stack Overflow, Wikipedia, DuckDuckGo, Hacker News; используй, если это полезно):\n")
+                        append("\n\nАктуальные результаты поиска (Bing, Wikipedia, GitHub, Stack Overflow, Hacker News и другие):\n")
                         append(searchBlock)
+                        append(
+                            "\n\nОпирайся на эти результаты для свежих фактов, цен, погоды, новостей, " +
+                                "версий и событий. Если ответа в результатах нет, честно скажи об этом " +
+                                "и дай общий ответ. Указывай ссылки на источники."
+                        )
                     }
                 }
                 apiMessages.add(AiMessage("system", system))
@@ -519,7 +539,8 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
 
                 if (!cancelled.get()) {
                     finished.set(true)
-                    val finalText = full.ifBlank { synchronized(sb) { sb.toString() } }
+                    val answer = full.ifBlank { synchronized(sb) { sb.toString() } }
+                    val finalText = withSearchSources(answer, searchBlock)
                     messages = messages.toMutableList().also {
                         if (assistantIndex in it.indices) {
                             it[assistantIndex] = AiMessage("assistant", finalText)
@@ -689,15 +710,19 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             FilterChip(
-                selected = searchEnabled,
+                selected = searchEnabled || autoWeb,
                 onClick = {
-                    requireFeature(PremiumFeature.SEARCH) {
-                        searchEnabled = !searchEnabled
-                        AppPrefs.setSearchEnabled(context, searchEnabled)
+                    if (autoWeb) {
+                        toast("DevAI Core ищет в интернете автоматически")
+                    } else {
+                        requireFeature(PremiumFeature.SEARCH) {
+                            searchEnabled = !searchEnabled
+                            AppPrefs.setSearchEnabled(context, searchEnabled)
+                        }
                     }
                 },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                label = { Text("Поиск") },
+                label = { Text(if (autoWeb) "Интернет · авто" else "Поиск") },
             )
             FilterChip(
                 selected = mcpEnabled,
@@ -1479,6 +1504,19 @@ private fun CodeBlock(lang: String, code: String, fontSize: TextUnit, wrap: Bool
     }
 }
 
+
+private fun withSearchSources(answer: String, searchBlock: String): String {
+    if (searchBlock.isBlank()) return answer
+    val links = Regex("""https?://[^\s)>\]]+""")
+        .findAll(searchBlock)
+        .map { it.value.trimEnd('.', ',', ';', ')', ']') }
+        .filter { !it.contains("bing.com/ck") }
+        .distinct()
+        .take(5)
+        .toList()
+    if (links.isEmpty() || answer.contains("http")) return answer
+    return answer.trimEnd() + "\n\nИсточники:\n" + links.joinToString("\n") { "- $it" }
+}
 
 private fun readAttachment(context: android.content.Context, uri: android.net.Uri): Attachment {
     val name = context.contentResolver.query(

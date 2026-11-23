@@ -30,6 +30,27 @@ object SearchClient {
         .callTimeout(30, TimeUnit.SECONDS)
         .build()
 
+    private val BING_BLOCK = Regex("<li class=\"b_algo\".*?</li>", RegexOption.DOT_MATCHES_ALL)
+    private val BING_TITLE_DESKTOP = Regex(
+        "<h2[^>]*>\\s*<a[^>]*href=\"([^\"]+)\"[^>]*>(.*?)</a>",
+        RegexOption.DOT_MATCHES_ALL,
+    )
+    private val BING_TITLE_MOBILE = Regex(
+        "<a[^>]*href=\"([^\"]+)\"[^>]*>\\s*<h2[^>]*>(.*?)</h2>",
+        RegexOption.DOT_MATCHES_ALL,
+    )
+    private val BING_SNIPPET = Regex("<p[^>]*>(.*?)</p>", RegexOption.DOT_MATCHES_ALL)
+    private val NEWS_HINT = Regex(
+        "(?iu)(новост|последн|сегодня|сейчас|срочно|курс|цена|стоимость|погод|" +
+            "что нового|происход|событ|выбор|матч|счёт|релиз|вышел|вышла|202[4-9])",
+    )
+    private val CURRENCY_HINT = Regex("(?iu)(курс|доллар|евро|юан|валют|usd|eur|cny)")
+    private val WEATHER_HINT = Regex("(?iu)(погод|температур|дожд|снег|ветер|жарк|холод|градус)")
+    private val WEATHER_STOP = Regex(
+        "(?iu)\\b(какая|какой|какие|сейчас|сегодня|завтра|погода|погоду|погоде|" +
+            "температура|температуру|на|в|во|по|градусов|сколько|улице)\\b",
+    )
+
     suspend fun search(ctx: Context, query: String, maxResults: Int = 5): String =
         withContext(Dispatchers.IO) {
             val q = query.trim()
@@ -41,6 +62,10 @@ object SearchClient {
             val sections = coroutineScope {
                 listOf(
                     async { runCatching { tavily(tavilyKey, q, limit) }.getOrNull() },
+                    async { runCatching { bing(q, limit) }.getOrNull() },
+                    async { runCatching { googleNews(q, limit) }.getOrNull() },
+                    async { runCatching { currencyRates(q) }.getOrNull() },
+                    async { runCatching { weather(q) }.getOrNull() },
                     async { runCatching { github(q, githubToken, limit) }.getOrNull() },
                     async { runCatching { stackOverflow(q, limit) }.getOrNull() },
                     async { runCatching { wikipedia(q, limit) }.getOrNull() },
@@ -83,6 +108,169 @@ object SearchClient {
             }
         }.trim()
         return text.takeIf { it.length > "### Tavily (веб)".length + 2 }
+    }
+
+    private fun bing(query: String, limit: Int): String? {
+        if (query.any { it.code in 0x0400..0x04FF }) return null
+        val html = getText(
+            url(
+                "https://www.bing.com/search",
+                mapOf(
+                    "q" to query,
+                    "count" to limit.coerceAtMost(8).toString(),
+                    "setlang" to "ru",
+                ),
+            ),
+            mapOf("Accept-Language" to "ru-RU,ru;q=0.9,en;q=0.8"),
+        )
+        return parseBing(html, limit)
+    }
+
+    private fun googleNews(query: String, limit: Int): String? {
+        if (!NEWS_HINT.containsMatchIn(query)) return null
+        val russian = query.any { it.code in 0x0400..0x04FF }
+        val xml = getText(
+            url(
+                "https://news.google.com/rss/search",
+                if (russian) {
+                    mapOf("q" to query, "hl" to "ru", "gl" to "RU", "ceid" to "RU:ru")
+                } else {
+                    mapOf("q" to query, "hl" to "en-US", "gl" to "US", "ceid" to "US:en")
+                },
+            ),
+        )
+        val items = Regex("<item>(.*?)</item>", RegexOption.DOT_MATCHES_ALL)
+            .findAll(xml)
+            .take(limit.coerceAtMost(5))
+            .toList()
+        if (items.isEmpty()) return null
+        return buildString {
+            append("### Новости (Google News)\n")
+            for ((index, item) in items.withIndex()) {
+                val block = item.value
+                val title = clean(
+                    Regex("<title>(.*?)</title>", RegexOption.DOT_MATCHES_ALL)
+                        .find(block)?.groupValues?.get(1).orEmpty(),
+                )
+                val link = Regex("<link>(.*?)</link>", RegexOption.DOT_MATCHES_ALL)
+                    .find(block)?.groupValues?.get(1).orEmpty()
+                    .replace("&amp;", "&")
+                val date = Regex("<pubDate>(.*?)</pubDate>", RegexOption.DOT_MATCHES_ALL)
+                    .find(block)?.groupValues?.get(1).orEmpty()
+                val source = clean(
+                    Regex("<source[^>]*>(.*?)</source>", RegexOption.DOT_MATCHES_ALL)
+                        .find(block)?.groupValues?.get(1).orEmpty(),
+                )
+                if (title.isBlank()) continue
+                append(index + 1).append(". ").append(title).append("\n")
+                if (source.isNotBlank()) append("   ").append(source)
+                if (date.isNotBlank()) append(" · ").append(date)
+                if (source.isNotBlank() || date.isNotBlank()) append("\n")
+                if (link.isNotBlank()) append("   ").append(link).append("\n")
+            }
+        }.trim().takeIf { it.length > "### Новости (Google News)".length + 2 }
+    }
+
+    private fun currencyRates(query: String): String? {
+        if (!CURRENCY_HINT.containsMatchIn(query)) return null
+        val json = getJson("https://www.cbr-xml-daily.ru/daily_json.js")
+        val valute = json.optJSONObject("Valute") ?: return null
+        val rows = listOf("USD" to "Доллар", "EUR" to "Евро", "CNY" to "Юань")
+            .mapNotNull { (code, label) ->
+                val item = valute.optJSONObject(code) ?: return@mapNotNull null
+                val nominal = item.optDouble("Nominal", 1.0).coerceAtLeast(1.0)
+                val value = item.optDouble("Value", 0.0) / nominal
+                val previous = item.optDouble("Previous", 0.0) / nominal
+                if (value <= 0.0) return@mapNotNull null
+                val delta = value - previous
+                val arrow = if (delta >= 0) "▲" else "▼"
+                "$label: ${"%.2f".format(value)} ₽ $arrow ${"%.2f".format(kotlin.math.abs(delta))}"
+            }
+        if (rows.isEmpty()) return null
+        val date = json.optString("Date").substringBefore('T')
+        return buildString {
+            append("### Курсы ЦБ РФ")
+            if (date.isNotBlank()) append(" на ").append(date)
+            append("\n")
+            rows.forEach { append("• ").append(it).append("\n") }
+        }.trim()
+    }
+
+    private fun weather(query: String): String? {
+        if (!WEATHER_HINT.containsMatchIn(query)) return null
+        val city = query
+            .replace(WEATHER_STOP, " ")
+            .replace(Regex("[?!.,]"), " ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+            .ifBlank { "Москва" }
+        val encoded = java.net.URLEncoder.encode(city, "UTF-8").replace("+", "%20")
+        val json = getJson("https://wttr.in/$encoded?format=j1&lang=ru")
+        val current = json.optJSONArray("current_condition")?.optJSONObject(0) ?: return null
+        val area = json.optJSONArray("nearest_area")
+            ?.optJSONObject(0)
+            ?.optJSONArray("areaName")
+            ?.optJSONObject(0)
+            ?.optString("value")
+            .orEmpty()
+        val temp = current.optString("temp_C")
+        val feels = current.optString("FeelsLikeC")
+        val humidity = current.optString("humidity")
+        val desc = current.optJSONArray("lang_ru")
+            ?.optJSONObject(0)
+            ?.optString("value")
+            .orEmpty()
+            .ifBlank {
+                current.optJSONArray("weatherDesc")
+                    ?.optJSONObject(0)
+                    ?.optString("value")
+                    .orEmpty()
+            }
+        if (temp.isBlank()) return null
+        return buildString {
+            append("### Погода сейчас")
+            if (area.isNotBlank()) append(" · ").append(area)
+            append("\n")
+            append("• Температура: ").append(temp).append(" °C")
+            if (feels.isNotBlank()) append(" (ощущается ").append(feels).append(" °C)")
+            append("\n")
+            if (humidity.isNotBlank()) append("• Влажность: ").append(humidity).append(" %\n")
+            if (desc.isNotBlank()) append("• ").append(desc).append("\n")
+        }.trim()
+    }
+
+    internal fun parseBing(html: String, limit: Int): String? {
+        val blocks = BING_BLOCK.findAll(html).take(limit)
+        val text = buildString {
+            append("### Bing (веб)\n")
+            var found = false
+            for (block in blocks) {
+                val titleMatch = BING_TITLE_DESKTOP.find(block.value)
+                    ?: BING_TITLE_MOBILE.find(block.value)
+                    ?: continue
+                val title = clean(titleMatch.groupValues[2])
+                if (title.isBlank()) continue
+                found = true
+                append("- ").append(title).append("\n")
+                append("  ").append(decodeBingUrl(titleMatch.groupValues[1])).append("\n")
+                val snippet = BING_SNIPPET.find(block.value)?.groupValues?.get(1)
+                if (!snippet.isNullOrBlank()) {
+                    append("  ").append(clean(snippet).take(400)).append("\n")
+                }
+            }
+            if (!found) clear()
+        }.trim()
+        return text.takeIf { it.isNotBlank() }
+    }
+
+    private fun decodeBingUrl(raw: String): String {
+        val marker = "u=a1"
+        val start = raw.indexOf(marker)
+        if (start < 0) return raw.replace("&amp;", "&")
+        val encoded = raw.substring(start + marker.length).substringBefore('&')
+        return runCatching {
+            String(java.util.Base64.getUrlDecoder().decode(encoded))
+        }.getOrElse { raw.replace("&amp;", "&") }
     }
 
     private fun github(query: String, token: String?, limit: Int): String? {
@@ -207,9 +395,10 @@ object SearchClient {
     }
 
     private fun wikipedia(query: String, limit: Int): String? {
+        val lang = if (query.any { it.code in 0x0400..0x04FF }) "ru" else "en"
         val json = getJson(
             url(
-                "https://ru.wikipedia.org/w/api.php",
+                "https://$lang.wikipedia.org/w/api.php",
                 mapOf(
                     "action" to "query",
                     "list" to "search",
@@ -222,12 +411,28 @@ object SearchClient {
         )
         val items = json.optJSONObject("query")?.optJSONArray("search") ?: return null
         if (items.length() == 0) return null
+        val firstTitle = items.optJSONObject(0)?.optString("title").orEmpty()
+        val summary = if (firstTitle.isNotBlank()) {
+            runCatching {
+                getJson(
+                    "https://$lang.wikipedia.org/api/rest_v1/page/summary/".toHttpUrl()
+                        .newBuilder()
+                        .addPathSegment(firstTitle)
+                        .build()
+                        .toString(),
+                )
+            }.getOrNull()
+        } else {
+            null
+        }
         return buildString {
             append("### Wikipedia\n")
+            val extract = clean(summary?.text("extract").orEmpty())
+            if (extract.isNotBlank()) append(extract.take(900)).append("\n\n")
             for (i in 0 until items.length()) {
                 val item = items.optJSONObject(i) ?: continue
                 append(i + 1).append(". ").append(clean(item.optString("title"))).append("\n")
-                append("https://ru.wikipedia.org/?curid=")
+                append("https://$lang.wikipedia.org/?curid=")
                 append(item.optInt("pageid")).append("\n")
                 val snippet = clean(item.optString("snippet"))
                 if (snippet.isNotBlank()) append(snippet.take(400)).append("\n")
@@ -330,6 +535,24 @@ object SearchClient {
         return builder.build().toString()
     }
 
+    private fun getText(url: String, headers: Map<String, String> = emptyMap()): String {
+        val request = Request.Builder()
+            .url(url)
+            .header(
+                "User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+                    "(KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+            )
+            .apply { headers.forEach { (key, value) -> header(key, value) } }
+            .get()
+            .build()
+        client.newCall(request).execute().use { resp ->
+            val body = resp.body?.string().orEmpty()
+            if (!resp.isSuccessful) error("HTTP ${resp.code}: ${body.take(200)}")
+            return body
+        }
+    }
+
     private fun getJson(url: String, githubToken: String? = null): JSONObject {
         val request = Request.Builder()
             .url(url)
@@ -374,5 +597,12 @@ object SearchClient {
             .replace("&amp;", "&")
             .replace("&lt;", "<")
             .replace("&gt;", ">")
+            .replace("&nbsp;", " ")
+            .replace("&ndash;", "–")
+            .replace("&mdash;", "—")
+            .replace(Regex("&#(\\d+);")) { match ->
+                match.groupValues[1].toIntOrNull()?.toChar()?.toString() ?: match.value
+            }
+            .replace(Regex("\\s+"), " ")
             .trim()
 }

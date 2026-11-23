@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,20 +20,26 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -50,7 +58,10 @@ import androidx.compose.ui.unit.sp
 import com.devai.studio.data.AppPrefs
 import com.devai.studio.data.ChatMode
 import com.devai.studio.data.ChatSessionsStore
+import com.devai.studio.data.AppUpdate
 import com.devai.studio.data.PremiumStore
+import com.devai.studio.data.UpdateChecker
+import com.devai.studio.util.AndroidUtils
 import com.devai.studio.util.ThemeManager
 import com.qwenz.qwel.MainActivity as QwelActivity
 
@@ -256,11 +267,26 @@ fun DevAIApp() {
     val context = LocalContext.current
     var tab by rememberSaveable { mutableStateOf("chat") }
     var modeId by rememberSaveable { mutableStateOf(AppPrefs.chatMode(context)) }
+    var update by remember { mutableStateOf<AppUpdate?>(null) }
+    var updateDismissed by rememberSaveable { mutableStateOf(false) }
     val mode = ChatMode.fromId(modeId)
+
+    LaunchedEffect(Unit) {
+        update = UpdateChecker.cached(context) ?: UpdateChecker.check(context)
+    }
 
     DevAIBackground {
         Scaffold(
             containerColor = Color.Transparent,
+            topBar = {
+                val available = update
+                if (available != null && !updateDismissed) {
+                    UpdateBanner(
+                        update = available,
+                        onDismiss = { updateDismissed = true },
+                    )
+                }
+            },
             bottomBar = {
                 DevAIBottomBar(
                     tab = tab,
@@ -289,6 +315,58 @@ fun DevAIApp() {
                     )
                     else -> ChatScreen(mode = mode)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UpdateBanner(update: AppUpdate, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 14.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                Icons.Default.Refresh,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+            )
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    "Вышло обновление!",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    "DevAI Studio ${update.version}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f),
+                )
+            }
+            TextButton(
+                onClick = {
+                    AndroidUtils.openUrl(
+                        context,
+                        update.apkUrl.ifBlank { update.pageUrl },
+                    )
+                },
+            ) {
+                Text("Скачать", fontWeight = FontWeight.Bold)
+            }
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = "Скрыть",
+                    modifier = Modifier.size(18.dp),
+                )
             }
         }
     }

@@ -6,7 +6,7 @@
 
 **Android-студия для разработки с ИИ.** Чат с ведущими моделями, генерация Android-проектов, рабочее пространство с файлами и офлайн-модели, которые работают без интернета.
 
-[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v3.6.1** · Android 12+ · arm64-v8a
+[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v3.6.2** · Android 12+ · arm64-v8a
 [Сайт API](https://karishka-sr.github.io/devai-studio/) · **DevAI Core API** · ключ за 10 секунд
 [Скачать PC-версию](https://github.com/Karishka-sr/devai-studio-pc/releases/latest) · **Windows 7/10/11 · 3.2.0** · JRE 8 внутри
 
@@ -15,7 +15,7 @@
     <img src="https://img.shields.io/badge/Telegram-@NeonBeatt-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram @NeonBeatt">
   </a>
   <a href="https://github.com/Karishka-sr/devai-studio/releases">
-    <img src="https://img.shields.io/badge/Download_APK-v3.6.1-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
+    <img src="https://img.shields.io/badge/Download_APK-v3.6.2-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
   </a>
   <a href="https://rytmix-live.pplx-2.app">
     <img src="https://img.shields.io/badge/Site-rytmix--live-0A66C2?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Сайт">
@@ -52,6 +52,8 @@
 
 ### 💬 Чат с ИИ
 - **DevAI Core** — собственный провайдер: модель `devai-core-0.1`, бесплатный ключ с сайта и вставка ключа из буфера в приложении.
+- **Интернет в реальном времени** — DevAI Core автоматически ищет в вебе, новостях, Wikipedia, GitHub и Stack Overflow, показывает источники и текущую дату.
+- **Проверка обновлений** — приложение смотрит релизы на GitHub и показывает сверху баннер «Вышло обновление!» с кнопкой «Скачать».
 - 25+ провайдеров: OpenAI, Anthropic Claude, Google Gemini, DeepSeek, Groq, Mistral, OpenRouter, Together AI, Cerebras, NVIDIA NIM, xAI, Cohere, Perplexity и другие.
 - Локальные серверы: Ollama, LM Studio, llama.cpp, Jan.
 - Свой OpenAI-совместимый сервер.
