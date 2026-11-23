@@ -79,6 +79,11 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name=".ui.WallpaperActivity"
+            android:exported="false"
+            android:label="Обои чата" />
+
+        <activity
             android:name="com.qwenz.qwel.MainActivity"
             android:exported="false"
             android:label="@string/vexel_app_name"

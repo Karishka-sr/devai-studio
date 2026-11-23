@@ -9,6 +9,7 @@ import android.speech.RecognizerIntent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -76,6 +77,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -87,9 +89,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -178,6 +182,8 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
     var showPromptLibrary by remember { mutableStateOf(false) }
     var showChatSearch by remember { mutableStateOf(false) }
     var incognito by rememberSaveable { mutableStateOf(false) }
+    var wallpaperId by remember { mutableStateOf(AppPrefs.chatWallpaper(context)) }
+    var wallpaperDim by remember { mutableFloatStateOf(AppPrefs.chatWallpaperDim(context)) }
     var plugins by remember { mutableStateOf<List<Plugin>>(emptyList()) }
     val clipboard = LocalClipboardManager.current
     var characterName by remember {
@@ -235,6 +241,8 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                 characterName = CharacterStore.active(context)?.name ?: "Без персонажа"
                 searchEnabled = AppPrefs.searchEnabled(context)
                 mcpEnabled = AppPrefs.mcpEnabled(context)
+                wallpaperId = AppPrefs.chatWallpaper(context)
+                wallpaperDim = AppPrefs.chatWallpaperDim(context)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -570,7 +578,9 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
         }
     }
 
-    Column(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize()) {
+        ChatWallpaperLayer(wallpaperId, wallpaperDim)
+        Column(Modifier.fillMaxSize()) {
         DevAITopBar(
             title = "DevAI",
             subtitle = "Studio · " + mode.title + (if (incognito) " · временный" else "") + " · " + modelLabel,
@@ -801,6 +811,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                 }
             }
         }
+        }
     }
 
     if (showSessions) {
@@ -1028,6 +1039,36 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                 showChatSearch = false
                 scope.launch { listState.animateScrollToItem(index) }
             },
+        )
+    }
+}
+
+@Composable
+private fun ChatWallpaperLayer(id: String, dim: Float) {
+    val wallpaper = ChatWallpapers.byId(id) ?: return
+    Box(Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(wallpaper.full),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+        )
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = dim.coerceIn(0f, 0.85f))),
+        )
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.background.copy(alpha = 0.10f),
+                            MaterialTheme.colorScheme.background.copy(alpha = 0.42f),
+                        )
+                    )
+                ),
         )
     }
 }

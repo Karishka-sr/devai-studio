@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -101,16 +102,32 @@ fun ToolsScreen() {
             contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
         ) {
             Text(
-                "В 2.17.0 добавлено 70+ функций",
+                "3.0.0 — глобальное обновление",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                "56 локальных инструментов, 14 AI-действий, память, стили и языки ответа, " +
-                    "голосовой ввод, временный чат, поиск по чату и библиотека промптов.",
+                "24 обои чата в высоком разрешении, 56 локальных инструментов, " +
+                    "14 AI-действий, память, стили и языки ответа, голосовой ввод, " +
+                    "временный чат, поиск по чату и библиотека промптов.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+
+        ToolCard(
+            "Обои чата · ${ChatWallpapers.all.size}",
+            "Большой офлайн-пак абстрактных фонов с затемнением и мгновенным применением.",
+            icon = Icons.Default.Star,
+        ) {
+            Button(
+                onClick = { context.startActivity(Intent(context, WallpaperActivity::class.java)) },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Default.Star, contentDescription = null)
+                Spacer(Modifier.width(6.dp))
+                Text("Выбрать обои")
+            }
         }
 
         ToolCard(

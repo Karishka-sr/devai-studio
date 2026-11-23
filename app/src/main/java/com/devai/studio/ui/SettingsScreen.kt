@@ -786,6 +786,16 @@ fun SettingsScreen() {
                             DevAIThemeState.refresh()
                         },
                     )
+
+                    ActionRow(
+                        icon = Icons.Default.Star,
+                        title = "Обои чата",
+                        subtitle = "${ChatWallpapers.all.size} вариантов · " +
+                            ChatWallpapers.title(AppPrefs.chatWallpaper(context)),
+                        onClick = {
+                            context.startActivity(Intent(context, WallpaperActivity::class.java))
+                        },
+                    )
                 }
 
                 SettingsSection("Кастомизация") {

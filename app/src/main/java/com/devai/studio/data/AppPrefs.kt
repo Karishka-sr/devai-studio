@@ -37,6 +37,8 @@ object AppPrefs {
     private const val KEY_CONFIRM_DELETE = "confirm_delete_chat"
     private const val KEY_RESPONSE_STYLE = "response_style"
     private const val KEY_RESPONSE_LANGUAGE = "response_language"
+    private const val KEY_CHAT_WALLPAPER = "chat_wallpaper"
+    private const val KEY_CHAT_WALLPAPER_DIM = "chat_wallpaper_dim"
 
     const val DEFAULT_SYSTEM_PROMPT =
         "Ты — DevAI, полезный ИИ-ассистент разработчика. Отвечай по делу, давай рабочие примеры кода. " +
@@ -202,6 +204,16 @@ object AppPrefs {
     fun setResponseLanguage(ctx: Context, v: String) =
         p(ctx).edit().putString(KEY_RESPONSE_LANGUAGE, v).apply()
 
+    fun chatWallpaper(ctx: Context): String =
+        p(ctx).getString(KEY_CHAT_WALLPAPER, "none") ?: "none"
+    fun setChatWallpaper(ctx: Context, v: String) =
+        p(ctx).edit().putString(KEY_CHAT_WALLPAPER, v).apply()
+
+    fun chatWallpaperDim(ctx: Context): Float =
+        p(ctx).getFloat(KEY_CHAT_WALLPAPER_DIM, 0.55f).coerceIn(0f, 0.85f)
+    fun setChatWallpaperDim(ctx: Context, v: Float) =
+        p(ctx).edit().putFloat(KEY_CHAT_WALLPAPER_DIM, v.coerceIn(0f, 0.85f)).apply()
+
     fun reset(ctx: Context) {
         p(ctx).edit().clear().apply()
     }
@@ -233,6 +245,8 @@ object AppPrefs {
         put("confirmDelete", confirmDelete(ctx))
         put("responseStyle", responseStyle(ctx))
         put("responseLanguage", responseLanguage(ctx))
+        put("chatWallpaper", chatWallpaper(ctx))
+        put("chatWallpaperDim", chatWallpaperDim(ctx))
         put("theme", theme(ctx))
         put("chatMode", chatMode(ctx))
         put("systemPrompt", systemPrompt(ctx))
