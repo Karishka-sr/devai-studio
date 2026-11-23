@@ -112,6 +112,7 @@ import com.devai.studio.ai.AiClientFactory
 import com.devai.studio.ai.AiFormat
 import com.devai.studio.ai.AiMessage
 import com.devai.studio.ai.DevAICore
+import com.devai.studio.ai.AiQuality
 import com.devai.studio.ai.McpClient
 import com.devai.studio.ai.ToolAgent
 import com.devai.studio.data.ApiKeyStore
@@ -424,6 +425,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                         append(it.systemText()).append("\n\n")
                     }
                     append(AppPrefs.systemPromptForMode(context, mode))
+                    append("\n\n").append(AiQuality.ANSWER_RULES)
                     val style = AppPrefs.responseStyle(context)
                     append(
                         "\n\nСтиль ответа: " + when (style) {
@@ -458,11 +460,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                     if (searchBlock.isNotBlank()) {
                         append("\n\nАктуальные результаты поиска (Bing, Wikipedia, GitHub, Stack Overflow, Hacker News и другие):\n")
                         append(searchBlock)
-                        append(
-                            "\n\nОпирайся на эти результаты для свежих фактов, цен, погоды, новостей, " +
-                                "версий и событий. Если ответа в результатах нет, честно скажи об этом " +
-                                "и дай общий ответ. Указывай ссылки на источники."
-                        )
+                        append("\n\n").append(AiQuality.SEARCH_RULES)
                     }
                 }
                 apiMessages.add(AiMessage("system", system))
@@ -1507,14 +1505,18 @@ private fun CodeBlock(lang: String, code: String, fontSize: TextUnit, wrap: Bool
 
 private fun withSearchSources(answer: String, searchBlock: String): String {
     if (searchBlock.isBlank()) return answer
+    val existing = Regex("""https?://[^\s)>\]]+""")
+        .findAll(answer)
+        .map { it.value.trimEnd('.', ',', ';', ')', ']') }
+        .toSet()
     val links = Regex("""https?://[^\s)>\]]+""")
         .findAll(searchBlock)
         .map { it.value.trimEnd('.', ',', ';', ')', ']') }
-        .filter { !it.contains("bing.com/ck") }
+        .filter { !it.contains("bing.com/ck") && it !in existing }
         .distinct()
         .take(5)
         .toList()
-    if (links.isEmpty() || answer.contains("http")) return answer
+    if (links.isEmpty()) return answer
     return answer.trimEnd() + "\n\nИсточники:\n" + links.joinToString("\n") { "- $it" }
 }
 

@@ -63,6 +63,47 @@ class ResponseGuardTest {
         assertEquals("Привет! Чем помочь?", shown.toString())
     }
 
+
+    @Test
+    fun degenerateLoopIsRejected() {
+        val loop = "повторяю одно и то же предложение снова и снова ".repeat(20)
+        assertTrue(ResponseGuard.isDegenerate(loop))
+    }
+
+    @Test
+    fun variedAnswerIsNotDegenerate() {
+        val answer = (1..30).joinToString(" ") { "слово$it" }
+        assertFalse(ResponseGuard.isDegenerate(answer))
+    }
+
+    @Test
+    fun localPromptDropsOldestTurnsToFitBudget() {
+        val messages = (1..20).map { AiMessage("user", "длинный вопрос $it " + "контекст ".repeat(80)) } +
+            AiMessage("assistant", "ответ") +
+            AiMessage("user", "последний вопрос")
+        val prompt = LocalPrompt.build(messages, "chatml", maxChars = 2000)
+        assertTrue(prompt.length < 2300)
+        assertTrue(prompt.contains("последний вопрос"))
+        assertFalse(prompt.contains("длинный вопрос 1 "))
+    }
+
+    @Test
+    fun searchResultsSurviveLocalPromptBudget() {
+        val system = "Ты помощник. " + "Правило. ".repeat(100) +
+            "\n\nАктуальные результаты поиска:\n" + "1. Свежий факт https://example.com/source ".repeat(30)
+        val prompt = LocalPrompt.build(
+            listOf(
+                AiMessage("system", system),
+                AiMessage("user", "Что нового?"),
+            ),
+            "chatml",
+            maxChars = 2000,
+        )
+        assertTrue(prompt.contains("Актуальные результаты поиска"))
+        assertTrue(prompt.contains("Свежий факт"))
+        assertTrue(prompt.contains("User: Что нового?"))
+    }
+
     @Test
     fun promptDropsMetaAssistantTurnsAndAddsRussianRule() {
         val prompt = LocalPrompt.build(

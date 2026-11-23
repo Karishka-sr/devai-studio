@@ -55,6 +55,15 @@ object ResponseGuard {
         greetingReply(text)
             ?: "Не удалось получить нормальный ответ. Переформулируйте вопрос или выберите другую локальную модель."
 
+    fun isDegenerate(text: String): Boolean {
+        val normalized = normalize(text)
+        val words = normalized.split(' ').filter { it.isNotBlank() }
+        if (words.size < 80) return false
+        if (words.toSet().size.toDouble() / words.size < 0.22) return true
+        val repeatedPhrase = Regex("""\b(\w+(?: \w+){0,7})(?: \1){2,}""")
+        return repeatedPhrase.containsMatchIn(normalized)
+    }
+
     private fun normalize(text: String): String =
         text.lowercase()
             .replace(Regex("[`*_#>]+"), " ")
@@ -86,6 +95,10 @@ class ResponseGate(private val emit: (String) -> Unit) {
             return false
         }
         if (text.length >= 220) {
+            if (ResponseGuard.isDegenerate(text)) {
+                blocked = true
+                return false
+            }
             released = true
             emit(text)
             pending.clear()

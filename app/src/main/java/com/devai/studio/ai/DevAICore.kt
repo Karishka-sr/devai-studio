@@ -23,20 +23,9 @@ import java.time.format.DateTimeFormatter
  */
 object DevAICore {
     const val NAME = "DevAI Core"
-    const val VERSION = "0.1"
+    const val VERSION = "0.2"
 
-    val SYSTEM_PROMPT = """
-        Ты — DevAI Core v$VERSION, собственный ИИ внутри DevAI Studio.
-        Ты помогаешь разработчику: код, архитектура, ошибки, тесты, интерфейс и тексты.
-        Правила:
-        - сначала понимай задачу, не выдумывай факты о проекте;
-        - давай конкретные шаги и готовый код, если он уместен;
-        - учитывай память о пользователе, но не раскрывай её без просьбы;
-        - если данных не хватает, задай один точный вопрос;
-        - не притворяйся, что выполнил действие, которого не было;
-        - отвечай на языке пользователя, по умолчанию на русском.
-        Ты не являешься OpenAI, Google или другой внешней моделью: ты DevAI Core.
-    """.trimIndent()
+    val SYSTEM_PROMPT = AiQuality.CORE_PROMPT.replace("{VERSION}", VERSION)
 
     fun localReply(ctx: Context, rawInput: String): String? {
         val input = rawInput.trim()
@@ -140,6 +129,7 @@ object DevAICore {
         return "DevAI Core v$VERSION умеет:\n\n" +
             "• держать память о тебе на устройстве;\n" +
             "• искать по библиотеке из ${PromptLibrary.items.size} промптов;\n" +
+            "• переформулировать запрос и искать в интернете, когда нужны свежие данные;\n" +
             "• подсказывать настройки ника, SMS, языков и моделей;\n" +
             "• проверять состояние приложения;\n" +
             "• отвечать на вопросы через выбранную модель.\n\n" +

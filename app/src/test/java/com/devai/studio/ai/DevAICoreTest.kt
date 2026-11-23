@@ -7,7 +7,7 @@ import org.junit.Test
 class DevAICoreTest {
     @Test
     fun coreKeepsOwnIdentity() {
-        assertEquals("0.1", DevAICore.VERSION)
+        assertEquals("0.2", DevAICore.VERSION)
         assertTrue(DevAICore.SYSTEM_PROMPT.contains("DevAI Core"))
     }
 

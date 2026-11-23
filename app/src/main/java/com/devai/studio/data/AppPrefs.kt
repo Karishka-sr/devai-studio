@@ -1,6 +1,7 @@
 package com.devai.studio.data
 
 import android.content.Context
+import com.devai.studio.ai.AiQuality
 import com.devai.studio.ai.DevAICore
 
 object AppPrefs {
@@ -42,14 +43,8 @@ object AppPrefs {
     private const val KEY_CHAT_WALLPAPER = "chat_wallpaper"
     private const val KEY_CHAT_WALLPAPER_DIM = "chat_wallpaper_dim"
 
-    const val DEFAULT_SYSTEM_PROMPT =
-        "Ты — DevAI, полезный ИИ-ассистент разработчика. Отвечай по делу, давай рабочие примеры кода. " +
-            "Всегда отвечай на русском языке, если пользователь не попросил другой язык."
-
-    const val DEV_SYSTEM_PROMPT =
-        "Ты — DevAI, senior-разработчик. Помогай с кодом, архитектурой, ошибками и UI. " +
-            "Сначала уточняй требования, если задача неоднозначна. Давай готовые примеры кода " +
-            "и указывай, куда их вставлять. Всегда отвечай на русском языке."
+    val DEFAULT_SYSTEM_PROMPT = AiQuality.DEFAULT_PROMPT
+    val DEV_SYSTEM_PROMPT = AiQuality.DEV_PROMPT
 
     private const val LEGACY_DEFAULT_SYSTEM_PROMPT =
         "Ты — DevAI, полезный ИИ-ассистент разработчика. Отвечай по делу, давай рабочие примеры кода."

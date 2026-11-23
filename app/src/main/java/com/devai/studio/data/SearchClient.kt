@@ -55,6 +55,7 @@ object SearchClient {
         "добрый день", "добрый вечер", "доброе утро", "доброй ночи",
     )
     private val WEATHER_HINT = Regex("(?iu)(погод|температур|дожд|снег|ветер|жарк|холод|градус)")
+    private val URL = Regex("""https?://[^\s)>\]]+""")
     private val WEATHER_STOP = Regex(
         "(?iu)\\b(какая|какой|какие|сейчас|сегодня|завтра|погода|погоду|погоде|" +
             "температура|температуру|на|в|во|по|градусов|сколько|улице)\\b",
@@ -85,32 +86,87 @@ object SearchClient {
 
     suspend fun search(ctx: Context, query: String, maxResults: Int = 5): String =
         withContext(Dispatchers.IO) {
-            val q = query.trim()
-            require(q.isNotEmpty()) { "Пустой поисковый запрос" }
+            val plan = SearchQueryPlanner.plan(query)
+            require(plan.primary.isNotBlank()) { "Пустой поисковый запрос" }
             val limit = maxResults.coerceIn(1, 8)
-            val tavilyKey = ApiKeyStore.get(ctx, KEY_ID)
-            val githubToken = ApiKeyStore.get(ctx, GITHUB_KEY_ID)
 
-            val sections = coroutineScope {
-                listOf(
-                    async { runCatching { tavily(tavilyKey, q, limit) }.getOrNull() },
-                    async { runCatching { bing(q, limit) }.getOrNull() },
-                    async { runCatching { googleNews(q, limit) }.getOrNull() },
-                    async { runCatching { currencyRates(q) }.getOrNull() },
-                    async { runCatching { weather(q) }.getOrNull() },
-                    async { runCatching { github(q, githubToken, limit) }.getOrNull() },
-                    async { runCatching { stackOverflow(q, limit) }.getOrNull() },
-                    async { runCatching { wikipedia(q, limit) }.getOrNull() },
-                    async { runCatching { duckDuckGo(q, limit) }.getOrNull() },
-                    async { runCatching { hackerNews(q, limit) }.getOrNull() },
-                ).awaitAll().filterNotNull().filter { it.isNotBlank() }
-            }
-
-            if (sections.isEmpty()) {
+            val primary = searchOnce(ctx, plan.primary, limit)
+            if (primary.isEmpty()) {
                 error("Поиск не дал результатов. Проверьте интернет и повторите запрос.")
             }
-            sections.joinToString("\n\n").take(8000)
+
+            val extra = if (primary.joinToString("\n").length < 1800 && plan.alternates.isNotEmpty()) {
+                coroutineScope {
+                    plan.alternates.map { alternate ->
+                        async { runCatching { searchOnce(ctx, alternate, limit) }.getOrDefault(emptyList()) }
+                    }.awaitAll().flatten()
+                }
+            } else {
+                emptyList()
+            }
+
+            compact(orderSections(primary + extra, plan)).ifBlank {
+                error("Поиск не дал результатов. Проверьте интернет и повторите запрос.")
+            }
         }
+
+    private suspend fun searchOnce(ctx: Context, query: String, limit: Int): List<String> =
+        coroutineScope {
+            val tavilyKey = ApiKeyStore.get(ctx, KEY_ID)
+            val githubToken = ApiKeyStore.get(ctx, GITHUB_KEY_ID)
+            listOf(
+                async { runCatching { tavily(tavilyKey, query, limit) }.getOrNull() },
+                async { runCatching { bing(query, limit) }.getOrNull() },
+                async { runCatching { googleNews(query, limit) }.getOrNull() },
+                async { runCatching { currencyRates(query) }.getOrNull() },
+                async { runCatching { weather(query) }.getOrNull() },
+                async { runCatching { github(query, githubToken, limit) }.getOrNull() },
+                async { runCatching { stackOverflow(query, limit) }.getOrNull() },
+                async { runCatching { wikipedia(query, limit) }.getOrNull() },
+                async { runCatching { duckDuckGo(query, limit) }.getOrNull() },
+                async { runCatching { hackerNews(query, limit) }.getOrNull() },
+            ).awaitAll().filterNotNull().filter { it.isNotBlank() }
+        }
+
+    private fun orderSections(sections: List<String>, plan: SearchQueryPlanner.Plan): List<String> {
+        val preferred = when {
+            plan.fresh -> listOf(
+                "Новости", "Курсы", "Погода", "Tavily", "Bing", "Wikipedia",
+                "DuckDuckGo", "GitHub", "Stack Overflow", "Hacker News",
+            )
+            plan.code -> listOf(
+                "Stack Overflow", "GitHub", "Tavily", "Bing", "Wikipedia",
+                "DuckDuckGo", "Hacker News", "Новости", "Курсы", "Погода",
+            )
+            else -> listOf(
+                "Tavily", "Bing", "Wikipedia", "DuckDuckGo", "GitHub",
+                "Stack Overflow", "Новости", "Курсы", "Погода", "Hacker News",
+            )
+        }
+        return sections.sortedBy { section ->
+            val header = section.substringAfter("### ", "").substringBefore('\n')
+            preferred.indexOfFirst { header.contains(it) }.let { if (it < 0) preferred.size else it }
+        }
+    }
+
+    internal fun compact(sections: List<String>, maxChars: Int = 9000): String {
+        val seenUrls = HashSet<String>()
+        val out = StringBuilder()
+        for ((index, section) in sections.withIndex()) {
+            if (index > 0 && out.length >= maxChars) break
+            val body = section.trim().take(2600)
+            if (body.isBlank()) continue
+            val clean = body.lineSequence().filterNot { line ->
+                val urls = URL.findAll(line).map { it.value.trimEnd('.', ',', ';', ')', ']') }.toList()
+                if (urls.isEmpty()) return@filterNot false
+                urls.all { !seenUrls.add(it) }
+            }.joinToString("\n").trim()
+            if (clean.isBlank()) continue
+            if (out.isNotEmpty()) out.append("\n\n")
+            out.append(clean)
+        }
+        return out.toString().take(maxChars).trim()
+    }
 
     private fun tavily(key: String?, query: String, limit: Int): String? {
         if (key.isNullOrBlank()) return null

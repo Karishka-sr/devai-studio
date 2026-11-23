@@ -1,5 +1,6 @@
 package com.devai.studio.data
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -45,6 +46,23 @@ class SearchClientTest {
         assertFalse(SearchClient.isSearchWorthy("Спасибо"))
         assertFalse(SearchClient.isSearchWorthy("Кто ты?"))
         assertFalse(SearchClient.isSearchWorthy("Что ты умеешь?"))
+    }
+
+    @Test
+    fun compactDeduplicatesUrlsAndCapsSize() {
+        val block = """
+            ### Bing (веб)
+            - A
+              https://example.com/page
+            - B
+              https://example.com/page
+            - C
+              https://example.com/other
+        """.trimIndent()
+        val compact = SearchClient.compact(listOf(block, block), maxChars = 500)
+        assertEquals(1, Regex("https://example.com/page").findAll(compact).count())
+        assertTrue(compact.contains("https://example.com/other"))
+        assertTrue(compact.length <= 500)
     }
 
     @Test

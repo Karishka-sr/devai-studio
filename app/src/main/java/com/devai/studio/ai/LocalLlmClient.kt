@@ -1,6 +1,7 @@
 package com.devai.studio.ai
 
 import android.content.Context
+import com.devai.studio.data.AppPrefs
 import com.devai.studio.data.LocalModelStore
 
 class LocalLlmClient(private val ctx: Context) : AiClient {
@@ -18,11 +19,13 @@ class LocalLlmClient(private val ctx: Context) : AiClient {
         if (!file.exists()) {
             throw IllegalStateException("Файл модели «" + model.name + "» не найден. Скачайте её заново.")
         }
-        val prompt = LocalPrompt.build(messages, model.promptFormat)
+        val maxChars = (AppPrefs.localContextTokens(ctx) * 2.3).toInt()
+            .coerceIn(2000, 6000)
+        val prompt = LocalPrompt.build(messages, model.promptFormat, maxChars)
         val gate = ResponseGate(onDelta)
         val raw = LocalLlmEngine.generate(ctx, file.absolutePath, prompt) { gate.onChunk(it) }
         gate.finish()
-        if (gate.blocked || raw.isBlank() || ResponseGuard.isMeta(raw)) {
+        if (gate.blocked || raw.isBlank() || ResponseGuard.isMeta(raw) || ResponseGuard.isDegenerate(raw)) {
             val reply = ResponseGuard.fallback(lastUser)
             onDelta(reply)
             return reply

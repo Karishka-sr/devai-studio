@@ -15,8 +15,8 @@
 - Premium Неделя: LFM2.5 1.2B, TinyLlama 1.1B, Qwen2.5 1.5B. Месяц: Qwen2.5 Coder 1.5B, Qwen3 1.7B. Год: DeepSeek R1 1.5B, SmolLM3 3B, Phi-4 Mini.
 - Catalog uses public LiteRT-LM files (`.task` and `.litertlm`). Do not add gated Hugging Face repos (Gemma, Falcon-H1): direct downloads return 401 without a token.
 - LiteRT-LM applies the model chat template itself. `ai/LocalPrompt.kt` sends plain text and sanitizes every message; never send `<bos>`/ChatML/Gemma control tokens to `generateContentStream`.
-- `LocalPrompt` always appends a Russian-language instruction, and `AppPrefs.DEFAULT_SYSTEM_PROMPT` / `DEV_SYSTEM_PROMPT` require Russian answers. This fixes small local models drifting into English benchmark-style output.
-- `ai/ResponseGuard.kt` answers simple greetings without inference, filters leaked benchmark/task text from streamed local responses, and drops such assistant turns from prompt history.
+- `LocalPrompt` always appends a Russian-language instruction and now enforces a character budget derived from `AppPrefs.localContextTokens` (512–1280 tokens). It keeps the last user turn and prioritises the search-results section; never remove that budget or small models will drop the question or sources. `AppPrefs.DEFAULT_SYSTEM_PROMPT` / `DEV_SYSTEM_PROMPT` default to Russian answers.
+- `ai/ResponseGuard.kt` answers simple greetings without inference, filters leaked benchmark/task text and degenerate repetition from local responses, and drops such assistant turns from prompt history.
 - `data/ModelDownloader.kt` retries, resumes, and falls back to `hf-mirror.com` for Hugging Face URLs.
 
 ## Themes & Premium (v3.4.0)
@@ -44,7 +44,9 @@
 - `ChatMode.CORE` is the third chat mode. `ChatScreen.send` runs `DevAICore.localReply` before provider config; if no provider/key is configured it falls back to `offlineReply` instead of failing.
 - `AppPrefs.systemPromptForMode(CORE)` returns `DevAICore.SYSTEM_PROMPT`; custom user prompt still wins.
 - `DevAICore.findPrompts` first uses `PromptLibrary.search`, then falls back to all-term matching with simple stemming for phrases like «Kotlin API» and «тестов».
-- Tests: `DevAICoreTest` checks identity and prompt search; keep the local skill replies deterministic and offline.
+- Since Core 0.2, `ai/AiQuality.kt` is the shared answer policy: core/default/dev prompts plus `ANSWER_RULES` and `SEARCH_RULES`. `ChatScreen` appends the rules after any custom prompt, so user prompts cannot silently disable fact-checking/source rules.
+- `data/SearchQueryPlanner.kt` strips greetings/polite wrappers/question prefixes, detects fresh/code intents and produces alternate queries (`... 2026`, `... stackoverflow`). `SearchClient` runs alternates only when the first pass is thin, prioritises sections by intent, caps each section and deduplicates URLs. Keep planner logic pure and unit-tested.
+- Tests: `DevAICoreTest` checks identity and prompt search; `SearchQueryPlannerTest`, `LocalPromptTest`, `ResponseGuardTest`, `SearchClientTest` cover the query, budget and guard paths. Keep local skill replies deterministic and offline.
 - Since 3.6.2, `ChatScreen` enables web search automatically in `ChatMode.CORE` and for the `devai-core` provider. The chip shows «Интернет · авто»; a placeholder «Ищу в интернете…» appears while sources load.
 - Since 3.6.3, `SearchClient.isSearchWorthy` blocks web search for greetings and small talk («Привет», «Спасибо», «Кто ты», «Что ты умеешь», «Как дела»). `ChatScreen` applies it to both automatic and manual search, so a greeting gets a normal answer without a «Источники» block.
 - Since 3.6.4, update notifications use a full-screen Compose `Dialog` overlay from the Vexel design (`UpdateOverlay.kt`), with «Скачать» and «Позже» actions. The old top banner was removed. The 360×800 Vexel canvas is scaled down to fit small screens; Vexel itself is untouched.
