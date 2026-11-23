@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.bundling.Zip
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -12,8 +14,8 @@ android {
         applicationId = "com.devai.studio"
         minSdk = 31
         targetSdk = 34
-        versionCode = 35
-        versionName = "3.3.0"
+        versionCode = 36
+        versionName = "3.3.1"
         vectorDrawables.useSupportLibrary = true
         ndk {
             abiFilters += listOf("arm64-v8a")
@@ -41,6 +43,16 @@ android {
         compose = true
     }
 }
+
+val packLanguages by tasks.registering(Zip::class) {
+    from(rootProject.file("languages"))
+    archiveFileName.set("languages.zip")
+    destinationDirectory.set(layout.buildDirectory.dir("generated/languagePacks/raw"))
+}
+
+android.sourceSets.getByName("main").res.srcDir(layout.buildDirectory.dir("generated/languagePacks"))
+
+tasks.named("preBuild").configure { dependsOn(packLanguages) }
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")

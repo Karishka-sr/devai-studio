@@ -1,7 +1,10 @@
 package com.devai.studio.data
 
 import android.content.Context
+import com.devai.studio.R
 import org.json.JSONObject
+import java.io.File
+import java.util.zip.ZipInputStream
 
 data class CodeLanguage(
     val id: String,
@@ -521,38 +524,66 @@ object CodeLanguages {
         ),
     )
 
-    /** Каталог языков: по умолчанию встроенный, после [load] - из JSON-файлов assets/languages. */
+    /** Каталог языков: по умолчанию встроенный, после [load] - из файлов приложения. */
     var all: List<CodeLanguage> = builtIn
         private set
 
-    /** Читает языки из файлов сборки. Если файлов нет, остаётся встроенный список. */
+    /**
+     * Читает языки из папок приложения:
+     * `files/languages` и `Android/data/com.devai.studio/files/languages`.
+     * При первом запуске распаковывает туда стартовый набор из res/raw/languages.zip.
+     */
     fun load(ctx: Context) {
-        val loaded = runCatching {
-            ctx.assets.list("languages").orEmpty()
-                .filter { it.endsWith(".json") }
-                .mapNotNull { file ->
-                    runCatching {
-                        ctx.assets.open("languages/$file").use { input ->
-                            val json = JSONObject(input.bufferedReader().readText())
-                            val id = json.optString("id").trim()
-                            if (id.isBlank()) return@use null
-                            CodeLanguage(
-                                id = id,
-                                name = json.optString("name", id),
-                                short = json.optString("short", id),
-                                extension = json.optString("extension"),
-                                comment = json.optString("comment", "//"),
-                                testFramework = json.optString("testFramework", "—"),
-                                description = json.optString("description"),
-                                example = json.optString("example"),
-                                order = json.optInt("order", 0),
-                            )
+        val internal = File(ctx.filesDir, "languages")
+        val external = runCatching { ctx.getExternalFilesDir("languages") }.getOrNull()
+        seed(ctx, internal)
+        seed(ctx, external)
+        val loaded = (read(internal) + read(external))
+            .associateBy { it.id }
+            .values
+            .sortedWith(compareBy({ it.order }, { it.name }))
+        if (loaded.isNotEmpty()) all = loaded
+    }
+
+    private fun seed(ctx: Context, dir: File?) {
+        if (dir == null) return
+        if (dir.listFiles { f -> f.extension == "json" }?.isNotEmpty() == true) return
+        runCatching {
+            dir.mkdirs()
+            ctx.resources.openRawResource(R.raw.languages).use { input ->
+                ZipInputStream(input.buffered()).use { zip ->
+                    while (true) {
+                        val entry = zip.nextEntry ?: break
+                        if (!entry.isDirectory && entry.name.endsWith(".json")) {
+                            File(dir, entry.name.substringAfterLast('/')).writeBytes(zip.readBytes())
                         }
-                    }.getOrNull()
+                        zip.closeEntry()
+                    }
                 }
-                .sortedWith(compareBy({ it.order }, { it.name }))
-        }.getOrNull()
-        if (!loaded.isNullOrEmpty()) all = loaded
+            }
+        }
+    }
+
+    private fun read(dir: File?): List<CodeLanguage> =
+        dir?.listFiles { f -> f.extension == "json" }
+            ?.mapNotNull { file -> runCatching { parse(file.readText()) }.getOrNull() }
+            .orEmpty()
+
+    private fun parse(text: String): CodeLanguage? {
+        val json = JSONObject(text)
+        val id = json.optString("id").trim()
+        if (id.isBlank()) return null
+        return CodeLanguage(
+            id = id,
+            name = json.optString("name", id),
+            short = json.optString("short", id),
+            extension = json.optString("extension"),
+            comment = json.optString("comment", "//"),
+            testFramework = json.optString("testFramework", "—"),
+            description = json.optString("description"),
+            example = json.optString("example"),
+            order = json.optInt("order", 0),
+        )
     }
 
     val default: CodeLanguage

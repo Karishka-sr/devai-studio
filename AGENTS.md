@@ -19,7 +19,7 @@
 - `ai/ResponseGuard.kt` answers simple greetings without inference, filters leaked benchmark/task text from streamed local responses, and drops such assistant turns from prompt history.
 - `data/ModelDownloader.kt` retries, resumes, and falls back to `hf-mirror.com` for Hugging Face URLs.
 
-## Themes & Premium (v3.3.0)
+## Themes & Premium (v3.3.1)
 - `ui/DevAIDesign.kt` is the shared Aurora design system: gradient background, logo/top bar, rounded bordered cards, icon tiles, status pills, gradient buttons. Use these composables instead of raw `Card`/`TopAppBar` on new screens.
 - Contrast is enforced at the container level: `DevAIBackground` provides `LocalContentColor = onBackground`; `DevAICard`, top-bar buttons, bottom bar, chat bubbles and custom `Surface`s set an explicit `contentColor`. Do not rely on `contentColorFor()` for translucent colors (`surface.copy(alpha = ...)`) — it returns `Unspecified` and can inherit an unreadable color.
 - `ui/DevAIApp.kt` owns the palette, typography, shapes, and the floating rounded bottom bar. Default M3 is now Aurora (indigo/mint/coral); Expressive/Retro remain premium themes.
@@ -42,7 +42,8 @@
 - `AppPrefs.responseStyle` / `responseLanguage` append style and language rules to the system prompt. Settings → Чат exposes both.
 - Chat also supports temporary (non-persisted) sessions, voice input via `RecognizerIntent`, per-message copy/share, and a prompt-library shortcut.
 - `QuickToolsTest` exercises every tool with a valid sample and asserts the catalog stays at 50+ entries. It uses the real `org.json` test dependency because Android's stub throws in JVM tests.
-- `app/src/main/assets/languages/*.json` is the source of truth for 75 languages (Kotlin default). `CodeLanguages.load(ctx)` reads them at startup; the hardcoded list is only a fallback. Add a language by adding one JSON file with `id/name/short/extension/comment/testFramework/description/example/order`. `data/CodeLanguages.kt` provides aliases and `fromFileName`. The chat injects `CodeLanguages.instruction` into the DEV system prompt; `CodeLanguagesActivity` is the picker; `ChatAiActions` uses the selected language for test generation.
+- `languages/*.json` is the source of truth for 75 languages (Kotlin default). The build packs them into `res/raw/languages.zip`; nothing is stored in `assets`.
+- `CodeLanguages.load(ctx)` seeds `filesDir/languages` and `Android/data/com.devai.studio/files/languages` from that zip, then reads the files. Users can add JSON there without rebuilding; the hardcoded list is only a fallback. Add a language by adding one JSON file with `id/name/short/extension/comment/testFramework/description/example/order`. `data/CodeLanguages.kt` provides aliases and `fromFileName`. The chat injects `CodeLanguages.instruction` into the DEV system prompt; `CodeLanguagesActivity` is the picker; `ChatAiActions` uses the selected language for test generation.
 - `data/CodeSyntax.kt` is the offline lexer for 50 languages: keywords, types, strings, comments, numbers, annotations, functions and markup. `ui/CodeHighlight.kt` renders it in chat code blocks and language previews. Aliases (`js`, `ts`, `c++`, `c#`, `objective-c`) and auto-detection for untagged fences are supported.
 - `ui/ChatWallpapers.kt` lists 24 offline wallpapers; `WallpaperActivity`/`WallpaperScreen` is the picker. Full images live in `res/drawable-nodpi/chat_wall_XX.png`, thumbnails in `chat_wall_thumb_XX.png`. Chat reads `AppPrefs.chatWallpaper`/`chatWallpaperDim` and renders the selected image behind the message list.
 
