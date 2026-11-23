@@ -75,6 +75,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -104,10 +105,12 @@ import com.devai.studio.data.PremiumPlan
 import com.devai.studio.data.PhoneAuthManager
 import com.devai.studio.data.PhoneNumbers
 import com.devai.studio.data.PremiumStore
+import com.devai.studio.data.UpdateChecker
 import com.devai.studio.data.ProfileStore
 import com.devai.studio.data.PromptLibrary
 import com.devai.studio.util.PremiumDialogs
 import com.devai.studio.util.ThemeManager
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 private enum class SettingsCategory(
@@ -200,6 +203,7 @@ private val settingsPresets = listOf(
 fun SettingsScreen() {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val scope = rememberCoroutineScope()
 
     var temperature by remember { mutableFloatStateOf(AppPrefs.temperature(context)) }
     var topP by remember { mutableFloatStateOf(AppPrefs.topP(context)) }
@@ -1353,11 +1357,22 @@ fun SettingsScreen() {
                         fontWeight = FontWeight.Bold,
                     )
                     ActionRow(
-                        icon = Icons.Default.Info,
-                        title = "Обновления",
-                        subtitle = "GitHub Releases",
+                        icon = Icons.Default.Refresh,
+                        title = "Проверить обновления",
+                        subtitle = "Сейчас · GitHub Releases",
                         onClick = {
-                            openUrl("https://github.com/Karishka-sr/devai-studio/releases")
+                            scope.launch {
+                                toast("Проверяю обновления…")
+                                val update = runCatching {
+                                    UpdateChecker.check(context, force = true)
+                                }.getOrNull()
+                                if (update != null) {
+                                    toast("Доступна версия ${update.version}")
+                                    openUrl(update.pageUrl.ifBlank { update.apkUrl })
+                                } else {
+                                    toast("Обновлений нет: установлена последняя версия")
+                                }
+                            }
                         },
                     )
                     ActionRow(

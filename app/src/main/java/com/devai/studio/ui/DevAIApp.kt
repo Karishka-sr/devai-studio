@@ -49,6 +49,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import com.devai.studio.data.AppPrefs
 import com.devai.studio.data.ChatMode
 import com.devai.studio.data.ChatSessionsStore
@@ -58,6 +61,8 @@ import com.devai.studio.data.UpdateChecker
 import com.devai.studio.util.AndroidUtils
 import com.devai.studio.util.ThemeManager
 import com.qwenz.qwel.MainActivity as QwelActivity
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 private val AuroraLight = lightColorScheme(
     primary = Color(0xFF5B4BE8),
@@ -261,12 +266,25 @@ fun DevAIApp() {
     val context = LocalContext.current
     var tab by rememberSaveable { mutableStateOf("chat") }
     var modeId by rememberSaveable { mutableStateOf(AppPrefs.chatMode(context)) }
-    var update by remember { mutableStateOf<AppUpdate?>(null) }
-    var updateDismissed by rememberSaveable { mutableStateOf(false) }
+    var update by remember { mutableStateOf(UpdateChecker.cached(context)) }
+    var dismissedVersion by rememberSaveable {
+        mutableStateOf(UpdateChecker.dismissedVersion(context))
+    }
     val mode = ChatMode.fromId(modeId)
+    val lifecycleOwner = LocalLifecycleOwner.current
 
-    LaunchedEffect(Unit) {
-        update = UpdateChecker.cached(context) ?: UpdateChecker.check(context)
+    // Poll while the app is actually visible: every 30 s the cheap website
+    // JSON is checked, every 5 min (and on resume) GitHub Releases is checked.
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            var first = true
+            while (isActive) {
+                val next = runCatching { UpdateChecker.check(context, force = first) }.getOrNull()
+                if (next != null) update = next
+                first = false
+                delay(30_000L)
+            }
+        }
     }
 
     DevAIBackground {
@@ -304,17 +322,21 @@ fun DevAIApp() {
         }
     }
 
-    val available = update
-    if (available != null && !updateDismissed) {
+    val available = update?.takeIf { it.version != dismissedVersion }
+    if (available != null) {
         UpdateOverlay(
             onDownload = {
                 AndroidUtils.openUrl(
                     context,
                     available.apkUrl.ifBlank { available.pageUrl },
                 )
-                updateDismissed = true
+                dismissedVersion = available.version
+                UpdateChecker.dismiss(context, available.version)
             },
-            onDismiss = { updateDismissed = true },
+            onDismiss = {
+                dismissedVersion = available.version
+                UpdateChecker.dismiss(context, available.version)
+            },
         )
     }
 }
