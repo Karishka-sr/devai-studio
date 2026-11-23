@@ -45,11 +45,43 @@ object SearchClient {
             "что нового|происход|событ|выбор|матч|счёт|релиз|вышел|вышла|202[4-9])",
     )
     private val CURRENCY_HINT = Regex("(?iu)(курс|доллар|евро|юан|валют|usd|eur|cny)")
+    private val GREETINGS = setOf(
+        "привет", "приветик", "здравствуй", "здравствуйте", "хай", "hello", "hi", "ку",
+        "спасибо", "благодарю", "thanks", "пока", "бай",
+    )
+    private val SMALL_TALK = listOf(
+        "как дела", "как ты", "что делаешь", "чем занимаешься", "кто ты", "ты кто",
+        "что ты умеешь", "твои возможности", "что нового у тебя", "как жизнь",
+        "добрый день", "добрый вечер", "доброе утро", "доброй ночи",
+    )
     private val WEATHER_HINT = Regex("(?iu)(погод|температур|дожд|снег|ветер|жарк|холод|градус)")
     private val WEATHER_STOP = Regex(
         "(?iu)\\b(какая|какой|какие|сейчас|сегодня|завтра|погода|погоду|погоде|" +
             "температура|температуру|на|в|во|по|градусов|сколько|улице)\\b",
     )
+
+    /**
+     * Отсекает приветствия и короткую болтовню: для них веб-поиск только добавляет мусор.
+     */
+    fun isSearchWorthy(query: String): Boolean {
+        val normalized = query.trim().lowercase()
+            .replace(Regex("[^\\p{L}\\p{N}\\s]"), " ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+        if (normalized.length < 3) return false
+        var rest = normalized
+        for (greeting in GREETINGS) {
+            if (rest == greeting) return false
+            if (rest.startsWith("$greeting ")) {
+                rest = rest.removePrefix("$greeting ").trim()
+                break
+            }
+        }
+        if (rest.isBlank()) return false
+        if (rest != normalized && rest.split(' ').size <= 1) return false
+        if (SMALL_TALK.any { rest == it || rest.startsWith("$it ") }) return false
+        return true
+    }
 
     suspend fun search(ctx: Context, query: String, maxResults: Int = 5): String =
         withContext(Dispatchers.IO) {

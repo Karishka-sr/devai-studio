@@ -1,5 +1,6 @@
 package com.devai.studio.data
 
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -34,5 +35,23 @@ class SearchClientTest {
     @Test
     fun ignoresPagesWithoutResults() {
         assertNull(SearchClient.parseBing("<html><body>No results</body></html>", 5))
+    }
+
+    @Test
+    fun greetingsDoNotTriggerWebSearch() {
+        assertFalse(SearchClient.isSearchWorthy("Привет"))
+        assertFalse(SearchClient.isSearchWorthy("Привет!"))
+        assertFalse(SearchClient.isSearchWorthy("Здравствуйте, как дела?"))
+        assertFalse(SearchClient.isSearchWorthy("Спасибо"))
+        assertFalse(SearchClient.isSearchWorthy("Кто ты?"))
+        assertFalse(SearchClient.isSearchWorthy("Что ты умеешь?"))
+    }
+
+    @Test
+    fun factualQueriesTriggerWebSearch() {
+        assertTrue(SearchClient.isSearchWorthy("Курс доллара"))
+        assertTrue(SearchClient.isSearchWorthy("Погода в Москве"))
+        assertTrue(SearchClient.isSearchWorthy("Последние новости технологий"))
+        assertTrue(SearchClient.isSearchWorthy("Привет, что нового в Kotlin?"))
     }
 }

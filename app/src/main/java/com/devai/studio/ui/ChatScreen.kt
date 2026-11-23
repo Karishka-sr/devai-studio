@@ -387,7 +387,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
         }
 
         val autoWeb = mode == ChatMode.CORE || AiSupport.provider(context)?.id == "devai-core"
-        val searchOn = searchEnabled || autoWeb
+        val searchOn = (searchEnabled || autoWeb) && SearchClient.isSearchWorthy(typed)
         val useMcp = mcpEnabled
         input = ""
         attachments = emptyList()
