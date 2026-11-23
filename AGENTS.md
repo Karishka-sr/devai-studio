@@ -39,7 +39,7 @@
 - `PhoneAuthManager` uses Firebase Phone Auth. Configure `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_PROJECT_ID` in `local.properties`; without them the profile UI is disabled with an explicit message. See `docs/PHONE_AUTH.md`.
 - Settings category `PROFILE` edits nickname (2–32 chars) and runs SMS code request/confirm; `PhoneNumbers` normalizes RU formats and is unit-tested.
 
-## DevAI Core (3.6.1 → 3.6.3)
+## DevAI Core (3.6.1 → 3.6.4)
 - `ai/DevAICore.kt` is the custom assistant layer: local intent replies (memory, prompt search, profile/SMS/language/model help, status, time), `SYSTEM_PROMPT`, and `offlineReply`.
 - `ChatMode.CORE` is the third chat mode. `ChatScreen.send` runs `DevAICore.localReply` before provider config; if no provider/key is configured it falls back to `offlineReply` instead of failing.
 - `AppPrefs.systemPromptForMode(CORE)` returns `DevAICore.SYSTEM_PROMPT`; custom user prompt still wins.
@@ -47,6 +47,7 @@
 - Tests: `DevAICoreTest` checks identity and prompt search; keep the local skill replies deterministic and offline.
 - Since 3.6.2, `ChatScreen` enables web search automatically in `ChatMode.CORE` and for the `devai-core` provider. The chip shows «Интернет · авто»; a placeholder «Ищу в интернете…» appears while sources load.
 - Since 3.6.3, `SearchClient.isSearchWorthy` blocks web search for greetings and small talk («Привет», «Спасибо», «Кто ты», «Что ты умеешь», «Как дела»). `ChatScreen` applies it to both automatic and manual search, so a greeting gets a normal answer without a «Источники» block.
+- Since 3.6.4, update notifications use a full-screen Compose `Dialog` overlay from the Vexel design (`UpdateOverlay.kt`), with «Скачать» and «Позже» actions. The old top banner was removed. The 360×800 Vexel canvas is scaled down to fit small screens; Vexel itself is untouched.
 - `data/SearchClient.kt` aggregates Tavily (optional key), Bing (English), Google News RSS (news queries), CBR daily rates (currency queries), wttr.in (weather queries), GitHub, Stack Overflow, Wikipedia (with lead extract), DuckDuckGo and Hacker News. Cyrillic queries skip Bing because its mobile/RU HTML is unreliable; Wikipedia + Google News cover them.
 - Search results are injected into the system prompt with an instruction to cite sources; `withSearchSources` appends up to five links to the final answer. The prompt also carries the current date/time.
 - `data/UpdateChecker.kt` checks the latest GitHub release for `Karishka-sr/devai-studio` and `devai-studio-pc`, using the Releases API and falling back to `releases.atom` + `expanded_assets` when the API is rate-limited. It only accepts releases with an `.apk` asset and compares semantic versions against `BuildConfig.VERSION_NAME`.
