@@ -1,15 +1,15 @@
 {
-  "tag": "v4.1.0",
-  "version": "4.1.0",
-  "name": "DevAI Studio 4.1.0",
-  "published_at": "2026-11-24T02:24:35Z",
-  "page_url": "https://github.com/Karishka-sr/devai-studio/releases/tag/v4.1.0",
-  "apk_url": "https://github.com/Karishka-sr/devai-studio/releases/download/v4.1.0/devai-studio-4.1.0.apk",
-  "apk_name": "devai-studio-4.1.0.apk",
-  "apk_size": 117742759,
-  "apk_sha256": "69476fb54aaff7101c7ac35166f7ff7588963140a2013d94957e8c6d1d722517",
-  "languages_url": "https://github.com/Karishka-sr/devai-studio/releases/download/v4.1.0/devai-languages-4.1.0.zip",
-  "languages_name": "devai-languages-4.1.0.zip",
-  "body": "Этот релиз подготовлен AI-агентом (OpenHands) от имени Karishka-sr.\n\n# DevAI Studio 4.1.0 — настоящие стили интерфейса\n\n## Что нового\n- Стили больше не меняют только палитру. Каждый ключевой стиль получил собственный структурный макет: ChatGPT, Claude, Gemini, Material You, Material Design, Material Expressive 3, Glass, Liquid Glass и Terminal.\n- ChatGPT: сообщения ассистента без пузыря, сообщения пользователя — серые пилюли справа, снизу единое поле ввода.\n- Claude: широкие сообщения на всю ширину, ответы ассистента с засечками, реплики пользователя в рамке.\n- Terminal: моноширинный текст, приглашение `>_`, плоские панели и консольная сетка.\n- Material You: динамические цвета системы, M3-навигация с индикатором, карточки и тональные поверхности.\n- Material Design: верхняя панель в primary-цвете, плоская навигация без индикатора, классические карточки.\n- Material Expressive 3: крупные радиусы, выразительная типографика, тональные блоки и большая кнопка отправки.\n- Glass и Liquid Glass: настоящее размытие фона через Haze. Верхняя панель, поле ввода, нижняя навигация и карточки просвечивают сквозь себя список сообщений и обои. Liquid Glass дополнительно получил анимированный фон и блик на карточках.\n- В настройках стилей превью теперь показывает не только цвета, но и структуру выбранного макета.\n\n## Проверка\n- `:app:compileDebugKotlin` и `:app:testDebugUnitTest` прошли.\n- Добавлены тесты на структурные макеты и glass-фон.\n- Vexel-конструктор не изменялся, «Автор» на месте.\n- Подпись: `apksigner`, сертификат `CN=DevAI Studio`; APK проверен, versionCode 46, versionName 4.1.0.\n\n## Файлы\n- `devai-studio-4.1.0.apk`\n- `devai-languages-4.1.0.zip`\n",
-  "generated_at": "2026-11-24T02:24:45Z"
+  "tag": "v4.2.0",
+  "version": "4.2.0",
+  "name": "DevAI Studio 4.2.0",
+  "published_at": "2026-11-24T08:56:56Z",
+  "page_url": "https://github.com/Karishka-sr/devai-studio/releases/tag/v4.2.0",
+  "apk_url": "https://github.com/Karishka-sr/devai-studio/releases/download/v4.2.0/devai-studio-4.2.0.apk",
+  "apk_name": "devai-studio-4.2.0.apk",
+  "apk_size": 117759143,
+  "apk_sha256": "e4c91eb69c852bc6e2afc2c7e79734ae3377539988cdb33406ea2aab9706d114",
+  "languages_url": "https://github.com/Karishka-sr/devai-studio/releases/download/v4.2.0/devai-languages-4.2.0.zip",
+  "languages_name": "devai-languages-4.2.0.zip",
+  "body": "Этот релиз подготовлен AI-агентом (OpenHands) от имени Karishka-sr.\n\n# DevAI Studio 4.2.0 — 100 новых языков и обновлённые сайты\n\n## Что нового\n- В каталог ИИ добавлено 100 новых языковых пакетов. Всего теперь 175 языков: от ABAP, CUDA и COQ до Typst, WebAssembly и Zeek.\n- Новые языки автоматически попадают в подсказку ИИ, выбор языка, редактор и генерацию тестов.\n- `CodeLanguages.seed` теперь добавляет недостающие файлы при каждом запуске. Пользователи 4.1.0 получат новые языки без переустановки, а их собственные правки не перезаписываются.\n- Сайт DevAI Studio обновлён под 4.2.0: 175 языков, актуальная версия и отдельная кнопка «API-ключи DevAI».\n- Сайт API-ключей получил блок «Ключ в DevAI Studio»: где открыть провайдеры, как вставить ключ, лимиты и ссылки на APK.\n- В приложении ссылка «Получить ключ на сайте» теперь ведёт сразу на `api.html#key`.\n\n## Проверка\n- 175 JSON-файлов проверены: уникальные id, все обязательные поля, валидный JSON.\n- `:app:testDebugUnitTest` прошёл.\n- В APK лежит `languages.zip` со 175 записями.\n- APK подписан, versionCode 47, versionName 4.2.0.\n- Vexel-конструктор не изменялся, «Автор» на месте.\n\n## Файлы\n- `devai-studio-4.2.0.apk`\n- `devai-languages-4.2.0.zip`\n",
+  "generated_at": "2026-11-24T08:57:14Z"
 }
