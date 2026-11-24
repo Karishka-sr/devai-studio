@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="ru" data-theme="lime">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>DevAI Studio — Expressive</title>
+  <meta name="description" content="DevAI Studio в эстетике Material Expressive 3: крупная типографика, живые формы, эмбиент-звук и Android-студия с Vexel, ИИ-чатом и 175 языками.">
+  <meta name="theme-color" content="#0b0f0c">
+  <meta property="og:title" content="DevAI Studio — Expressive">
+  <meta property="og:description" content="DevAI Studio в эстетике Material Expressive 3: крупная типографика, живые формы, эмбиент-звук и Android-студия с Vexel, ИИ-чатом и 175 языками.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://karishka-sr.github.io/devai-studio/expressive/">
+  <meta property="og:image" content="https://karishka-sr.github.io/devai-studio/devai-icon.png">
+  <link rel="canonical" href="https://karishka-sr.github.io/devai-studio/expressive/">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Unbounded:wght@500;700;900&display=swap" rel="stylesheet">
+  <script>document.documentElement.classList.add("js");</script>
+  <link rel="stylesheet" href="expressive.css">
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="scroll-progress" aria-hidden="true"><i id="scroll-bar"></i></div>
+
+  <header class="top">
+    <a class="brand" href="../index.html" aria-label="DevAI Studio — на главную">
+      <img src="../favicon.svg" alt="" width="34" height="34">
+      <span class="brand-text">DEVAI<span>/</span>STUDIO</span>
+      <span class="brand-tag">EXPRESSIVE</span>
+    </a>
+    <nav class="nav" aria-label="Основная навигация">
+      <a href="#mood">Настроение</a>
+      <a href="#features">Возможности</a>
+      <a href="#vexel">Vexel</a>
+      <a href="#download">Скачать</a>
+      <a href="../playground/">Playground</a>
+    </nav>
+    <div class="top-actions">
+      <button class="sound-toggle" type="button" data-sound-toggle aria-pressed="false" aria-label="Включить эмбиент">
+        <span class="sound-toggle-icon" aria-hidden="true">
+          <svg class="icon play-icon" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor" stroke="none"/></svg>
+          <svg class="icon pause-icon" viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor" stroke="none"/></svg>
+        </span>
+        <span class="sound-toggle-label">Звук</span>
+      </button>
+      <a class="btn btn-primary btn-small ripple magnetic" href="https://github.com/Karishka-sr/devai-studio/releases/latest" target="_blank" rel="noopener" data-toast="Открываю GitHub Releases">
+        APK <svg class="icon" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M5 20h14"/></svg>
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="top">
+      <div class="hero-copy reveal">
+        <span class="kicker"><i></i> MATERIAL EXPRESSIVE 3 · V4.2.0</span>
+        <h1>Код.<br><span class="outline">Идеи.</span><br><span class="accent">Свой ритм.</span></h1>
+        <p class="lede">Android-студия, которая двигается и звучит вместе с тобой. Vexel, ИИ-чат, 175 языков и локальные модели — в одном живом интерфейсе.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary btn-large ripple magnetic" href="https://github.com/Karishka-sr/devai-studio/releases/latest" target="_blank" rel="noopener" data-toast="Открываю GitHub Releases">
+            Скачать APK
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M5 20h14"/></svg>
+          </a>
+          <a class="btn btn-tonal btn-large ripple" href="#features">Что внутри <svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></a>
+        </div>
+        <div class="hero-meta">
+          <span>ANDROID 12+</span>
+          <span>ARM64-V8A</span>
+          <span>112,3 МБ</span>
+          <span class="live"><i></i> V4.2.0</span>
+        </div>
+      </div>
+
+      <div class="hero-stage" aria-hidden="true">
+        <div class="orb-wrap">
+          <div class="orb">
+            <span class="orb-core"></span>
+            <span class="orb-ring ring-a"></span>
+            <span class="orb-ring ring-b"></span>
+            <span class="orb-ring ring-c"></span>
+            <span class="orb-glyph">D</span>
+            <span class="orb-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          </div>
+          <div class="float-card float-a">
+            <span class="fc-dot"></span>
+            <span class="fc-label">VEXEL</span>
+            <strong>Конструктор</strong>
+            <small>готов к сборке</small>
+          </div>
+          <div class="float-card float-b">
+            <span class="fc-label">DEVAI CORE</span>
+            <strong>ИИ-чат</strong>
+            <small>поиск + код</small>
+          </div>
+          <div class="float-card float-c">
+            <span class="fc-label">LOCAL</span>
+            <strong>175 языков</strong>
+            <small>работает офлайн</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee-track">
+        <span>VEXEL</span><i></i><span>ИИ-ЧАТ</span><i></i><span>175 ЯЗЫКОВ</span><i></i><span>ЛОКАЛЬНЫЕ МОДЕЛИ</span><i></i><span>ANDROID 12+</span><i></i><span>MATERIAL EXPRESSIVE 3</span><i></i>
+        <span>VEXEL</span><i></i><span>ИИ-ЧАТ</span><i></i><span>175 ЯЗЫКОВ</span><i></i><span>ЛОКАЛЬНЫЕ МОДЕЛИ</span><i></i><span>ANDROID 12+</span><i></i><span>MATERIAL EXPRESSIVE 3</span><i></i>
+      </div>
+    </div>
+
+    <section class="section mood" id="mood">
+      <div class="section-head reveal">
+        <span class="eyebrow">01 / НАСТРОЕНИЕ</span>
+        <h2>Интерфейс<br><em>под тебя.</em></h2>
+        <p>Четыре expressive-темы и четыре звуковые сцены. Меняй цвет, глубину и атмосферу — интерфейс отвечает сразу.</p>
+      </div>
+
+      <div class="mood-grid">
+        <div class="mood-panel reveal">
+          <div class="panel-top"><span class="label">ЦВЕТ</span><span class="panel-value" id="theme-name">Лайм</span></div>
+          <div class="theme-grid" role="group" aria-label="Цветовая тема">
+            <button class="theme-chip is-active" type="button" data-theme-choice="lime" aria-pressed="true"><i style="--c:#c8ff3d"></i><span>Лайм</span></button>
+            <button class="theme-chip" type="button" data-theme-choice="coral" aria-pressed="false"><i style="--c:#ff6b8a"></i><span>Коралл</span></button>
+            <button class="theme-chip" type="button" data-theme-choice="violet" aria-pressed="false"><i style="--c:#b69cff"></i><span>Лила</span></button>
+            <button class="theme-chip" type="button" data-theme-choice="ocean" aria-pressed="false"><i style="--c:#6fe7ff"></i><span>Океан</span></button>
+          </div>
+          <div class="theme-preview" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+          <p class="hint">Тема сохраняется в браузере и применяется ко всем блокам страницы.</p>
+        </div>
+
+        <div class="mood-panel sound-panel reveal" id="sound">
+          <div class="panel-top"><span class="label">ЭМБИЕНТ</span><span class="panel-value" id="sound-state">выключен</span></div>
+          <div class="sound-head">
+            <button class="sound-orb" type="button" data-sound-toggle aria-pressed="false" aria-label="Включить эмбиент">
+              <svg class="icon play-icon" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor" stroke="none"/></svg>
+              <svg class="icon pause-icon" viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor" stroke="none"/></svg>
+            </button>
+            <div class="sound-head-copy"><strong id="scene-name">Космос</strong><small id="scene-desc">Глубокие пэды и медленное дыхание</small></div>
+          </div>
+          <div class="scene-grid" role="group" aria-label="Звуковая сцена">
+            <button class="scene-card is-active" type="button" data-scene="space"><span class="scene-icon">◌</span><strong>Космос</strong><small>пэды</small></button>
+            <button class="scene-card" type="button" data-scene="rain"><span class="scene-icon">⌁</span><strong>Дождь</strong><small>шум и капли</small></button>
+            <button class="scene-card" type="button" data-scene="forest"><span class="scene-icon">⌇</span><strong>Лес</strong><small>ветер и птицы</small></button>
+            <button class="scene-card" type="button" data-scene="focus"><span class="scene-icon">≋</span><strong>Фокус</strong><small>бурый шум</small></button>
+          </div>
+          <label class="volume-row">
+            <span>Громкость</span>
+            <input type="range" min="0" max="100" value="35" data-volume aria-label="Громкость эмбиента">
+            <output data-volume-output>35%</output>
+          </label>
+          <label class="switch-row">
+            <span>Звуки интерфейса</span>
+            <input type="checkbox" id="ui-sounds" checked>
+            <i aria-hidden="true"></i>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="section features" id="features">
+      <div class="section-head reveal">
+        <span class="eyebrow">02 / ВОЗМОЖНОСТИ</span>
+        <h2>Больше, чем<br><em>редактор.</em></h2>
+        <p>Всё, что нужно, чтобы придумать, собрать и проверить Android-идею — без прыжков между приложениями.</p>
+      </div>
+
+      <div class="bento">
+        <article class="bento-card span-7 reveal">
+          <span class="label">VEXEL / КОНСТРУКТОР</span>
+          <h3>Собирай экраны,<br>не трогая код.</h3>
+          <p>Визуальный конструктор с живым превью, слоями и свойствами. Тот самый Vexel — без изменений и сюрпризов.</p>
+          <div class="mini-vexel" aria-hidden="true">
+            <span class="mv-side"></span>
+            <span class="mv-canvas"><i></i><i></i><i></i></span>
+            <span class="mv-props"></span>
+          </div>
+        </article>
+
+        <article class="bento-card span-5 accent-card reveal">
+          <span class="label">DEVAI CORE</span>
+          <h3>ИИ, который<br>ищет и объясняет.</h3>
+          <p>Чат с интернет-поиском, разбором кода и генерацией экранов. Спроси словами — получи рабочий результат.</p>
+          <div class="chat-preview" aria-hidden="true">
+            <span class="bubble bubble-in">Сделай экран входа в Vexel</span>
+            <span class="bubble bubble-out">Готово. Добавил поля, валидацию и тему.</span>
+            <span class="typing"><i></i><i></i><i></i></span>
+          </div>
+        </article>
+
+        <article class="bento-card span-4 stat-card reveal">
+          <span class="stat" data-count="175">175</span>
+          <h3>языков</h3>
+          <p>Подсветка, подсказки и локальные модели для каждого.</p>
+        </article>
+
+        <article class="bento-card span-4 stat-card reveal">
+          <span class="stat" data-count="112" data-suffix=" МБ">112 МБ</span>
+          <h3>весит APK</h3>
+          <p>Один файл для ARM64. Внутри — вся студия и офлайн-режим.</p>
+        </article>
+
+        <article class="bento-card span-4 stat-card reveal">
+          <span class="stat" data-count="4">4</span>
+          <h3>звуковые сцены</h3>
+          <p>Космос, дождь, лес и фокус. Включаются одним касанием.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section vexel-section" id="vexel">
+      <div class="vexel-copy reveal">
+        <span class="eyebrow">03 / VEXEL</span>
+        <h2>Собери экран.<br><em>Почувствуй отклик.</em></h2>
+        <p>Перетаскивай блоки, меняй свойства и смотри, как макет оживает. Vexel остаётся твоим конструктором — мы только добавили expressive-настроение вокруг.</p>
+        <ul class="check-list">
+          <li><span>01</span> Слои, сетки и адаптивные блоки</li>
+          <li><span>02</span> Живое превью и экспорт проекта</li>
+          <li><span>03</span> Темы, типографика и анимации</li>
+        </ul>
+        <a class="btn btn-tonal ripple magnetic" href="../index.html#features">Посмотреть возможности <svg class="icon" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></a>
+      </div>
+
+      <div class="vexel-demo reveal" aria-hidden="true">
+        <div class="vexel-window">
+          <div class="vexel-bar"><span></span><span></span><span></span><b>VEXEL / CANVAS</b><em>100%</em></div>
+          <div class="vexel-canvas">
+            <div class="vexel-block block-head"><span>Header</span><i></i><i></i></div>
+            <div class="vexel-block block-hero"><span>Hero</span><strong>Твой экран</strong><i></i><i></i><i></i></div>
+            <div class="vexel-block block-row"><span>Cards</span><i></i><i></i><i></i></div>
+            <div class="vexel-block block-fab"><span>+</span></div>
+          </div>
+          <div class="vexel-props">
+            <span class="label">СВОЙСТВА</span>
+            <div class="prop"><span>Radius</span><b>28</b></div>
+            <div class="prop"><span>Motion</span><b>spring</b></div>
+            <div class="prop"><span>Theme</span><b>lime</b></div>
+            <div class="prop-bar"><i></i></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section sound-section">
+      <div class="sound-copy reveal">
+        <span class="eyebrow">04 / ЗВУК</span>
+        <h2>Тишина —<br><em>тоже функция.</em></h2>
+        <p>Эмбиент не мешает работе: он собирается из мягких пэдов, шума и редких акцентов. Включи и настрой под себя — звук живёт только в этой вкладке.</p>
+        <div class="sound-actions">
+          <button class="btn btn-primary btn-large ripple magnetic" type="button" data-sound-toggle aria-pressed="false">
+            <span class="sound-toggle-icon" aria-hidden="true">
+              <svg class="icon play-icon" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor" stroke="none"/></svg>
+              <svg class="icon pause-icon" viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor" stroke="none"/></svg>
+            </span>
+            <span class="sound-btn-label">Включить эмбиент</span>
+          </button>
+          <a class="btn btn-ghost ripple" href="#mood">Настроить звук</a>
+        </div>
+      </div>
+      <div class="visualizer reveal" aria-hidden="true">
+        <div class="viz-orbit"><i></i><i></i><i></i></div>
+        <div class="viz-bars" id="viz-bars">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+        <span class="viz-caption">LIVE AMBIENT / WEB AUDIO</span>
+      </div>
+    </section>
+
+    <section class="section download" id="download">
+      <div class="download-card reveal">
+        <div class="download-glow" aria-hidden="true"></div>
+        <span class="eyebrow">05 / СКАЧАТЬ</span>
+        <h2>Попробуй<br><em>на слух.</em></h2>
+        <p>Скачай DevAI Studio 4.2.0 для Android 12+ и собери первый экран прямо на телефоне.</p>
+        <div class="download-actions">
+          <a class="btn btn-primary btn-large ripple magnetic" href="https://github.com/Karishka-sr/devai-studio/releases/latest" target="_blank" rel="noopener" data-toast="Открываю GitHub Releases">
+            Скачать APK 4.2.0
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M5 20h14"/></svg>
+          </a>
+          <a class="btn btn-tonal btn-large ripple" href="../download.html">Страница загрузки</a>
+        </div>
+        <div class="download-meta">
+          <span>112,3 МБ</span><span>ARM64-V8A</span><span>Android 12+</span><span>Подписано</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <a class="brand footer-brand" href="../index.html">
+      <img src="../favicon.svg" alt="" width="30" height="30">
+      <span class="brand-text">DEVAI<span>/</span>STUDIO</span>
+    </a>
+    <nav class="footer-nav" aria-label="Ссылки в подвале">
+      <a href="../index.html">Главная</a>
+      <a href="../playground/">Playground</a>
+      <a href="../api.html">API-ключи</a>
+      <a href="../download.html">Скачать</a>
+      <a href="https://github.com/Karishka-sr/devai-studio" target="_blank" rel="noopener">GitHub ↗</a>
+    </nav>
+    <p class="footer-note">Автор: <a href="https://github.com/Karishka-sr" target="_blank" rel="noopener">Karishka-sr</a> · Vexel не тронут · 2026</p>
+  </footer>
+
+  <aside class="sound-dock" id="sound-dock" aria-label="Мини-плеер эмбиента">
+    <button class="dock-main" type="button" data-sound-toggle aria-pressed="false" aria-label="Включить эмбиент">
+      <span class="dock-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span class="dock-copy"><small>ЭМБИЕНТ</small><strong id="dock-scene">Космос</strong></span>
+    </button>
+    <button class="dock-more" type="button" id="dock-more" aria-expanded="false" aria-controls="dock-panel" aria-label="Настройки звука">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <div class="dock-panel" id="dock-panel" hidden>
+      <div class="dock-scenes" role="group" aria-label="Звуковая сцена">
+        <button type="button" data-scene="space" class="is-active">Космос</button>
+        <button type="button" data-scene="rain">Дождь</button>
+        <button type="button" data-scene="forest">Лес</button>
+        <button type="button" data-scene="focus">Фокус</button>
+      </div>
+      <label class="volume-row compact">
+        <span>Громкость</span>
+        <input type="range" min="0" max="100" value="35" data-volume aria-label="Громкость эмбиента">
+        <output data-volume-output>35%</output>
+      </label>
+    </div>
+  </aside>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="expressive.js" defer></script>
+</body>
+</html>

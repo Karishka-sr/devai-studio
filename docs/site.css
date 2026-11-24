@@ -1558,6 +1558,10 @@ h2 {
     gap: 14px;
   }
 
+  .header-api {
+    display: none;
+  }
+
   .hero-inner {
     grid-template-columns: minmax(0, 1fr) minmax(290px, 0.8fr);
     gap: 24px;
