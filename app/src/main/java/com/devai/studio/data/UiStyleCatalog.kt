@@ -6,6 +6,20 @@ enum class StyleNav { FLOATING_PILL, FLAT_BAR, MINIMAL, SEGMENTED, TERMINAL }
 enum class StyleFont { SANS, SERIF, MONO }
 enum class StyleAvatar { CIRCLE, ROUNDED, SQUARE }
 
+/** Structural layout, not just colors. A style can rearrange the whole chat shell. */
+enum class StyleLayout {
+    CLASSIC,
+    CHATGPT,
+    CLAUDE,
+    GEMINI,
+    MATERIAL_YOU,
+    MATERIAL_DESIGN,
+    MATERIAL_EXPRESSIVE,
+    GLASS,
+    LIQUID_GLASS,
+    TERMINAL,
+}
+
 data class StylePalette(
     val primary: Long,
     val onPrimary: Long,
@@ -39,6 +53,7 @@ data class UiStyle(
     val nav: StyleNav = StyleNav.FLOATING_PILL,
     val font: StyleFont = StyleFont.SANS,
     val avatar: StyleAvatar = StyleAvatar.CIRCLE,
+    val layout: StyleLayout = StyleLayout.CLASSIC,
     val forceDark: Boolean = false,
     val forceLight: Boolean = false,
 )
@@ -102,7 +117,7 @@ object UiStyleCatalog {
             userBubble = 0xFF303030, onUserBubble = 0xFFECECEC, aiBubble = 0xFF212121,
         ),
         corner = 14, bubble = StyleBubble.MINIMAL, background = StyleBackground.SOLID,
-        nav = StyleNav.FLOATING_PILL, font = StyleFont.SANS,
+        nav = StyleNav.FLOATING_PILL, font = StyleFont.SANS, layout = StyleLayout.CHATGPT,
     )
 
     private fun claude() = UiStyle(
@@ -123,7 +138,7 @@ object UiStyleCatalog {
             userBubble = 0xFF3A332D, onUserBubble = 0xFFF3EEE7, aiBubble = 0xFF262422,
         ),
         corner = 20, bubble = StyleBubble.SOFT, background = StyleBackground.PAPER,
-        nav = StyleNav.MINIMAL, font = StyleFont.SERIF,
+        nav = StyleNav.MINIMAL, font = StyleFont.SERIF, layout = StyleLayout.CLAUDE,
     )
 
     private fun gemini() = UiStyle(
@@ -144,7 +159,7 @@ object UiStyleCatalog {
             userBubble = 0xFF364A6B, onUserBubble = 0xFFD3E3FD,
         ),
         corner = 28, bubble = StyleBubble.SOFT, background = StyleBackground.MESH,
-        nav = StyleNav.SEGMENTED, font = StyleFont.SANS,
+        nav = StyleNav.SEGMENTED, font = StyleFont.SANS, layout = StyleLayout.GEMINI,
     )
 
     private fun copilot() = UiStyle(
@@ -450,7 +465,7 @@ object UiStyleCatalog {
             userBubble = 0xFFD0BCFF, onUserBubble = 0xFF381E72, aiBubble = 0xFF2B2930,
         ),
         corner = 30, bubble = StyleBubble.SOFT, background = StyleBackground.MESH,
-        nav = StyleNav.SEGMENTED, font = StyleFont.SANS,
+        nav = StyleNav.SEGMENTED, font = StyleFont.SANS, layout = StyleLayout.MATERIAL_YOU,
     )
 
     private fun materialDesign() = UiStyle(
@@ -471,7 +486,7 @@ object UiStyleCatalog {
             userBubble = 0xFFBB86FC, onUserBubble = 0xFF121212, aiBubble = 0xFF1E1E1E,
         ),
         corner = 16, bubble = StyleBubble.ROUNDED, background = StyleBackground.SOLID,
-        nav = StyleNav.FLAT_BAR, font = StyleFont.SANS,
+        nav = StyleNav.FLAT_BAR, font = StyleFont.SANS, layout = StyleLayout.MATERIAL_DESIGN,
     )
 
     private fun materialExpressive() = UiStyle(
@@ -491,7 +506,7 @@ object UiStyleCatalog {
             userBubble = 0xFFD0BCFF, onUserBubble = 0xFF381E72, aiBubble = 0xFF1A1328,
         ),
         corner = 34, bubble = StyleBubble.ROUNDED, background = StyleBackground.MESH,
-        nav = StyleNav.SEGMENTED, font = StyleFont.SANS,
+        nav = StyleNav.SEGMENTED, font = StyleFont.SANS, layout = StyleLayout.MATERIAL_EXPRESSIVE,
     )
 
     private fun fluent() = UiStyle(
@@ -551,7 +566,7 @@ object UiStyleCatalog {
             userBubble = 0xFF4F7CFF, onUserBubble = 0xFFFFFFFF, aiBubble = 0xFF0E1B2E,
         ),
         corner = 28, bubble = StyleBubble.SOFT, background = StyleBackground.GLASS,
-        nav = StyleNav.FLOATING_PILL, font = StyleFont.SANS,
+        nav = StyleNav.FLOATING_PILL, font = StyleFont.SANS, layout = StyleLayout.LIQUID_GLASS,
     )
 
     private fun glass() = UiStyle(
@@ -571,7 +586,7 @@ object UiStyleCatalog {
             userBubble = 0xFF4F7CFF, onUserBubble = 0xFFFFFFFF, aiBubble = 0xFF0E1B2E,
         ),
         corner = 24, bubble = StyleBubble.SOFT, background = StyleBackground.GLASS,
-        nav = StyleNav.FLOATING_PILL, font = StyleFont.SANS,
+        nav = StyleNav.FLOATING_PILL, font = StyleFont.SANS, layout = StyleLayout.GLASS,
     )
 
     private fun terminal() = UiStyle(
@@ -592,7 +607,7 @@ object UiStyleCatalog {
             userBubble = 0xFF00FF66, onUserBubble = 0xFF001A00, aiBubble = 0xFF111111,
         ),
         corner = 0, bubble = StyleBubble.TERMINAL, background = StyleBackground.TERMINAL,
-        nav = StyleNav.TERMINAL, font = StyleFont.MONO, forceDark = true,
+        nav = StyleNav.TERMINAL, font = StyleFont.MONO, forceDark = true, layout = StyleLayout.TERMINAL,
     )
 
     private fun nord() = UiStyle(

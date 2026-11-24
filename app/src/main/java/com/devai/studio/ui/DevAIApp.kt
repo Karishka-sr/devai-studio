@@ -23,6 +23,9 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -45,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -54,6 +58,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.devai.studio.data.AppPrefs
+import com.devai.studio.data.StyleLayout
 import com.devai.studio.data.UiStyleCatalog
 import com.devai.studio.data.ChatMode
 import com.devai.studio.data.ChatSessionsStore
@@ -63,6 +68,7 @@ import com.devai.studio.data.UpdateChecker
 import com.devai.studio.util.AndroidUtils
 import com.devai.studio.util.ThemeManager
 import com.qwenz.qwel.MainActivity as QwelActivity
+import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
@@ -254,7 +260,21 @@ fun DevAITheme(content: @Composable () -> Unit) {
     val accentColor = accent?.takeIf { it.id != "default" }?.let {
         Color(if (dark) it.dark else it.light)
     }
-    val scheme = if (!classic) {
+    val dynamicYou = !classic && style.layout == StyleLayout.MATERIAL_YOU &&
+        AppPrefs.dynamicColor(context)
+    val scheme = if (dynamicYou) {
+        val base = if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        if (accentColor != null) {
+            base.copy(
+                primary = accentColor,
+                onPrimary = if (accentColor.luminance() > 0.55f) Color(0xFF111827) else Color.White,
+                primaryContainer = accentColor.copy(alpha = if (dark) 0.28f else 0.16f),
+                onPrimaryContainer = if (dark) Color(0xFFE5E7EB) else Color(0xFF111827),
+            )
+        } else {
+            base
+        }
+    } else if (!classic) {
         style.colorScheme(dark, accentColor)
     } else if (accentColor != null) {
         legacyBase.copy(
@@ -289,6 +309,7 @@ fun DevAIApp() {
     }
     val mode = ChatMode.fromId(modeId)
     val lifecycleOwner = LocalLifecycleOwner.current
+    val hazeState = rememberHazeState(blurEnabled = true)
 
     // Poll while the app is actually visible: every 30 s the cheap website
     // JSON is checked, every 5 min (and on resume) GitHub Releases is checked.
@@ -304,6 +325,7 @@ fun DevAIApp() {
         }
     }
 
+    CompositionLocalProvider(LocalHazeState provides hazeState) {
     DevAIBackground {
         Scaffold(
             containerColor = Color.Transparent,
@@ -338,6 +360,7 @@ fun DevAIApp() {
             }
         }
     }
+    }
 
     val available = update?.takeIf { it.version != dismissedVersion }
     if (available != null) {
@@ -365,7 +388,12 @@ private fun DevAIBottomBar(
     onBuilder: () -> Unit,
 ) {
     val style = LocalUiStyle.current
+    if (style.isMaterial) {
+        MaterialBottomBar(tab, onTab, onBuilder)
+        return
+    }
     val nav = style.nav
+    val layout = style.layout
     val outerPadding = when (nav) {
         com.devai.studio.data.StyleNav.FLAT_BAR -> 8.dp
         com.devai.studio.data.StyleNav.MINIMAL -> 6.dp
@@ -376,32 +404,53 @@ private fun DevAIBottomBar(
             .fillMaxWidth()
             .padding(horizontal = outerPadding, vertical = 8.dp),
     ) {
+        val glass = style.isGlass
+        val haze = LocalHazeState.current
+        val dark = style.effectiveDark(MaterialTheme.colorScheme.background.luminance() < 0.35f)
+        val shape = when {
+            layout == com.devai.studio.data.StyleLayout.CHATGPT ||
+                layout == com.devai.studio.data.StyleLayout.CLAUDE -> RoundedCornerShape(0.dp)
+            nav == com.devai.studio.data.StyleNav.FLAT_BAR -> RoundedCornerShape(0.dp)
+            nav == com.devai.studio.data.StyleNav.MINIMAL -> RoundedCornerShape(0.dp)
+            nav == com.devai.studio.data.StyleNav.TERMINAL -> RoundedCornerShape(0.dp)
+            nav == com.devai.studio.data.StyleNav.SEGMENTED -> RoundedCornerShape(24.dp)
+            else -> RoundedCornerShape(28.dp)
+        }
         Surface(
-            shape = when (nav) {
-                com.devai.studio.data.StyleNav.FLAT_BAR -> RoundedCornerShape(0.dp)
-                com.devai.studio.data.StyleNav.MINIMAL -> RoundedCornerShape(0.dp)
-                com.devai.studio.data.StyleNav.TERMINAL -> RoundedCornerShape(0.dp)
-                com.devai.studio.data.StyleNav.SEGMENTED -> RoundedCornerShape(24.dp)
-                else -> RoundedCornerShape(28.dp)
-            },
-            color = when (nav) {
-                com.devai.studio.data.StyleNav.MINIMAL -> Color.Transparent
-                com.devai.studio.data.StyleNav.SEGMENTED -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)
+            modifier = Modifier.then(
+                if (glass) Modifier.glassPanel(haze, style, shape, dark) else Modifier
+            ),
+            shape = shape,
+            color = when {
+                glass && haze != null -> Color.Transparent
+                layout == com.devai.studio.data.StyleLayout.CHATGPT -> MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)
+                layout == com.devai.studio.data.StyleLayout.CLAUDE -> Color.Transparent
+                nav == com.devai.studio.data.StyleNav.MINIMAL -> Color.Transparent
+                nav == com.devai.studio.data.StyleNav.SEGMENTED -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)
                 else -> MaterialTheme.colorScheme.surface.copy(
-                    alpha = if (style.background == com.devai.studio.data.StyleBackground.GLASS) 0.72f else 0.94f,
+                    alpha = if (glass) 0.72f else 0.94f,
                 )
             },
             contentColor = MaterialTheme.colorScheme.onSurface,
-            border = if (nav == com.devai.studio.data.StyleNav.MINIMAL) null else BorderStroke(
-                1.dp,
-                if (nav == com.devai.studio.data.StyleNav.TERMINAL)
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
-                else MaterialTheme.colorScheme.outline.copy(alpha = 0.18f),
-            ),
-            shadowElevation = when (nav) {
-                com.devai.studio.data.StyleNav.MINIMAL -> 0.dp
-                com.devai.studio.data.StyleNav.TERMINAL -> 0.dp
-                com.devai.studio.data.StyleNav.FLAT_BAR -> 4.dp
+            border = when {
+                glass -> BorderStroke(1.dp, style.glassBorder(dark))
+                layout == com.devai.studio.data.StyleLayout.CLAUDE -> BorderStroke(
+                    1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                )
+                nav == com.devai.studio.data.StyleNav.MINIMAL -> null
+                else -> BorderStroke(
+                    1.dp,
+                    if (nav == com.devai.studio.data.StyleNav.TERMINAL)
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+                    else MaterialTheme.colorScheme.outline.copy(alpha = 0.18f),
+                )
+            },
+            shadowElevation = when {
+                glass -> 8.dp
+                layout == com.devai.studio.data.StyleLayout.CHATGPT -> 6.dp
+                nav == com.devai.studio.data.StyleNav.MINIMAL -> 0.dp
+                nav == com.devai.studio.data.StyleNav.TERMINAL -> 0.dp
+                nav == com.devai.studio.data.StyleNav.FLAT_BAR -> 4.dp
                 else -> 18.dp
             },
         ) {
@@ -445,6 +494,55 @@ private fun DevAIBottomBar(
 }
 
 @Composable
+private fun MaterialBottomBar(
+    tab: String,
+    onTab: (String) -> Unit,
+    onBuilder: () -> Unit,
+) {
+    val style = LocalUiStyle.current
+    val container = when (style.layout) {
+        com.devai.studio.data.StyleLayout.MATERIAL_DESIGN -> MaterialTheme.colorScheme.surface
+        com.devai.studio.data.StyleLayout.MATERIAL_EXPRESSIVE -> MaterialTheme.colorScheme.surfaceVariant
+        else -> MaterialTheme.colorScheme.surface
+    }
+    NavigationBar(
+        containerColor = container,
+        tonalElevation = if (style.layout == com.devai.studio.data.StyleLayout.MATERIAL_DESIGN) 4.dp else 0.dp,
+    ) {
+        MaterialNavItem("Режимы", Icons.AutoMirrored.Filled.List, tab == "chat" || tab == "modes") { onTab("modes") }
+        MaterialNavItem("ИИ", Icons.Default.Person, tab == "providers") { onTab("providers") }
+        MaterialNavItem("Vexel", Icons.Default.Add, false, onBuilder)
+        MaterialNavItem("Ещё", Icons.Default.Build, tab == "tools") { onTab("tools") }
+        MaterialNavItem("Настройки", Icons.Default.Settings, tab == "settings") { onTab("settings") }
+    }
+}
+
+@Composable
+private fun androidx.compose.foundation.layout.RowScope.MaterialNavItem(
+    label: String,
+    icon: ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val design = LocalUiStyle.current.layout == StyleLayout.MATERIAL_DESIGN
+    NavigationBarItem(
+        selected = selected,
+        onClick = onClick,
+        icon = { Icon(icon, contentDescription = label, modifier = Modifier.size(22.dp)) },
+        label = { Text(label, maxLines = 1, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal) },
+        colors = NavigationBarItemDefaults.colors(
+            selectedIconColor = if (design) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.onSecondaryContainer,
+            selectedTextColor = if (design) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.onSurface,
+            indicatorColor = if (design) Color.Transparent else MaterialTheme.colorScheme.secondaryContainer,
+            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        ),
+    )
+}
+
+@Composable
 private fun RowScope.DevAINavItem(
     label: String,
     icon: ImageVector,
@@ -453,7 +551,10 @@ private fun RowScope.DevAINavItem(
 ) {
     val style = LocalUiStyle.current
     val sharp = style.nav == com.devai.studio.data.StyleNav.TERMINAL ||
-        style.nav == com.devai.studio.data.StyleNav.MINIMAL
+        style.nav == com.devai.studio.data.StyleNav.MINIMAL ||
+        style.layout == com.devai.studio.data.StyleLayout.CHATGPT ||
+        style.layout == com.devai.studio.data.StyleLayout.CLAUDE ||
+        style.layout == com.devai.studio.data.StyleLayout.GEMINI
     val shape = if (sharp) RoundedCornerShape(0.dp) else RoundedCornerShape(20.dp)
     Column(
         modifier = Modifier
@@ -461,10 +562,8 @@ private fun RowScope.DevAINavItem(
             .clip(shape)
             .then(
                 if (selected) {
-                    if (style.nav == com.devai.studio.data.StyleNav.TERMINAL ||
-                        style.nav == com.devai.studio.data.StyleNav.MINIMAL
-                    ) {
-                        Modifier.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f))
+                    if (sharp) {
+                        Modifier.background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f))
                     } else {
                         Modifier.background(
                             Brush.horizontalGradient(
@@ -488,15 +587,17 @@ private fun RowScope.DevAINavItem(
             icon,
             contentDescription = label,
             modifier = Modifier.size(20.dp),
-            tint = if (selected) MaterialTheme.colorScheme.onPrimary
-            else MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = if (selected) {
+                if (sharp) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimary
+            } else MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
             label,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-            color = if (selected) MaterialTheme.colorScheme.onPrimary
-            else MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (selected) {
+                if (sharp) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimary
+            } else MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
         )
     }

@@ -25,8 +25,8 @@ android {
         applicationId = "com.devai.studio"
         minSdk = 31
         targetSdk = 34
-        versionCode = 45
-        versionName = "4.0.0"
+        versionCode = 46
+        versionName = "4.1.0"
         vectorDrawables.useSupportLibrary = true
         buildConfigField("String", "FIREBASE_API_KEY", "\"${buildSecret("FIREBASE_API_KEY")}\"")
         buildConfigField("String", "FIREBASE_APP_ID", "\"${buildSecret("FIREBASE_APP_ID")}\"")
@@ -91,6 +91,7 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.animation:animation")
     implementation("androidx.compose.material3:material3:1.5.0-alpha10")
+    implementation("dev.chrisbanes.haze:haze:1.6.10")
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.activity:activity-compose:1.10.1")
     implementation("androidx.graphics:graphics-shapes:1.1.0")

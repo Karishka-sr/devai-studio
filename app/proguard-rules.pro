@@ -8,3 +8,6 @@
 -keep class com.google.ai.edge.litertlm.** { *; }
 -dontwarn com.google.ai.edge.litertlm.**
 -keepclasseswithmembernames class * { native <methods>; }
+
+# LuaJ optional javax.script bridge
+-dontwarn javax.script.**

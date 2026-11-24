@@ -1,5 +1,11 @@
 package com.devai.studio.ui
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -34,6 +40,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.devai.studio.R
+import dev.chrisbanes.haze.hazeSource
 
 object DevAIPalette {
     val Indigo = Color(0xFF5B4BE8)
@@ -70,10 +78,24 @@ fun DevAIBackground(
     val dark = style.effectiveDark(scheme.background.luminance() < 0.35f)
     val density = androidx.compose.ui.platform.LocalDensity.current
     val step = with(density) { 28.dp.toPx() }
+    val haze = LocalHazeState.current
+    val liquid = style.isLiquidGlass
+    val phase by rememberInfiniteTransition(label = "liquid-background").animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(9000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "liquid-phase",
+    )
+    val drift = if (liquid) phase else 0f
     CompositionLocalProvider(LocalContentColor provides scheme.onBackground) {
+        Box(modifier.fillMaxSize()) {
         Box(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
+                .then(if (style.isGlass && haze != null) Modifier.hazeSource(haze, zIndex = 0f) else Modifier)
                 .background(
                     when (style.background) {
                         com.devai.studio.data.StyleBackground.AURORA ->
@@ -150,20 +172,20 @@ fun DevAIBackground(
                         drawCircle(
                             brush = Brush.radialGradient(
                                 listOf(scheme.primary.copy(alpha = if (dark) 0.16f else 0.10f), Color.Transparent),
-                                center = Offset(size.width * 0.15f, size.height * 0.12f),
-                                radius = size.width * 0.8f,
+                                center = Offset(size.width * (0.12f + drift * 0.10f), size.height * 0.12f),
+                                radius = size.width * (0.8f + drift * 0.12f),
                             ),
-                            radius = size.width * 0.8f,
-                            center = Offset(size.width * 0.15f, size.height * 0.12f),
+                            radius = size.width * (0.8f + drift * 0.12f),
+                            center = Offset(size.width * (0.12f + drift * 0.10f), size.height * 0.12f),
                         )
                         drawCircle(
                             brush = Brush.radialGradient(
                                 listOf(scheme.tertiary.copy(alpha = if (dark) 0.12f else 0.08f), Color.Transparent),
-                                center = Offset(size.width * 0.9f, size.height * 0.82f),
-                                radius = size.width * 0.75f,
+                                center = Offset(size.width * (0.88f - drift * 0.10f), size.height * 0.82f),
+                                radius = size.width * (0.75f + drift * 0.10f),
                             ),
-                            radius = size.width * 0.75f,
-                            center = Offset(size.width * 0.9f, size.height * 0.82f),
+                            radius = size.width * (0.75f + drift * 0.10f),
+                            center = Offset(size.width * (0.88f - drift * 0.10f), size.height * 0.82f),
                         )
                     }
                     com.devai.studio.data.StyleBackground.NEON -> {
@@ -189,7 +211,8 @@ fun DevAIBackground(
                     com.devai.studio.data.StyleBackground.SOLID -> Unit
                 }
             }
-            content()
+        }
+        content()
         }
     }
 }
@@ -225,36 +248,106 @@ fun DevAITopBar(
     onBack: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
+    val style = LocalUiStyle.current
+    val layout = style.layout
+    val terminal = layout == com.devai.studio.data.StyleLayout.TERMINAL
+    val material = style.isMaterial
+    val minimal = layout == com.devai.studio.data.StyleLayout.CHATGPT ||
+        layout == com.devai.studio.data.StyleLayout.CLAUDE ||
+        layout == com.devai.studio.data.StyleLayout.GEMINI
+    val container = when {
+        terminal -> Color.Black.copy(alpha = 0.42f)
+        layout == com.devai.studio.data.StyleLayout.MATERIAL_DESIGN -> MaterialTheme.colorScheme.primary
+        layout == com.devai.studio.data.StyleLayout.MATERIAL_YOU -> MaterialTheme.colorScheme.surface
+        layout == com.devai.studio.data.StyleLayout.MATERIAL_EXPRESSIVE -> MaterialTheme.colorScheme.surfaceVariant
+        else -> Color.Transparent
+    }
+    val titleColor = when {
+        terminal -> MaterialTheme.colorScheme.primary
+        layout == com.devai.studio.data.StyleLayout.MATERIAL_DESIGN -> MaterialTheme.colorScheme.onPrimary
+        else -> MaterialTheme.colorScheme.onSurface
+    }
+    val subtitleColor = when {
+        terminal -> MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+        layout == com.devai.studio.data.StyleLayout.MATERIAL_DESIGN ->
+            MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.78f)
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    val haze = LocalHazeState.current
+    val dark = style.effectiveDark(MaterialTheme.colorScheme.background.luminance() < 0.35f)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 8.dp, top = 10.dp, bottom = 6.dp),
+            .background(container)
+            .then(
+                if (style.isGlass && haze != null) {
+                    Modifier.glassPanel(haze, style, RoundedCornerShape(0.dp), dark)
+                } else {
+                    Modifier
+                }
+            )
+            .padding(
+                start = if (material) 8.dp else 16.dp,
+                end = 8.dp,
+                top = if (material) 2.dp else 10.dp,
+                bottom = if (material) 2.dp else 6.dp,
+            ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (onBack != null) {
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)),
-            ) {
-                IconButton(onClick = onBack, modifier = Modifier.size(42.dp)) {
+            if (minimal || terminal) {
+                IconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Назад",
+                        tint = titleColor,
                         modifier = Modifier.size(20.dp),
                     )
                 }
+            } else {
+                Surface(
+                    shape = CircleShape,
+                    color = if (layout == com.devai.studio.data.StyleLayout.MATERIAL_DESIGN)
+                        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f)
+                    else MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                    contentColor = titleColor,
+                    border = if (layout == com.devai.studio.data.StyleLayout.MATERIAL_DESIGN) null else
+                        BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)),
+                ) {
+                    IconButton(onClick = onBack, modifier = Modifier.size(42.dp)) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Назад",
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
             }
+        } else if (minimal || terminal) {
+            Text(
+                if (terminal) ">_" else title.take(1),
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.titleLarge,
+                fontFamily = if (terminal) androidx.compose.ui.text.font.FontFamily.Monospace else null,
+                fontWeight = FontWeight.Black,
+                modifier = Modifier.padding(horizontal = 8.dp),
+            )
         } else {
-            DevAILogo(42.dp)
+            DevAILogo(if (material) 38.dp else 42.dp)
         }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(if (minimal) 4.dp else 12.dp))
         Column(Modifier.weight(1f)) {
             Text(
                 title,
-                style = MaterialTheme.typography.titleLarge,
+                style = when (layout) {
+                    com.devai.studio.data.StyleLayout.MATERIAL_EXPRESSIVE -> MaterialTheme.typography.headlineSmall
+                    com.devai.studio.data.StyleLayout.CLAUDE -> MaterialTheme.typography.titleLarge.copy(
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
+                    )
+                    else -> MaterialTheme.typography.titleLarge
+                },
                 fontWeight = FontWeight.Bold,
+                color = titleColor,
                 maxLines = 1,
                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             )
@@ -262,7 +355,7 @@ fun DevAITopBar(
                 Text(
                     subtitle,
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = subtitleColor,
                     maxLines = 1,
                 )
             }
@@ -278,12 +371,13 @@ fun DevAIActionIcon(
     enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
-    Surface(
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.62f),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.14f)),
-    ) {
-        IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(40.dp)) {
+    val style = LocalUiStyle.current
+    val flat = style.layout == com.devai.studio.data.StyleLayout.CHATGPT ||
+        style.layout == com.devai.studio.data.StyleLayout.CLAUDE ||
+        style.layout == com.devai.studio.data.StyleLayout.GEMINI ||
+        style.layout == com.devai.studio.data.StyleLayout.TERMINAL
+    if (flat) {
+        IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(38.dp)) {
             Icon(
                 icon,
                 contentDescription = description,
@@ -291,6 +385,22 @@ fun DevAIActionIcon(
                 tint = if (enabled) MaterialTheme.colorScheme.onSurface
                 else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
             )
+        }
+    } else {
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.62f),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.14f)),
+        ) {
+            IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(40.dp)) {
+                Icon(
+                    icon,
+                    contentDescription = description,
+                    modifier = Modifier.size(19.dp),
+                    tint = if (enabled) MaterialTheme.colorScheme.onSurface
+                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                )
+            }
         }
     }
 }
@@ -303,36 +413,54 @@ fun DevAICard(
     accent: Color? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val shape = LocalUiStyle.current.cardShape()
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
-        shape = shape,
-        color = MaterialTheme.colorScheme.surface.copy(
-            alpha = if (LocalUiStyle.current.background == com.devai.studio.data.StyleBackground.GLASS) 0.66f else 0.9f,
-        ),
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        border = BorderStroke(
-            1.dp,
-            (accent ?: MaterialTheme.colorScheme.outline).copy(alpha = if (accent != null) 0.35f else 0.16f),
-        ),
-        shadowElevation = 0.dp,
-    ) {
-        Box {
-            if (accent != null) {
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(3.dp)
-                        .background(Brush.horizontalGradient(listOf(accent, accent.copy(alpha = 0.15f))))
+    val style = LocalUiStyle.current
+    val dark = style.effectiveDark(MaterialTheme.colorScheme.background.luminance() < 0.35f)
+    val shape = style.cardShape()
+    val haze = LocalHazeState.current
+    val glass = style.isGlass
+    Box {
+        Surface(
+            modifier = modifier
+                .fillMaxWidth()
+                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+                .then(if (glass) Modifier.glassPanel(haze, style, shape, dark) else Modifier),
+            shape = shape,
+            color = when {
+                glass && haze != null -> Color.Transparent
+                glass -> MaterialTheme.colorScheme.surface.copy(alpha = 0.66f)
+                style.layout == com.devai.studio.data.StyleLayout.MATERIAL_DESIGN ->
+                    MaterialTheme.colorScheme.surface
+                else -> MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+            },
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            border = if (glass) {
+                BorderStroke(1.dp, style.glassBorder(dark))
+            } else {
+                BorderStroke(
+                    1.dp,
+                    (accent ?: MaterialTheme.colorScheme.outline).copy(alpha = if (accent != null) 0.35f else 0.16f),
+                )
+            },
+            shadowElevation = if (style.layout == com.devai.studio.data.StyleLayout.MATERIAL_DESIGN) 3.dp else 0.dp,
+        ) {
+            Box {
+                if (accent != null) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(3.dp)
+                            .background(Brush.horizontalGradient(listOf(accent, accent.copy(alpha = 0.15f))))
+                    )
+                }
+                Column(
+                    modifier = Modifier.padding(contentPadding),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    content = content,
                 )
             }
-            Column(
-                modifier = Modifier.padding(contentPadding),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                content = content,
-            )
+        }
+        if (style.isLiquidGlass) {
+            LiquidSheen(Modifier.matchParentSize(), shape, strength = 0.12f)
         }
     }
 }

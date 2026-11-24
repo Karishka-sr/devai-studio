@@ -1,5 +1,13 @@
 package com.devai.studio.ui
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
@@ -7,19 +15,45 @@ import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.devai.studio.data.StyleAvatar
+import com.devai.studio.data.StyleBackground
 import com.devai.studio.data.StyleFont
+import com.devai.studio.data.StyleLayout
 import com.devai.studio.data.StylePalette
 import com.devai.studio.data.UiStyle
 import com.devai.studio.data.UiStyleCatalog
+import dev.chrisbanes.haze.HazeDefaults
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeEffect
 
 val LocalUiStyle = staticCompositionLocalOf { UiStyleCatalog.classic }
+val LocalHazeState = staticCompositionLocalOf<HazeState?> { null }
+
+val UiStyle.isGlass: Boolean
+    get() = layout == StyleLayout.GLASS || layout == StyleLayout.LIQUID_GLASS ||
+        background == StyleBackground.GLASS
+
+val UiStyle.isLiquidGlass: Boolean
+    get() = layout == StyleLayout.LIQUID_GLASS
+
+val UiStyle.isMaterial: Boolean
+    get() = layout == StyleLayout.MATERIAL_YOU ||
+        layout == StyleLayout.MATERIAL_DESIGN ||
+        layout == StyleLayout.MATERIAL_EXPRESSIVE
 
 fun UiStyle.effectiveDark(systemDark: Boolean): Boolean =
     forceDark || (!forceLight && systemDark)
@@ -144,3 +178,74 @@ fun UiStyle.userBubbleColor(dark: Boolean): Color = Color(palette(dark).userBubb
 fun UiStyle.onUserBubbleColor(dark: Boolean): Color = Color(palette(dark).onUserBubble)
 fun UiStyle.aiBubbleColor(dark: Boolean): Color = Color(palette(dark).aiBubble)
 fun UiStyle.onAiBubbleColor(dark: Boolean): Color = Color(palette(dark).onAiBubble)
+
+
+/**
+ * Real backdrop blur for glass styles. Haze captures the background and message list
+ * and redraws them behind this panel; the Surface itself must stay translucent.
+ */
+fun Modifier.glassPanel(
+    haze: HazeState?,
+    style: UiStyle,
+    shape: Shape,
+    dark: Boolean,
+): Modifier {
+    if (!style.isGlass || haze == null) return this
+    val palette = style.palette(dark)
+    val surface = Color(palette.surface)
+    val primary = Color(palette.primary)
+    val liquid = style.isLiquidGlass
+    return clip(shape).hazeEffect(state = haze) {
+        backgroundColor = surface.copy(alpha = if (liquid) 0.34f else 0.52f)
+        tints = listOf(
+            HazeTint(Color.White.copy(alpha = if (dark) 0.05f else 0.18f)),
+            HazeTint(primary.copy(alpha = if (liquid) 0.10f else 0.04f)),
+        )
+        blurRadius = if (liquid) 30.dp else 22.dp
+        noiseFactor = 0.05f
+    }
+}
+
+fun UiStyle.glassBorder(dark: Boolean): Brush {
+    val p = palette(dark)
+    return Brush.linearGradient(
+        listOf(
+            Color.White.copy(alpha = if (dark) 0.22f else 0.72f),
+            Color(p.primary).copy(alpha = 0.20f),
+            Color.White.copy(alpha = if (dark) 0.10f else 0.38f),
+        )
+    )
+}
+
+@Composable
+fun LiquidSheen(
+    modifier: Modifier = Modifier,
+    shape: Shape,
+    strength: Float = 0.20f,
+) {
+    val transition = rememberInfiniteTransition(label = "liquid-glass")
+    val shift by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(6200, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "sheen",
+    )
+    Box(
+        modifier
+            .clip(shape)
+            .drawBehind {
+                val start = Offset(size.width * (shift - 0.55f), -size.height * 0.35f)
+                val end = Offset(size.width * (shift + 0.55f), size.height * 1.35f)
+                drawRect(
+                    Brush.linearGradient(
+                        listOf(Color.Transparent, Color.White.copy(alpha = strength), Color.Transparent),
+                        start = start,
+                        end = end,
+                    )
+                )
+            }
+    )
+}

@@ -40,6 +40,34 @@ class UiStyleCatalogTest {
     }
 
     @Test
+    fun namedStylesUseRealStructuralLayouts() {
+        val expected = mapOf(
+            "chatgpt" to StyleLayout.CHATGPT,
+            "claude" to StyleLayout.CLAUDE,
+            "gemini" to StyleLayout.GEMINI,
+            "glass" to StyleLayout.GLASS,
+            "liquid-glass" to StyleLayout.LIQUID_GLASS,
+            "material-you" to StyleLayout.MATERIAL_YOU,
+            "material-design" to StyleLayout.MATERIAL_DESIGN,
+            "material-expressive" to StyleLayout.MATERIAL_EXPRESSIVE,
+            "terminal" to StyleLayout.TERMINAL,
+        )
+        expected.forEach { (id, layout) ->
+            assertEquals("$id must use $layout", layout, UiStyleCatalog.byId(id).layout)
+        }
+        assertTrue(expected.values.distinct().size >= 9)
+    }
+
+    @Test
+    fun glassStylesAreBackedByRealBlurBackground() {
+        listOf("glass", "liquid-glass").forEach { id ->
+            val style = UiStyleCatalog.byId(id)
+            assertEquals(StyleBackground.GLASS, style.background)
+            assertTrue(style.layout == StyleLayout.GLASS || style.layout == StyleLayout.LIQUID_GLASS)
+        }
+    }
+
+    @Test
     fun unknownIdFallsBackToClassicAndNextCycles() {
         assertEquals(UiStyleCatalog.CLASSIC_ID, UiStyleCatalog.byId("missing").id)
         val first = UiStyleCatalog.all.first()

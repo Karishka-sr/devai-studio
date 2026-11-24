@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -134,9 +135,11 @@ import com.devai.studio.data.PluginStore
 import com.devai.studio.data.PremiumFeature
 import com.devai.studio.data.PremiumStore
 import com.devai.studio.data.SearchClient
+import com.devai.studio.data.StyleLayout
 import com.devai.studio.util.AiSupport
 import com.devai.studio.util.PremiumDialogs
 import com.devai.studio.util.TtsManager
+import dev.chrisbanes.haze.hazeSource
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -166,6 +169,10 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
     val bubbleWidth = AppPrefs.bubbleWidth(context).dp
     val showAvatars = AppPrefs.showAvatars(context)
     val compactChat = AppPrefs.compactChat(context)
+    val uiStyle = LocalUiStyle.current
+    val layout = uiStyle.layout
+    val haze = LocalHazeState.current
+    val centered = layout == StyleLayout.CHATGPT || layout == StyleLayout.CLAUDE
     val hapticEnabled = AppPrefs.hapticFeedback(context)
     val haptic = LocalHapticFeedback.current
 
@@ -658,45 +665,74 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                 onSuggestion = { input = it },
             )
         } else {
-            LazyColumn(
-                state = listState,
+            val listHorizontal = when (layout) {
+                StyleLayout.CHATGPT, StyleLayout.CLAUDE -> 20.dp
+                StyleLayout.TERMINAL -> 8.dp
+                StyleLayout.MATERIAL_EXPRESSIVE -> 16.dp
+                else -> if (compactChat) 4.dp else 8.dp
+            }
+            Box(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(if (compactChat) 4.dp else 10.dp),
-                contentPadding = PaddingValues(
-                    horizontal = if (compactChat) 4.dp else 8.dp,
-                    vertical = if (compactChat) 4.dp else 8.dp,
-                ),
+                contentAlignment = Alignment.TopCenter,
             ) {
-                items(messages.size) { index ->
-                    val message = messages[index]
-                    if (!(streaming && index == messages.lastIndex && message.content.isBlank())) {
-                        MessageBubble(
-                            message = message,
-                            fontSize = chatFontSize,
-                            codeFontSize = codeFontSize,
-                            codeWrap = codeWrap,
-                            bubbleWidth = bubbleWidth,
-                            showAvatars = showAvatars,
-                            fontFamily = chatFontFamily,
-                            onSpeak = { TtsManager.speak(context, it) },
-                            onCopy = {
-                                clipboard.setText(AnnotatedString(it))
-                                toast("Скопировано")
-                            },
-                            onShare = { text ->
-                                val intent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "text/plain"
-                                    putExtra(Intent.EXTRA_TEXT, text)
-                                }
-                                context.startActivity(
-                                    Intent.createChooser(intent, "Поделиться сообщением")
-                                )
-                            },
-                        )
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .then(if (centered) Modifier.widthIn(max = 820.dp) else Modifier)
+                        .fillMaxWidth()
+                        .then(
+                            if (uiStyle.isGlass && haze != null) {
+                                Modifier.hazeSource(haze, zIndex = 1f)
+                            } else {
+                                Modifier
+                            }
+                        ),
+                    verticalArrangement = Arrangement.spacedBy(
+                        when (layout) {
+                            StyleLayout.CLAUDE -> 18.dp
+                            StyleLayout.CHATGPT -> 14.dp
+                            StyleLayout.TERMINAL -> 2.dp
+                            StyleLayout.MATERIAL_EXPRESSIVE -> 14.dp
+                            else -> if (compactChat) 4.dp else 10.dp
+                        }
+                    ),
+                    contentPadding = PaddingValues(
+                        horizontal = listHorizontal,
+                        vertical = if (compactChat) 4.dp else 8.dp,
+                    ),
+                ) {
+                    items(messages.size) { index ->
+                        val message = messages[index]
+                        if (!(streaming && index == messages.lastIndex && message.content.isBlank())) {
+                            MessageBubble(
+                                message = message,
+                                fontSize = chatFontSize,
+                                codeFontSize = codeFontSize,
+                                codeWrap = codeWrap,
+                                bubbleWidth = bubbleWidth,
+                                showAvatars = showAvatars,
+                                fontFamily = chatFontFamily,
+                                onSpeak = { TtsManager.speak(context, it) },
+                                onCopy = {
+                                    clipboard.setText(AnnotatedString(it))
+                                    toast("Скопировано")
+                                },
+                                onShare = { text ->
+                                    val intent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, text)
+                                    }
+                                    context.startActivity(
+                                        Intent.createChooser(intent, "Поделиться сообщением")
+                                    )
+                                },
+                            )
+                        }
                     }
-                }
-                if (streaming) {
-                    item { TypingIndicator() }
+                    if (streaming) {
+                        item { TypingIndicator() }
+                    }
                 }
             }
         }
@@ -782,23 +818,73 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
             }
         }
 
+        val dark = uiStyle.effectiveDark(MaterialTheme.colorScheme.background.luminance() < 0.35f)
+        val glass = uiStyle.isGlass
+        val composerShape = when (layout) {
+            StyleLayout.CHATGPT -> RoundedCornerShape(28.dp)
+            StyleLayout.CLAUDE -> RoundedCornerShape(18.dp)
+            StyleLayout.MATERIAL_DESIGN -> RoundedCornerShape(4.dp)
+            StyleLayout.MATERIAL_YOU -> RoundedCornerShape(28.dp)
+            StyleLayout.MATERIAL_EXPRESSIVE -> RoundedCornerShape(32.dp)
+            StyleLayout.GLASS -> RoundedCornerShape(26.dp)
+            StyleLayout.LIQUID_GLASS -> RoundedCornerShape(32.dp)
+            StyleLayout.TERMINAL -> RoundedCornerShape(0.dp)
+            else -> MaterialTheme.shapes.extraLarge
+        }
+        val composerColor = when {
+            glass && haze != null -> Color.Transparent
+            layout == StyleLayout.TERMINAL -> Color.Black.copy(alpha = 0.88f)
+            layout == StyleLayout.CHATGPT -> MaterialTheme.colorScheme.surface
+            layout == StyleLayout.CLAUDE -> MaterialTheme.colorScheme.surface.copy(alpha = 0.62f)
+            layout == StyleLayout.MATERIAL_DESIGN -> MaterialTheme.colorScheme.surface
+            layout == StyleLayout.MATERIAL_YOU -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
+            layout == StyleLayout.MATERIAL_EXPRESSIVE -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f)
+            else -> MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)
+        }
+        val composerBorder = when {
+            glass -> androidx.compose.foundation.BorderStroke(1.dp, uiStyle.glassBorder(dark))
+            layout == StyleLayout.CLAUDE -> androidx.compose.foundation.BorderStroke(
+                1.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.8f)
+            )
+            layout == StyleLayout.MATERIAL_YOU -> androidx.compose.foundation.BorderStroke(
+                1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
+            )
+            layout == StyleLayout.TERMINAL -> androidx.compose.foundation.BorderStroke(
+                1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+            )
+            layout == StyleLayout.CHATGPT || layout == StyleLayout.MATERIAL_DESIGN -> null
+            else -> androidx.compose.foundation.BorderStroke(
+                1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)
+            )
+        }
         Surface(
-            shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surface.copy(
-                alpha = if (LocalUiStyle.current.background == com.devai.studio.data.StyleBackground.GLASS) 0.68f else 0.92f,
-            ),
+            shape = composerShape,
+            color = composerColor,
             contentColor = MaterialTheme.colorScheme.onSurface,
-            border = androidx.compose.foundation.BorderStroke(
-                1.dp,
-                MaterialTheme.colorScheme.outline.copy(alpha = 0.18f),
-            ),
-            shadowElevation = 10.dp,
+            border = composerBorder,
+            shadowElevation = when (layout) {
+                StyleLayout.CHATGPT -> 8.dp
+                StyleLayout.CLAUDE -> 0.dp
+                StyleLayout.MATERIAL_DESIGN -> 4.dp
+                StyleLayout.TERMINAL -> 0.dp
+                else -> 8.dp
+            },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(
+                    horizontal = when (layout) {
+                        StyleLayout.CHATGPT -> 16.dp
+                        StyleLayout.CLAUDE -> 24.dp
+                        StyleLayout.TERMINAL -> 8.dp
+                        else -> 12.dp
+                    },
+                    vertical = 8.dp,
+                )
+                .then(if (glass) Modifier.glassPanel(haze, uiStyle, composerShape, dark) else Modifier),
         ) {
+            Box {
             Row(
-                modifier = Modifier.padding(5.dp),
+                modifier = Modifier.padding(if (layout == StyleLayout.CLAUDE) 8.dp else 5.dp),
                 verticalAlignment = Alignment.Bottom,
             ) {
                 IconButton(
@@ -832,7 +918,11 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                     modifier = Modifier.weight(1f),
                     placeholder = { Text("Сообщение…") },
                     maxLines = 4,
-                    shape = MaterialTheme.shapes.large,
+                    shape = when (layout) {
+                        StyleLayout.TERMINAL -> RoundedCornerShape(0.dp)
+                        StyleLayout.MATERIAL_DESIGN -> RoundedCornerShape(8.dp)
+                        else -> MaterialTheme.shapes.large
+                    },
                     keyboardOptions = KeyboardOptions(
                         imeAction = if (sendOnEnter) ImeAction.Send else ImeAction.Default
                     ),
@@ -844,27 +934,42 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                 )
                 Spacer(Modifier.width(6.dp))
                 val canSend = streaming || input.isNotBlank() || attachments.isNotEmpty()
+                val sendShape = when (layout) {
+                    StyleLayout.MATERIAL_EXPRESSIVE -> RoundedCornerShape(20.dp)
+                    StyleLayout.TERMINAL -> RoundedCornerShape(0.dp)
+                    StyleLayout.MATERIAL_DESIGN -> RoundedCornerShape(8.dp)
+                    else -> CircleShape
+                }
+                val sendSize = if (layout == StyleLayout.MATERIAL_EXPRESSIVE) 52.dp else 48.dp
+                val sendBrush = if (!canSend) {
+                    Brush.linearGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.surfaceVariant,
+                            MaterialTheme.colorScheme.surfaceVariant,
+                        )
+                    )
+                } else when (layout) {
+                    StyleLayout.CHATGPT -> Brush.linearGradient(
+                        listOf(MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.onSurface)
+                    )
+                    StyleLayout.MATERIAL_DESIGN -> Brush.linearGradient(
+                        listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary)
+                    )
+                    StyleLayout.TERMINAL -> Brush.linearGradient(
+                        listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary)
+                    )
+                    StyleLayout.MATERIAL_EXPRESSIVE -> Brush.linearGradient(
+                        listOf(MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.primary)
+                    )
+                    else -> Brush.linearGradient(
+                        listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
+                    )
+                }
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (canSend) {
-                                Brush.linearGradient(
-                                    listOf(
-                                        MaterialTheme.colorScheme.primary,
-                                        MaterialTheme.colorScheme.tertiary,
-                                    )
-                                )
-                            } else {
-                                Brush.linearGradient(
-                                    listOf(
-                                        MaterialTheme.colorScheme.surfaceVariant,
-                                        MaterialTheme.colorScheme.surfaceVariant,
-                                    )
-                                )
-                            }
-                        )
+                        .size(sendSize)
+                        .clip(sendShape)
+                        .background(sendBrush)
                         .clickable(enabled = canSend) { if (streaming) stop() else send() },
                     contentAlignment = Alignment.Center,
                 ) {
@@ -876,6 +981,10 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                         modifier = Modifier.size(21.dp),
                     )
                 }
+            }
+            if (uiStyle.isLiquidGlass) {
+                LiquidSheen(Modifier.matchParentSize(), composerShape, 0.10f)
+            }
             }
         }
         }
@@ -1113,7 +1222,12 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
 @Composable
 private fun ChatWallpaperLayer(id: String, dim: Float) {
     val wallpaper = ChatWallpapers.byId(id) ?: return
-    Box(Modifier.fillMaxSize()) {
+    val haze = LocalHazeState.current
+    Box(
+        Modifier
+            .fillMaxSize()
+            .then(if (haze != null) Modifier.hazeSource(haze, zIndex = 0.5f) else Modifier)
+    ) {
         Image(
             painter = painterResource(wallpaper.full),
             contentDescription = null,
@@ -1277,6 +1391,40 @@ private fun MessageBubble(
     val isUser = message.role == "user"
     val style = LocalUiStyle.current
     val dark = style.effectiveDark(MaterialTheme.colorScheme.background.luminance() < 0.35f)
+    val layout = style.layout
+    when (layout) {
+        StyleLayout.CHATGPT -> {
+            ChatGptMessage(
+                message, isUser, style, dark, fontSize, codeFontSize, codeWrap, bubbleWidth,
+                fontFamily, onSpeak, onCopy, onShare,
+            )
+            return
+        }
+        StyleLayout.CLAUDE -> {
+            ClaudeMessage(
+                message, isUser, style, dark, fontSize, codeFontSize, codeWrap, bubbleWidth,
+                fontFamily, onSpeak, onCopy, onShare,
+            )
+            return
+        }
+        StyleLayout.TERMINAL -> {
+            TerminalMessage(
+                message, isUser, style, dark, fontSize, codeFontSize, codeWrap,
+                onSpeak, onCopy, onShare,
+            )
+            return
+        }
+        StyleLayout.MATERIAL_DESIGN,
+        StyleLayout.MATERIAL_YOU,
+        StyleLayout.MATERIAL_EXPRESSIVE -> {
+            MaterialMessage(
+                message, isUser, style, dark, fontSize, codeFontSize, codeWrap, bubbleWidth,
+                showAvatars, fontFamily, onSpeak, onCopy, onShare,
+            )
+            return
+        }
+        else -> Unit
+    }
     val userColor = style.userBubbleColor(dark)
     val onUser = style.onUserBubbleColor(dark)
     val aiColor = style.aiBubbleColor(dark)
@@ -1312,13 +1460,17 @@ private fun MessageBubble(
             Avatar(isUser = false)
             Spacer(Modifier.width(8.dp))
         }
+        val glass = style.isGlass
         Surface(
             shape = bubbleShape,
-            color = if (isUser || transparentAi) Color.Transparent else aiColor.copy(
-                alpha = if (style.background == com.devai.studio.data.StyleBackground.GLASS) 0.72f else 1f,
-            ),
+            color = when {
+                glass -> if (isUser) userColor.copy(alpha = 0.62f) else aiColor.copy(alpha = 0.46f)
+                isUser || transparentAi -> Color.Transparent
+                else -> aiColor
+            },
             contentColor = if (isUser) onUser else onAi,
             border = when {
+                glass -> androidx.compose.foundation.BorderStroke(1.dp, style.glassBorder(dark))
                 isUser -> null
                 style.bubble == com.devai.studio.data.StyleBubble.MINIMAL ||
                     style.bubble == com.devai.studio.data.StyleBubble.FLAT -> null
@@ -1348,8 +1500,10 @@ private fun MessageBubble(
                                 ),
                                 bubbleShape,
                             )
-                        } else {
+                        } else if (!glass) {
                             Modifier.background(userColor, bubbleShape)
+                        } else {
+                            Modifier
                         }
                     } else {
                         Modifier
@@ -1443,6 +1597,252 @@ private fun MessageBubble(
         if (isUser && showAvatars) {
             Spacer(Modifier.width(8.dp))
             Avatar(isUser = true)
+        }
+    }
+}
+
+@Composable
+private fun MessageBody(
+    message: AiMessage,
+    color: Color,
+    fontSize: TextUnit,
+    codeFontSize: TextUnit,
+    codeWrap: Boolean,
+    fontFamily: FontFamily,
+) {
+    if (message.content.isBlank()) {
+        Text("…", color = color)
+        return
+    }
+    val segments = remember(message.content) { parseSegments(message.content) }
+    if (segments.isEmpty()) {
+        SelectionContainer {
+            Text(message.content, color = color, fontSize = fontSize, fontFamily = fontFamily)
+        }
+    } else {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            segments.forEach { segment ->
+                if (segment.code) {
+                    CodeBlock(segment.lang, segment.text, fontSize = codeFontSize, wrap = codeWrap)
+                } else {
+                    SelectionContainer {
+                        Text(segment.text, color = color, fontSize = fontSize, fontFamily = fontFamily)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MessageActions(
+    content: String,
+    isUser: Boolean,
+    tint: Color,
+    onSpeak: (String) -> Unit,
+    onCopy: (String) -> Unit,
+    onShare: (String) -> Unit,
+) {
+    if (content.isBlank()) return
+    Row(horizontalArrangement = Arrangement.spacedBy(0.dp)) {
+        IconButton(onClick = { onCopy(content) }, modifier = Modifier.size(32.dp)) {
+            Icon(Icons.Default.Create, contentDescription = "Копировать", tint = tint, modifier = Modifier.size(15.dp))
+        }
+        IconButton(onClick = { onShare(content) }, modifier = Modifier.size(32.dp)) {
+            Icon(Icons.Default.Share, contentDescription = "Поделиться", tint = tint, modifier = Modifier.size(15.dp))
+        }
+        if (!isUser) {
+            IconButton(onClick = { onSpeak(content) }, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.Default.PlayArrow, contentDescription = "Озвучить", tint = tint, modifier = Modifier.size(15.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChatGptMessage(
+    message: AiMessage,
+    isUser: Boolean,
+    style: com.devai.studio.data.UiStyle,
+    dark: Boolean,
+    fontSize: TextUnit,
+    codeFontSize: TextUnit,
+    codeWrap: Boolean,
+    bubbleWidth: Dp,
+    fontFamily: FontFamily,
+    onSpeak: (String) -> Unit,
+    onCopy: (String) -> Unit,
+    onShare: (String) -> Unit,
+) {
+    val userColor = style.userBubbleColor(dark)
+    val onUser = style.onUserBubbleColor(dark)
+    val onAi = style.onAiBubbleColor(dark)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
+    ) {
+        if (isUser) {
+            Surface(
+                modifier = Modifier.widthIn(max = bubbleWidth),
+                shape = RoundedCornerShape(24.dp),
+                color = userColor,
+                contentColor = onUser,
+            ) {
+                Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+                    MessageBody(message, onUser, fontSize, codeFontSize, codeWrap, fontFamily)
+                    MessageActions(message.content, true, onUser.copy(alpha = 0.6f), onSpeak, onCopy, onShare)
+                }
+            }
+        } else {
+            Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                MessageBody(message, onAi, fontSize, codeFontSize, codeWrap, fontFamily)
+                MessageActions(message.content, false, onAi.copy(alpha = 0.55f), onSpeak, onCopy, onShare)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClaudeMessage(
+    message: AiMessage,
+    isUser: Boolean,
+    style: com.devai.studio.data.UiStyle,
+    dark: Boolean,
+    fontSize: TextUnit,
+    codeFontSize: TextUnit,
+    codeWrap: Boolean,
+    bubbleWidth: Dp,
+    fontFamily: FontFamily,
+    onSpeak: (String) -> Unit,
+    onCopy: (String) -> Unit,
+    onShare: (String) -> Unit,
+) {
+    val userColor = style.userBubbleColor(dark)
+    val onUser = style.onUserBubbleColor(dark)
+    val onAi = style.onAiBubbleColor(dark)
+    Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+        if (isUser) {
+            Surface(
+                modifier = Modifier.widthIn(max = bubbleWidth),
+                shape = RoundedCornerShape(14.dp),
+                color = userColor.copy(alpha = 0.52f),
+                contentColor = onUser,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.8f)
+                ),
+            ) {
+                Column(Modifier.padding(14.dp)) {
+                    MessageBody(message, onUser, fontSize, codeFontSize, codeWrap, fontFamily)
+                    MessageActions(message.content, true, onUser.copy(alpha = 0.6f), onSpeak, onCopy, onShare)
+                }
+            }
+        } else {
+            MessageBody(
+                message, onAi, fontSize, codeFontSize, codeWrap,
+                FontFamily.Serif,
+            )
+            MessageActions(message.content, false, onAi.copy(alpha = 0.55f), onSpeak, onCopy, onShare)
+        }
+    }
+}
+
+@Composable
+private fun TerminalMessage(
+    message: AiMessage,
+    isUser: Boolean,
+    style: com.devai.studio.data.UiStyle,
+    dark: Boolean,
+    fontSize: TextUnit,
+    codeFontSize: TextUnit,
+    codeWrap: Boolean,
+    onSpeak: (String) -> Unit,
+    onCopy: (String) -> Unit,
+    onShare: (String) -> Unit,
+) {
+    val prompt = if (isUser) ">" else "$"
+    val color = if (isUser) MaterialTheme.colorScheme.primary
+    else MaterialTheme.colorScheme.onBackground
+    Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.Top) {
+        Text(
+            prompt,
+            color = MaterialTheme.colorScheme.primary,
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.width(16.dp),
+        )
+        Column(Modifier.weight(1f)) {
+            MessageBody(message, color, fontSize, codeFontSize, codeWrap, FontFamily.Monospace)
+            MessageActions(
+                message.content, isUser, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f),
+                onSpeak, onCopy, onShare,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MaterialMessage(
+    message: AiMessage,
+    isUser: Boolean,
+    style: com.devai.studio.data.UiStyle,
+    dark: Boolean,
+    fontSize: TextUnit,
+    codeFontSize: TextUnit,
+    codeWrap: Boolean,
+    bubbleWidth: Dp,
+    showAvatars: Boolean,
+    fontFamily: FontFamily,
+    onSpeak: (String) -> Unit,
+    onCopy: (String) -> Unit,
+    onShare: (String) -> Unit,
+) {
+    val layout = style.layout
+    val shape = when (layout) {
+        StyleLayout.MATERIAL_DESIGN -> RoundedCornerShape(4.dp)
+        StyleLayout.MATERIAL_YOU -> RoundedCornerShape(24.dp)
+        else -> RoundedCornerShape(28.dp)
+    }
+    val container = when {
+        isUser && layout == StyleLayout.MATERIAL_DESIGN -> MaterialTheme.colorScheme.primary
+        isUser && layout == StyleLayout.MATERIAL_YOU -> MaterialTheme.colorScheme.primaryContainer
+        isUser -> MaterialTheme.colorScheme.tertiaryContainer
+        layout == StyleLayout.MATERIAL_DESIGN -> MaterialTheme.colorScheme.surface
+        layout == StyleLayout.MATERIAL_YOU -> MaterialTheme.colorScheme.surfaceVariant
+        else -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f)
+    }
+    val contentColor = when {
+        isUser && layout == StyleLayout.MATERIAL_DESIGN -> MaterialTheme.colorScheme.onPrimary
+        isUser && layout == StyleLayout.MATERIAL_YOU -> MaterialTheme.colorScheme.onPrimaryContainer
+        isUser -> MaterialTheme.colorScheme.onTertiaryContainer
+        else -> MaterialTheme.colorScheme.onSurface
+    }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
+        verticalAlignment = Alignment.Top,
+    ) {
+        if (!isUser && showAvatars) {
+            Avatar(false)
+            Spacer(Modifier.width(8.dp))
+        }
+        Surface(
+            modifier = Modifier.widthIn(max = bubbleWidth),
+            shape = shape,
+            color = container,
+            contentColor = contentColor,
+            shadowElevation = if (layout == StyleLayout.MATERIAL_DESIGN) 2.dp else 0.dp,
+        ) {
+            Column(Modifier.padding(if (layout == StyleLayout.MATERIAL_EXPRESSIVE) 16.dp else 12.dp)) {
+                MessageBody(message, contentColor, fontSize, codeFontSize, codeWrap, fontFamily)
+                MessageActions(
+                    message.content, isUser, contentColor.copy(alpha = 0.58f),
+                    onSpeak, onCopy, onShare,
+                )
+            }
+        }
+        if (isUser && showAvatars) {
+            Spacer(Modifier.width(8.dp))
+            Avatar(true)
         }
     }
 }

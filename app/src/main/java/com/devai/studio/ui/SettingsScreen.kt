@@ -86,6 +86,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -2227,6 +2229,130 @@ private fun UiStyleSettings(
 }
 
 @Composable
+private fun StyleMiniPreview(
+    style: UiStyle,
+    p: StylePalette,
+    background: Color,
+    surface: Color,
+    onVariant: Color,
+) {
+    val primary = Color(p.primary)
+    val user = Color(p.userBubble)
+    val ai = Color(p.aiBubble)
+    val radius = when (style.corner) {
+        0 -> 0.dp
+        in 1..12 -> 6.dp
+        in 13..24 -> 10.dp
+        else -> 14.dp
+    }
+    val shape = RoundedCornerShape(radius)
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(86.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(background),
+    ) {
+        when (style.layout) {
+            com.devai.studio.data.StyleLayout.TERMINAL -> {
+                Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("> hello", color = primary, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace)
+                    Text("devai@studio:~$ ready", color = onVariant, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Monospace)
+                    Spacer(Modifier.weight(1f))
+                    Box(Modifier.fillMaxWidth().height(16.dp).background(Color.Black, RoundedCornerShape(0.dp)))
+                }
+            }
+            com.devai.studio.data.StyleLayout.CHATGPT -> {
+                Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Text("DevAI", color = onVariant, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                    Box(Modifier.width(52.dp).height(12.dp).background(ai, shape))
+                    Box(Modifier.width(34.dp).height(12.dp).background(user, shape).align(Alignment.End))
+                    Spacer(Modifier.weight(1f))
+                    Box(Modifier.fillMaxWidth().height(18.dp).background(surface, RoundedCornerShape(9.dp)))
+                }
+            }
+            com.devai.studio.data.StyleLayout.CLAUDE -> {
+                Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Claude", color = onVariant, style = MaterialTheme.typography.labelSmall, fontFamily = FontFamily.Serif)
+                    Box(Modifier.width(64.dp).height(10.dp).background(onVariant.copy(alpha = 0.35f), RoundedCornerShape(2.dp)))
+                    Box(Modifier.width(44.dp).height(10.dp).background(onVariant.copy(alpha = 0.22f), RoundedCornerShape(2.dp)))
+                    Spacer(Modifier.weight(1f))
+                    Box(Modifier.fillMaxWidth().height(18.dp).background(surface, RoundedCornerShape(6.dp)))
+                }
+            }
+            com.devai.studio.data.StyleLayout.GLASS,
+            com.devai.studio.data.StyleLayout.LIQUID_GLASS -> {
+                Column(Modifier.fillMaxSize().padding(7.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Box(
+                        Modifier.fillMaxWidth().height(20.dp).clip(shape)
+                            .background(
+                                Brush.linearGradient(
+                                    listOf(
+                                        Color.White.copy(alpha = 0.38f),
+                                        primary.copy(alpha = 0.22f),
+                                        Color.White.copy(alpha = 0.12f),
+                                    )
+                                )
+                            )
+                    )
+                    Box(Modifier.width(58.dp).height(14.dp).clip(shape).background(ai.copy(alpha = 0.55f)))
+                    Box(Modifier.width(38.dp).height(14.dp).clip(shape).background(user.copy(alpha = 0.72f)).align(Alignment.End))
+                    Spacer(Modifier.weight(1f))
+                    Box(
+                        Modifier.fillMaxWidth().height(18.dp).clip(shape)
+                            .background(Color.White.copy(alpha = 0.28f))
+                    )
+                }
+            }
+            com.devai.studio.data.StyleLayout.MATERIAL_DESIGN,
+            com.devai.studio.data.StyleLayout.MATERIAL_YOU,
+            com.devai.studio.data.StyleLayout.MATERIAL_EXPRESSIVE -> {
+                val expressive = style.layout == com.devai.studio.data.StyleLayout.MATERIAL_EXPRESSIVE
+                val appBar = if (style.layout == com.devai.studio.data.StyleLayout.MATERIAL_DESIGN) primary
+                else if (expressive) primary.copy(alpha = 0.22f) else surface
+                Column(Modifier.fillMaxSize()) {
+                    Box(Modifier.fillMaxWidth().height(18.dp).background(appBar)) {
+                        Text(
+                            "DevAI",
+                            color = if (style.layout == com.devai.studio.data.StyleLayout.MATERIAL_DESIGN)
+                                Color(p.onPrimary) else primary,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        )
+                    }
+                    Column(Modifier.weight(1f).padding(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Box(
+                            Modifier.width(if (expressive) 64.dp else 54.dp).height(if (expressive) 18.dp else 14.dp)
+                                .background(if (expressive) primary.copy(alpha = 0.35f) else ai, shape)
+                        )
+                        Box(
+                            Modifier.width(40.dp).height(14.dp).background(user, shape).align(Alignment.End)
+                        )
+                        Spacer(Modifier.weight(1f))
+                        Box(Modifier.fillMaxWidth().height(16.dp).background(surface, shape))
+                    }
+                    Box(Modifier.fillMaxWidth().height(14.dp).background(primary.copy(alpha = 0.12f))) {
+                        Box(
+                            Modifier.width(24.dp).height(8.dp).background(primary.copy(alpha = 0.35f), RoundedCornerShape(4.dp))
+                                .align(Alignment.Center)
+                        )
+                    }
+                }
+            }
+            else -> {
+                Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Box(Modifier.width(52.dp).height(14.dp).background(ai, shape))
+                    Box(Modifier.width(36.dp).height(14.dp).background(user, shape).align(Alignment.End))
+                    Spacer(Modifier.weight(1f))
+                    Box(Modifier.fillMaxWidth().height(16.dp).background(surface, shape))
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun StylePreviewCard(
     style: UiStyle,
     selected: Boolean,
@@ -2288,38 +2414,23 @@ private fun StylePreviewCard(
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.Bottom,
-            ) {
-                Box(
-                    Modifier
-                        .width(54.dp)
-                        .height(16.dp)
-                        .background(
-                            Color(p.userBubble),
-                            RoundedCornerShape(if (style.corner == 0) 0.dp else 7.dp),
-                        ),
-                )
-                Box(
-                    Modifier
-                        .width(66.dp)
-                        .height(20.dp)
-                        .background(
-                            if (style.bubble == com.devai.studio.data.StyleBubble.MINIMAL)
-                                surface
-                            else Color(p.aiBubble),
-                            RoundedCornerShape(if (style.corner == 0) 0.dp else 7.dp),
-                        ),
-                )
-                Spacer(Modifier.weight(1f))
+            StyleMiniPreview(style, p, onBg, surface, onVariant)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    style.id.uppercase(),
+                    style.layout.name.replace('_', ' '),
                     style = MaterialTheme.typography.labelSmall,
                     color = Color(p.primary),
                     maxLines = 1,
                 )
+                Spacer(Modifier.weight(1f))
+                if (style.isGlass) {
+                    Text(
+                        if (style.isLiquidGlass) "LIVE BLUR" else "BLUR",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(p.primary),
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
             }
 
             Text(
