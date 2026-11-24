@@ -60,6 +60,7 @@
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute("content", THEMES[name].color);
     store.set("devai.expressive.theme", name);
+    window.dispatchEvent(new CustomEvent("expressive:theme", { detail: name }));
     if (announce) {
       toast("Тема: " + THEMES[name].name);
       Sound.uiTap("theme");
@@ -585,8 +586,11 @@
     const show = (element) => {
       const target = Number(element.dataset.count) || 0;
       const suffix = element.dataset.suffix || "";
+      const format = element.dataset.format === "space"
+        ? (value) => value.toLocaleString("ru-RU")
+        : (value) => String(value);
       if (reduced) {
-        element.textContent = target + suffix;
+        element.textContent = format(target) + suffix;
         return;
       }
       const started = performance.now();
@@ -594,7 +598,7 @@
       const frame = (now) => {
         const progress = Math.min(1, (now - started) / duration);
         const eased = 1 - Math.pow(1 - progress, 3);
-        element.textContent = Math.round(target * eased) + suffix;
+        element.textContent = format(Math.round(target * eased)) + suffix;
         if (progress < 1) requestAnimationFrame(frame);
       };
       requestAnimationFrame(frame);
@@ -620,6 +624,7 @@
       const max = document.documentElement.scrollHeight - window.innerHeight;
       const progress = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
       bar.style.transform = "scaleX(" + progress.toFixed(4) + ")";
+      document.body.classList.toggle("is-scrolled", window.scrollY > 260);
     };
     window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
@@ -630,9 +635,341 @@
   initSound();
   initToastLinks();
   initRipples();
+
+  function initSplitText() {
+    if (reduced) return;
+    const title = $(".hero-title");
+    if (!title) return;
+    const walker = document.createTreeWalker(title, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) {
+      if (walker.currentNode.nodeValue.trim()) nodes.push(walker.currentNode);
+    }
+    let index = 0;
+    nodes.forEach((node) => {
+      const fragment = document.createDocumentFragment();
+      node.nodeValue.split(/(\s+)/).forEach((part) => {
+        if (!part) return;
+        if (/^\s+$/.test(part)) {
+          fragment.append(part);
+          return;
+        }
+        const word = document.createElement("span");
+        word.className = "word";
+        Array.from(part).forEach((character) => {
+          const char = document.createElement("span");
+          char.className = "char";
+          char.textContent = character;
+          char.style.setProperty("--char-index", index);
+          index += 1;
+          word.append(char);
+        });
+        fragment.append(word);
+      });
+      node.replaceWith(fragment);
+    });
+  }
+
+  function initTicker() {
+    const word = $("#ticker-word");
+    if (!word || reduced) return;
+    const words = ["VEXEL", "ИИ-ЧАТ", "175 ЯЗЫКОВ", "ЛОКАЛЬНЫЕ МОДЕЛИ"];
+    let index = 0;
+    window.setInterval(() => {
+      if (document.hidden || document.body.classList.contains("motion-paused")) return;
+      word.classList.add("is-out");
+      window.setTimeout(() => {
+        index = (index + 1) % words.length;
+        word.textContent = words[index];
+        word.classList.remove("is-out");
+      }, 280);
+    }, 2800);
+  }
+
+  function initCursor() {
+    if (reduced || !finePointer) return;
+    const ring = $("#cursor-ring");
+    const dot = $("#cursor-dot");
+    if (!ring || !dot) return;
+    let x = window.innerWidth / 2;
+    let y = window.innerHeight / 2;
+    let ringX = x;
+    let ringY = y;
+    window.addEventListener("pointermove", (event) => {
+      x = event.clientX;
+      y = event.clientY;
+      document.body.classList.add("has-cursor");
+      dot.style.transform = "translate3d(" + x + "px, " + y + "px, 0)";
+      const target = event.target instanceof Element ? event.target : null;
+      const hot = target ? target.closest("a, button, summary, [data-motion-card]") : null;
+      document.body.classList.toggle("cursor-hot", Boolean(hot));
+    }, { passive: true });
+    const frame = () => {
+      ringX += (x - ringX) * 0.18;
+      ringY += (y - ringY) * 0.18;
+      ring.style.transform = "translate3d(" + ringX + "px, " + ringY + "px, 0)";
+      window.requestAnimationFrame(frame);
+    };
+    window.requestAnimationFrame(frame);
+  }
+
+  function initHeroCanvas() {
+    const canvas = $("#hero-canvas");
+    if (!canvas || reduced) return;
+    const stage = canvas.parentElement;
+    const context = canvas.getContext("2d");
+    if (!stage || !context) return;
+    let width = 0;
+    let height = 0;
+    let ratio = 1;
+    let particles = [];
+    let primary = "#c8ff3d";
+    let frameId = 0;
+
+    const readColor = () => {
+      primary = window.getComputedStyle(document.documentElement).getPropertyValue("--primary").trim() || "#c8ff3d";
+    };
+
+    const resize = () => {
+      const rect = stage.getBoundingClientRect();
+      width = Math.max(1, rect.width);
+      height = Math.max(1, rect.height);
+      ratio = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      canvas.style.width = width + "px";
+      canvas.style.height = height + "px";
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      const count = Math.min(44, Math.max(18, Math.round(width * height / 22000)));
+      particles = Array.from({ length: count }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.22,
+        vy: (Math.random() - 0.5) * 0.22,
+        r: 0.7 + Math.random() * 1.5
+      }));
+    };
+
+    const draw = () => {
+      context.clearRect(0, 0, width, height);
+      context.fillStyle = primary;
+      context.strokeStyle = primary;
+      const paused = document.body.classList.contains("motion-paused");
+      particles.forEach((particle, index) => {
+        if (!paused) {
+          particle.x += particle.vx;
+          particle.y += particle.vy;
+          if (particle.x < 0 || particle.x > width) particle.vx *= -1;
+          if (particle.y < 0 || particle.y > height) particle.vy *= -1;
+        }
+        context.globalAlpha = 0.5;
+        context.beginPath();
+        context.arc(particle.x, particle.y, particle.r, 0, Math.PI * 2);
+        context.fill();
+        for (let other = index + 1; other < particles.length; other += 1) {
+          const next = particles[other];
+          const distance = Math.hypot(particle.x - next.x, particle.y - next.y);
+          if (distance > 92) continue;
+          context.globalAlpha = (1 - distance / 92) * 0.12;
+          context.beginPath();
+          context.moveTo(particle.x, particle.y);
+          context.lineTo(next.x, next.y);
+          context.stroke();
+        }
+      });
+      context.globalAlpha = 1;
+      frameId = window.requestAnimationFrame(draw);
+    };
+
+    resize();
+    readColor();
+    draw();
+    window.addEventListener("resize", resize);
+    window.addEventListener("expressive:theme", readColor);
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        window.cancelAnimationFrame(frameId);
+        frameId = 0;
+      } else if (!frameId) {
+        draw();
+      }
+    });
+  }
+
+  function initSpotlight() {
+    if (!finePointer) return;
+    $$("[data-spotlight]").forEach((card) => {
+      card.addEventListener("pointermove", (event) => {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty("--sx", ((event.clientX - rect.left) / rect.width * 100).toFixed(1) + "%");
+        card.style.setProperty("--sy", ((event.clientY - rect.top) / rect.height * 100).toFixed(1) + "%");
+      });
+    });
+  }
+
+  function initMotionLab() {
+    $$("[data-motion-run]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const card = button.closest("[data-motion-card]");
+        if (!card) return;
+        card.classList.remove("is-running");
+        void card.offsetWidth;
+        card.classList.add("is-running");
+        window.setTimeout(() => card.classList.remove("is-running"), 1600);
+      });
+    });
+    $$("[data-motion-card]").forEach((card) => {
+      card.addEventListener("click", (event) => {
+        if (event.target.closest("button")) return;
+        const button = $("[data-motion-run]", card);
+        if (button) button.click();
+      });
+    });
+  }
+
+  function initMotionDock() {
+    const dock = $("#motion-dock");
+    if (!dock) return;
+    if (reduced) {
+      dock.hidden = true;
+      return;
+    }
+    const pause = $("#motion-pause");
+    const speed = $("#motion-speed");
+    const reset = $("#motion-reset");
+    if (!pause || !speed || !reset) return;
+    let paused = false;
+
+    const apply = () => {
+      const rate = Number(speed.value) || 1;
+      if (typeof document.getAnimations === "function") {
+        document.getAnimations().forEach((animation) => {
+          try {
+            animation.playbackRate = rate;
+            if (paused) animation.pause();
+            else if (animation.playState === "paused") animation.play();
+          } catch {}
+        });
+      }
+      document.body.classList.toggle("motion-paused", paused);
+      pause.setAttribute("aria-pressed", String(paused));
+      const label = pause.querySelector("span");
+      if (label) label.textContent = paused ? "Продолжить" : "Пауза";
+    };
+
+    pause.addEventListener("click", () => {
+      paused = !paused;
+      apply();
+    });
+    speed.addEventListener("input", apply);
+    reset.addEventListener("click", () => {
+      paused = false;
+      speed.value = "1";
+      apply();
+      $$("[data-motion-card]").forEach((card) => card.classList.remove("is-running"));
+      toast("Анимации сброшены");
+    });
+  }
+
+  function initCodeWindow() {
+    const windowEl = $("[data-code-window]");
+    if (!windowEl) return;
+    const run = () => {
+      windowEl.classList.remove("is-running");
+      void windowEl.offsetWidth;
+      windowEl.classList.add("is-running");
+    };
+    const replay = $("[data-code-replay]");
+    if (replay) replay.addEventListener("click", run);
+    if (reduced || !("IntersectionObserver" in window)) {
+      run();
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        run();
+        observer.disconnect();
+      });
+    }, { threshold: 0.25 });
+    observer.observe(windowEl);
+  }
+
+  function initSectionDots() {
+    const links = $$("[data-section-dot]");
+    if (!links.length) return;
+    const map = new Map();
+    links.forEach((link) => {
+      const id = (link.getAttribute("href") || "").slice(1);
+      const section = document.getElementById(id);
+      if (section) map.set(section, link);
+    });
+    if (!("IntersectionObserver" in window)) return;
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        links.forEach((link) => {
+          link.classList.remove("is-active");
+          link.removeAttribute("aria-current");
+        });
+        const active = map.get(entry.target);
+        if (active) {
+          active.classList.add("is-active");
+          active.setAttribute("aria-current", "true");
+        }
+      });
+    }, { rootMargin: "-45% 0px -45% 0px", threshold: 0 });
+    map.forEach((_, section) => observer.observe(section));
+  }
+
+  function initStagger() {
+    $$("[data-stagger]").forEach((group) => {
+      $$(".reveal", group).forEach((element, index) => {
+        element.style.setProperty("--delay", Math.min(index, 8) * 70 + "ms");
+      });
+    });
+  }
+
+  function initScrollParallax() {
+    if (reduced) return;
+    const items = $$("[data-parallax]");
+    if (!items.length) return;
+    let ticking = false;
+    const update = () => {
+      const viewport = window.innerHeight || 1;
+      items.forEach((element) => {
+        const rect = element.getBoundingClientRect();
+        const strength = Number(element.dataset.parallax) || 0.04;
+        const offset = (rect.top + rect.height / 2 - viewport / 2) / viewport;
+        element.style.setProperty("--py", (offset * strength * 100).toFixed(2));
+      });
+      ticking = false;
+    };
+    const request = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(update);
+    };
+    window.addEventListener("scroll", request, { passive: true });
+    window.addEventListener("resize", request);
+    update();
+  }
+
+  initSplitText();
+  initTicker();
+  initCursor();
+  initHeroCanvas();
+  initSpotlight();
+  initMotionLab();
+  initMotionDock();
+  initCodeWindow();
+  initSectionDots();
   initMagnetic();
   initParallax();
   initReveal();
+  initStagger();
   initCounters();
   initScroll();
+  initScrollParallax();
 })();

@@ -22,7 +22,31 @@
 </head>
 <body>
   <div class="grain" aria-hidden="true"></div>
+  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
   <div class="scroll-progress" aria-hidden="true"><i id="scroll-bar"></i></div>
+  <div class="cursor-ring" id="cursor-ring" aria-hidden="true"></div>
+  <div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
+
+  <nav class="section-dots" aria-label="Разделы страницы">
+    <a href="#top" data-section-dot aria-label="Начало"></a>
+    <a href="#mood" data-section-dot aria-label="Настроение"></a>
+    <a href="#motion" data-section-dot aria-label="Motion Lab"></a>
+    <a href="#features" data-section-dot aria-label="Возможности"></a>
+    <a href="#numbers" data-section-dot aria-label="Цифры"></a>
+    <a href="#vexel" data-section-dot aria-label="Vexel"></a>
+    <a href="#workflow" data-section-dot aria-label="Процесс"></a>
+    <a href="#sound" data-section-dot aria-label="Звук"></a>
+    <a href="#timeline" data-section-dot aria-label="Хроника"></a>
+    <a href="#faq" data-section-dot aria-label="FAQ"></a>
+    <a href="#download" data-section-dot aria-label="Скачать"></a>
+  </nav>
+
+  <aside class="motion-dock" id="motion-dock" aria-label="Управление анимациями">
+    <span class="motion-dock-label">MOTION</span>
+    <button class="motion-dock-btn" id="motion-pause" type="button" aria-pressed="false"><span>Пауза</span></button>
+    <label class="motion-speed"><span>Скорость</span><input id="motion-speed" type="range" min="0.5" max="1.8" step="0.1" value="1" aria-label="Скорость анимаций"></label>
+    <button class="motion-dock-btn" id="motion-reset" type="button" aria-label="Сбросить анимации">↺</button>
+  </aside>
 
   <header class="top">
     <a class="brand" href="../index.html" aria-label="DevAI Studio — на главную">
@@ -32,8 +56,10 @@
     </a>
     <nav class="nav" aria-label="Основная навигация">
       <a href="#mood">Настроение</a>
+      <a href="#motion">Motion</a>
       <a href="#features">Возможности</a>
       <a href="#vexel">Vexel</a>
+      <a href="#faq">FAQ</a>
       <a href="#download">Скачать</a>
       <a href="../playground/">Playground</a>
     </nav>
@@ -55,7 +81,11 @@
     <section class="hero" id="top">
       <div class="hero-copy reveal">
         <span class="kicker"><i></i> MATERIAL EXPRESSIVE 3 · V4.2.0</span>
-        <h1>Код.<br><span class="outline">Идеи.</span><br><span class="accent">Свой ритм.</span></h1>
+        <div class="hero-ticker" aria-hidden="true">
+          <span class="ticker-label">Сейчас в студии</span>
+          <span class="ticker-window"><span class="ticker-word" id="ticker-word">VEXEL</span></span>
+        </div>
+        <h1 class="hero-title">Код.<br><span class="outline">Идеи.</span><br><span class="accent">Свой ритм.</span></h1>
         <p class="lede">Android-студия, которая двигается и звучит вместе с тобой. Vexel, ИИ-чат, 175 языков и локальные модели — в одном живом интерфейсе.</p>
         <div class="hero-actions">
           <a class="btn btn-primary btn-large ripple magnetic" href="https://github.com/Karishka-sr/devai-studio/releases/latest" target="_blank" rel="noopener" data-toast="Открываю GitHub Releases">
@@ -73,6 +103,7 @@
       </div>
 
       <div class="hero-stage" aria-hidden="true">
+        <canvas class="hero-canvas" id="hero-canvas"></canvas>
         <div class="orb-wrap">
           <div class="orb">
             <span class="orb-core"></span>
@@ -100,6 +131,7 @@
           </div>
         </div>
       </div>
+      <a class="hero-scroll" href="#mood"><span></span>Листай</a>
     </section>
 
     <div class="marquee" aria-hidden="true">
@@ -116,7 +148,7 @@
         <p>Четыре expressive-темы и четыре звуковые сцены. Меняй цвет, глубину и атмосферу — интерфейс отвечает сразу.</p>
       </div>
 
-      <div class="mood-grid">
+      <div class="mood-grid" data-stagger>
         <div class="mood-panel reveal">
           <div class="panel-top"><span class="label">ЦВЕТ</span><span class="panel-value" id="theme-name">Лайм</span></div>
           <div class="theme-grid" role="group" aria-label="Цветовая тема">
@@ -160,15 +192,59 @@
       </div>
     </section>
 
+    <section class="section motion-lab" id="motion">
+      <div class="section-head reveal">
+        <span class="eyebrow">02 / MOTION LAB</span>
+        <h2>Движение —<br><em>часть языка.</em></h2>
+        <p>Четыре принципа expressive-моторики: пружина, морфинг, каскад и орбита. Нажми на карточку — она ответит.</p>
+      </div>
+
+      <div class="motion-grid" data-stagger>
+        <article class="motion-card reveal" data-motion-card data-spotlight>
+          <div class="motion-stage stage-spring" aria-hidden="true">
+            <span class="motion-spring-ball"></span>
+            <i class="motion-floor"></i>
+          </div>
+          <div class="motion-card-foot"><span class="label">SPRING</span><strong>Пружина</strong><small>упругий отклик</small></div>
+          <button class="motion-run ripple" type="button" data-motion-run aria-label="Запустить анимацию «Пружина»">Запустить</button>
+        </article>
+
+        <article class="motion-card reveal" data-motion-card data-spotlight>
+          <div class="motion-stage stage-morph" aria-hidden="true">
+            <span class="motion-blob"></span>
+          </div>
+          <div class="motion-card-foot"><span class="label">MORPH</span><strong>Морфинг</strong><small>живая форма</small></div>
+          <button class="motion-run ripple" type="button" data-motion-run aria-label="Запустить анимацию «Морфинг»">Запустить</button>
+        </article>
+
+        <article class="motion-card reveal" data-motion-card data-spotlight>
+          <div class="motion-stage stage-stagger" aria-hidden="true">
+            <span class="stagger-bars"><i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i></span>
+          </div>
+          <div class="motion-card-foot"><span class="label">STAGGER</span><strong>Каскад</strong><small>появление по очереди</small></div>
+          <button class="motion-run ripple" type="button" data-motion-run aria-label="Запустить анимацию «Каскад»">Запустить</button>
+        </article>
+
+        <article class="motion-card reveal" data-motion-card data-spotlight>
+          <div class="motion-stage stage-orbit" aria-hidden="true">
+            <span class="orbit-core"></span>
+            <i class="orbit-dot" style="--i:0"></i><i class="orbit-dot" style="--i:1"></i><i class="orbit-dot" style="--i:2"></i>
+          </div>
+          <div class="motion-card-foot"><span class="label">ORBIT</span><strong>Орбита</strong><small>непрерывное вращение</small></div>
+          <button class="motion-run ripple" type="button" data-motion-run aria-label="Запустить анимацию «Орбита»">Запустить</button>
+        </article>
+      </div>
+    </section>
+
     <section class="section features" id="features">
       <div class="section-head reveal">
-        <span class="eyebrow">02 / ВОЗМОЖНОСТИ</span>
+        <span class="eyebrow">03 / ВОЗМОЖНОСТИ</span>
         <h2>Больше, чем<br><em>редактор.</em></h2>
         <p>Всё, что нужно, чтобы придумать, собрать и проверить Android-идею — без прыжков между приложениями.</p>
       </div>
 
-      <div class="bento">
-        <article class="bento-card span-7 reveal">
+      <div class="bento" data-stagger>
+        <article class="bento-card span-7 reveal" data-spotlight>
           <span class="label">VEXEL / КОНСТРУКТОР</span>
           <h3>Собирай экраны,<br>не трогая код.</h3>
           <p>Визуальный конструктор с живым превью, слоями и свойствами. Тот самый Vexel — без изменений и сюрпризов.</p>
@@ -179,7 +255,7 @@
           </div>
         </article>
 
-        <article class="bento-card span-5 accent-card reveal">
+        <article class="bento-card span-5 accent-card reveal" data-spotlight>
           <span class="label">DEVAI CORE</span>
           <h3>ИИ, который<br>ищет и объясняет.</h3>
           <p>Чат с интернет-поиском, разбором кода и генерацией экранов. Спроси словами — получи рабочий результат.</p>
@@ -190,19 +266,19 @@
           </div>
         </article>
 
-        <article class="bento-card span-4 stat-card reveal">
+        <article class="bento-card span-4 stat-card reveal" data-spotlight>
           <span class="stat" data-count="175">175</span>
           <h3>языков</h3>
           <p>Подсветка, подсказки и локальные модели для каждого.</p>
         </article>
 
-        <article class="bento-card span-4 stat-card reveal">
+        <article class="bento-card span-4 stat-card reveal" data-spotlight>
           <span class="stat" data-count="112" data-suffix=" МБ">112 МБ</span>
           <h3>весит APK</h3>
           <p>Один файл для ARM64. Внутри — вся студия и офлайн-режим.</p>
         </article>
 
-        <article class="bento-card span-4 stat-card reveal">
+        <article class="bento-card span-4 stat-card reveal" data-spotlight>
           <span class="stat" data-count="4">4</span>
           <h3>звуковые сцены</h3>
           <p>Космос, дождь, лес и фокус. Включаются одним касанием.</p>
@@ -210,9 +286,55 @@
       </div>
     </section>
 
+    <section class="section numbers-band" id="numbers">
+      <div class="section-head reveal">
+        <span class="eyebrow">04 / ЦИФРЫ</span>
+        <h2>Много.<br><em>И всё сразу.</em></h2>
+        <p>Студия не экономит на возможностях: языки, иконки, темы, сцены и локальный ИИ живут в одном приложении.</p>
+      </div>
+
+      <div class="numbers-grid" data-stagger>
+        <article class="number-tile reveal">
+          <div class="number-top"><span class="label">ЯЗЫКИ</span><strong class="number-value" data-count="175">175</strong></div>
+          <div class="number-meter" style="--p:.92"><i></i></div>
+          <p>Подсветка, подсказки и локальные модели. 100 языков добавили в 4.2.0.</p>
+        </article>
+
+        <article class="number-tile reveal">
+          <div class="number-top"><span class="label">ИКОНКИ</span><strong class="number-value" data-count="23672" data-format="space">23 672</strong></div>
+          <div class="number-meter" style="--p:.78"><i></i></div>
+          <p>Material Symbols в outlined, rounded и sharp. Полный набор Vexel.</p>
+        </article>
+
+        <article class="number-tile reveal">
+          <div class="number-top"><span class="label">ТЕМЫ</span><strong class="number-value" data-count="4">4</strong></div>
+          <div class="number-meter" style="--p:.64"><i></i></div>
+          <p>Лайм, коралл, лила и океан. Тема запоминается и перекрашивает всю страницу.</p>
+        </article>
+
+        <article class="number-tile reveal">
+          <div class="number-top"><span class="label">СЦЕНЫ</span><strong class="number-value" data-count="4">4</strong></div>
+          <div class="number-meter" style="--p:.56"><i></i></div>
+          <p>Космос, дождь, лес и фокус. Собираются в Web Audio без файлов.</p>
+        </article>
+
+        <article class="number-tile reveal">
+          <div class="number-top"><span class="label">APK</span><strong class="number-value" data-count="112" data-suffix=" МБ">112 МБ</strong></div>
+          <div class="number-meter" style="--p:.70"><i></i></div>
+          <p>Один файл для ARM64-V8A и Android 12+. Внутри — вся студия.</p>
+        </article>
+
+        <article class="number-tile reveal">
+          <div class="number-top"><span class="label">MOTION</span><strong class="number-value" data-count="60" data-suffix=" FPS">60 FPS</strong></div>
+          <div class="number-meter" style="--p:.88"><i></i></div>
+          <p>CSS, canvas и Web Audio. Анимации можно поставить на паузу или ускорить.</p>
+        </article>
+      </div>
+    </section>
+
     <section class="section vexel-section" id="vexel">
       <div class="vexel-copy reveal">
-        <span class="eyebrow">03 / VEXEL</span>
+        <span class="eyebrow">05 / VEXEL</span>
         <h2>Собери экран.<br><em>Почувствуй отклик.</em></h2>
         <p>Перетаскивай блоки, меняй свойства и смотри, как макет оживает. Vexel остаётся твоим конструктором — мы только добавили expressive-настроение вокруг.</p>
         <ul class="check-list">
@@ -243,9 +365,39 @@
       </div>
     </section>
 
+    <section class="section workflow" id="workflow">
+      <div class="workflow-copy reveal">
+        <span class="eyebrow">06 / ПРОЦЕСС</span>
+        <h2>От идеи<br><em>до APK.</em></h2>
+        <p>Опиши экран словами, собери его в Vexel и проверь на телефоне. Код, превью и сборка живут в одном ритме.</p>
+        <ol class="workflow-steps">
+          <li><span>01</span><div><strong>Опиши</strong><small>ИИ-чат превращает задачу в структуру экрана.</small></div></li>
+          <li><span>02</span><div><strong>Собери</strong><small>Vexel раскладывает слои, отступы и компоненты.</small></div></li>
+          <li><span>03</span><div><strong>Запусти</strong><small>Превью отвечает сразу, без пересборки проекта.</small></div></li>
+        </ol>
+        <button class="btn btn-ghost ripple" type="button" data-code-replay>Перезапустить анимацию</button>
+      </div>
+
+      <div class="workflow-visual reveal">
+        <div class="pipeline" aria-hidden="true">
+          <span class="pipe-step is-active">ИДЕЯ</span><i></i><span class="pipe-step">VEXEL</span><i></i><span class="pipe-step">APK</span>
+        </div>
+        <div class="code-window" data-code-window data-parallax="0.03">
+          <div class="code-bar"><span></span><span></span><span></span><b>BUILD / VEXEL</b><em>LIVE</em></div>
+          <pre class="code-body"><code><span class="code-line" style="--i:0"><b>01</b> <em>fun</em> <strong>buildScreen</strong>() {</span>
+<span class="code-line" style="--i:1"><b>02</b>   <em>val</em> theme = "lime"</span>
+<span class="code-line" style="--i:2"><b>03</b>   Column(gap = 24) {</span>
+<span class="code-line" style="--i:3"><b>04</b>     Hero(title = "Свой ритм")</span>
+<span class="code-line" style="--i:4"><b>05</b>     Button("Собрать")</span>
+<span class="code-line" style="--i:5"><b>06</b>   }</span>
+<span class="code-line" style="--i:6"><b>07</b> } <span class="code-caret"></span></span></code></pre>
+        </div>
+      </div>
+    </section>
+
     <section class="section sound-section">
       <div class="sound-copy reveal">
-        <span class="eyebrow">04 / ЗВУК</span>
+        <span class="eyebrow">07 / ЗВУК</span>
         <h2>Тишина —<br><em>тоже функция.</em></h2>
         <p>Эмбиент не мешает работе: он собирается из мягких пэдов, шума и редких акцентов. Включи и настрой под себя — звук живёт только в этой вкладке.</p>
         <div class="sound-actions">
@@ -268,10 +420,61 @@
       </div>
     </section>
 
+    <section class="section timeline-section" id="timeline">
+      <div class="section-head reveal">
+        <span class="eyebrow">08 / ХРОНИКА</span>
+        <h2>Каждая версия —<br><em>новый ритм.</em></h2>
+        <p>Короткая история того, как студия обрастала языками, темами, звуком и локальным ИИ.</p>
+      </div>
+
+      <ol class="timeline" data-stagger>
+        <li class="reveal"><span class="tl-dot"></span><time>4.2.0</time><h3>100 новых языков</h3><p>ABAP, CUDA, Typst, WebAssembly и ещё 96 языков. Подсветка, примеры и тестовые фреймворки.</p></li>
+        <li class="reveal"><span class="tl-dot"></span><time>4.0.0</time><h3>Expressive UI</h3><p>Крупная типографика, живые формы, четыре темы и звуковые сцены. Интерфейс стал ближе к Material Expressive 3.</p></li>
+        <li class="reveal"><span class="tl-dot"></span><time>3.6.4</time><h3>Vexel без изменений</h3><p>Конструктор экранов, слои, свойства и живое превью. Vexel остался тем же инструментом, что и в приложении.</p></li>
+        <li class="reveal"><span class="tl-dot"></span><time>3.0.0</time><h3>Локальные модели</h3><p>LiteRT-LM внутри APK. Модели скачиваются отдельно, а студия работает без облака.</p></li>
+        <li class="reveal"><span class="tl-dot"></span><time>2.14.2</time><h3>Первый Vexel</h3><p>Визуальный конструктор появился в сборке 2.14.2. С него началась история экранов без кода.</p></li>
+      </ol>
+    </section>
+
+    <section class="section faq" id="faq">
+      <div class="faq-intro reveal">
+        <span class="eyebrow">09 / FAQ</span>
+        <h2>Коротко<br><em>о главном.</em></h2>
+        <p>Если ответа нет — открой GitHub Issues или напиши автору. Ссылки в подвале.</p>
+      </div>
+
+      <div class="faq-list" data-stagger>
+        <details class="faq-item reveal">
+          <summary><span>APK действительно бесплатный?</span><i></i></summary>
+          <div class="faq-a"><p>Да, APK можно скачать бесплатно. Для облачных провайдеров нужен свой API-ключ, а локальные модели работают на устройстве без облака.</p></div>
+        </details>
+        <details class="faq-item reveal">
+          <summary><span>Почему APK весит 112 МБ?</span><i></i></summary>
+          <div class="faq-a"><p>Внутри обои, 23 672 иконки, шрифты, код приложения и нативная библиотека LiteRT-LM для локальных моделей. Это цена автономности.</p></div>
+        </details>
+        <details class="faq-item reveal">
+          <summary><span>Что работает без интернета?</span><i></i></summary>
+          <div class="faq-a"><p>Редактор, Vexel, темы и локальные модели. Для поиска, облачных провайдеров и синхронизации сеть нужна.</p></div>
+        </details>
+        <details class="faq-item reveal">
+          <summary><span>Сколько языков поддерживается?</span><i></i></summary>
+          <div class="faq-a"><p>175 языков: подсветка, подсказки и примеры. В версии 4.2.0 добавили 100 новых, включая ABAP, CUDA, Typst и WebAssembly.</p></div>
+        </details>
+        <details class="faq-item reveal">
+          <summary><span>Можно менять тему и звук?</span><i></i></summary>
+          <div class="faq-a"><p>Да. Четыре темы — лайм, коралл, лила и океан — и четыре звуковые сцены: космос, дождь, лес и фокус. Настройки сохраняются в браузере.</p></div>
+        </details>
+        <details class="faq-item reveal">
+          <summary><span>Vexel — это отдельное приложение?</span><i></i></summary>
+          <div class="faq-a"><p>Vexel входит в DevAI Studio как конструктор экранов. В приложении также есть установщик Vexel APK, ADB и ярлыки для эмулятора.</p></div>
+        </details>
+      </div>
+    </section>
+
     <section class="section download" id="download">
       <div class="download-card reveal">
         <div class="download-glow" aria-hidden="true"></div>
-        <span class="eyebrow">05 / СКАЧАТЬ</span>
+        <span class="eyebrow">10 / СКАЧАТЬ</span>
         <h2>Попробуй<br><em>на слух.</em></h2>
         <p>Скачай DevAI Studio 4.2.0 для Android 12+ и собери первый экран прямо на телефоне.</p>
         <div class="download-actions">
@@ -288,6 +491,13 @@
     </section>
   </main>
 
+  <div class="wordmark" aria-hidden="true">
+    <div class="wordmark-track">
+      <span>DEVAI STUDIO</span><i>✦</i><span>VEXEL</span><i>✦</i><span>СВОЙ РИТМ</span><i>✦</i><span>EXPRESSIVE</span><i>✦</i>
+      <span>DEVAI STUDIO</span><i>✦</i><span>VEXEL</span><i>✦</i><span>СВОЙ РИТМ</span><i>✦</i><span>EXPRESSIVE</span><i>✦</i>
+    </div>
+  </div>
+
   <footer class="footer">
     <a class="brand footer-brand" href="../index.html">
       <img src="../favicon.svg" alt="" width="30" height="30">
@@ -299,6 +509,7 @@
       <a href="../api.html">API-ключи</a>
       <a href="../download.html">Скачать</a>
       <a href="https://github.com/Karishka-sr/devai-studio" target="_blank" rel="noopener">GitHub ↗</a>
+      <a href="#top">Наверх ↑</a>
     </nav>
     <p class="footer-note">Автор: <a href="https://github.com/Karishka-sr" target="_blank" rel="noopener">Karishka-sr</a> · Vexel не тронут · 2026</p>
   </footer>
