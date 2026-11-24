@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DevAI Premium — оплата звёздами Telegram</title>
+  <meta name="description" content="DevAI Premium за Telegram Stars: темы, локальные модели, поиск, плагины и MCP. Выбери тариф, оплати звёздами и получи код активации в Telegram.">
+  <meta name="theme-color" content="#080a0c">
+  <meta property="og:title" content="DevAI Premium — оплата звёздами Telegram">
+  <meta property="og:description" content="Все возможности DevAI Studio Premium за Telegram Stars. Без карт и автосписаний.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://karishka-sr.github.io/devai-studio/stars/">
+  <meta property="og:image" content="https://karishka-sr.github.io/devai-studio/devai-icon.png">
+  <link rel="canonical" href="https://karishka-sr.github.io/devai-studio/stars/">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Unbounded:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="stars.css">
+</head>
+<body>
+  <div class="starfield" aria-hidden="true"><canvas id="star-canvas"></canvas></div>
+  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="top">
+    <a class="brand" href="../index.html" aria-label="DevAI Studio — на главную">
+      <img src="../favicon.svg" alt="" width="36" height="36">
+      <span class="brand-name">DEVAI<span>/</span>STUDIO</span>
+    </a>
+    <span class="top-badge"><svg class="star-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.26 6.85.66-5.15 4.57 1.5 6.72L12 16.9l-6.1 3.31 1.5-6.72L2.25 8.92l6.85-.66L12 2z"/></svg> TELEGRAM STARS</span>
+    <nav class="nav" aria-label="Навигация">
+      <a href="#plans">Тарифы</a>
+      <a href="#features">Возможности</a>
+      <a href="#how">Как это работает</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="top-cta" href="#checkout">Оплатить <span aria-hidden="true">→</span></a>
+  </header>
+
+  <main>
+    <section class="hero" id="top">
+      <div class="hero-copy">
+        <span class="eyebrow"><i></i> DEVAI PREMIUM · TELEGRAM STARS</span>
+        <h1>Оплати<br><span class="outline">звёздами.</span><br><span class="accent">Забери Premium.</span></h1>
+        <p class="lede">Все темы, локальные модели, веб-поиск, плагины и MCP — в одной подписке. Оплата проходит в Telegram Stars: без карт и автосписаний.</p>
+        <div class="hero-actions">
+          <a class="btn btn-gold" href="#plans">Выбрать тариф <span aria-hidden="true">↓</span></a>
+          <a class="btn btn-ghost" href="#how">Как это работает</a>
+        </div>
+        <div class="hero-trust">
+          <span><b>75</b> <span class="star-glyph" aria-hidden="true"></span> старт</span>
+          <span>Код в Telegram</span>
+          <span>Без автосписаний</span>
+        </div>
+      </div>
+
+      <div class="hero-art" aria-hidden="true">
+        <div class="orb">
+          <span class="orb-ring"></span>
+          <span class="orb-ring ring-two"></span>
+          <span class="orb-core">
+            <svg class="hero-star" viewBox="0 0 24 24"><path d="M12 1.8l3.05 6.58 7.2.7-5.42 4.8 1.58 7.06L12 17.2l-6.41 3.74 1.58-7.06-5.42-4.8 7.2-.7L12 1.8z"/></svg>
+            <span>PREMIUM</span>
+          </span>
+          <span class="orbit-dot dot-a"></span>
+          <span class="orbit-dot dot-b"></span>
+          <span class="orbit-dot dot-c"></span>
+        </div>
+        <div class="float-chip chip-a"><span>7 ДНЕЙ</span><strong>75 <span class="star-glyph" aria-hidden="true"></span></strong></div>
+        <div class="float-chip chip-b"><span>30 ДНЕЙ</span><strong>249 <span class="star-glyph" aria-hidden="true"></span></strong></div>
+        <div class="float-chip chip-c"><span>365 ДНЕЙ</span><strong>1 490 <span class="star-glyph" aria-hidden="true"></span></strong></div>
+        <div class="float-chip chip-d"><span>НАВСЕГДА</span><strong>4 990 <span class="star-glyph" aria-hidden="true"></span></strong></div>
+      </div>
+
+      <a class="scroll-cue" href="#plans"><span></span>Листай</a>
+    </section>
+
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee-track">
+        <span>TELEGRAM STARS</span><i>✦</i><span>DEVAI PREMIUM</span><i>✦</i><span>БЕЗ КАРТ</span><i>✦</i><span>БЕЗ АВТОСПИСАНИЙ</span><i>✦</i><span>КОД В TELEGRAM</span><i>✦</i>
+        <span>TELEGRAM STARS</span><i>✦</i><span>DEVAI PREMIUM</span><i>✦</i><span>БЕЗ КАРТ</span><i>✦</i><span>БЕЗ АВТОСПИСАНИЙ</span><i>✦</i><span>КОД В TELEGRAM</span><i>✦</i>
+      </div>
+    </div>
+
+    <section class="section plans-section" id="plans">
+      <div class="section-head reveal">
+        <span class="eyebrow">01 / ТАРИФЫ</span>
+        <h2>Четыре способа<br><em>забрать всё.</em></h2>
+        <p>Один раз оплатил — пользуешься. Выбери срок, остальное сделает Telegram.</p>
+      </div>
+
+      <div class="plans-grid" data-stagger>
+        <article class="plan-card reveal" data-plan="week">
+          <div class="plan-top"><span class="plan-label">7 ДНЕЙ</span><span class="plan-badge">СТАРТ</span></div>
+          <h3>Неделя</h3>
+          <p class="plan-tagline">Попробовать Premium</p>
+          <div class="plan-price"><strong>75</strong><span class="stars-amount"><svg class="star-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.26 6.85.66-5.15 4.57 1.5 6.72L12 16.9l-6.1 3.31 1.5-6.72L2.25 8.92l6.85-.66L12 2z"/></svg></span></div>
+          <ul class="plan-list">
+            <li>Expressive-тема</li>
+            <li>Локальные модели 1.2B</li>
+            <li>Экспорт чата</li>
+            <li>Докачка моделей</li>
+          </ul>
+          <button class="plan-pick" type="button" data-select-plan="week">Выбрать <span aria-hidden="true">→</span></button>
+        </article>
+
+        <article class="plan-card is-popular reveal" data-plan="month">
+          <div class="plan-top"><span class="plan-label">30 ДНЕЙ</span><span class="plan-badge">ПОПУЛЯРНЫЙ</span></div>
+          <h3>Месяц</h3>
+          <p class="plan-tagline">Для активной разработки</p>
+          <div class="plan-price"><strong>249</strong><span class="stars-amount"><svg class="star-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.26 6.85.66-5.15 4.57 1.5 6.72L12 16.9l-6.1 3.31 1.5-6.72L2.25 8.92l6.85-.66L12 2z"/></svg></span></div>
+          <ul class="plan-list">
+            <li>Всё из «Недели»</li>
+            <li>10 акцентных цветов</li>
+            <li>Веб-поиск и провайдеры</li>
+            <li>Qwen Coder 1.5B</li>
+            <li>Персонажи</li>
+          </ul>
+          <button class="plan-pick" type="button" data-select-plan="month">Выбрать <span aria-hidden="true">→</span></button>
+        </article>
+
+        <article class="plan-card reveal" data-plan="year">
+          <div class="plan-top"><span class="plan-label">365 ДНЕЙ</span><span class="plan-badge">ВЫГОДНО</span></div>
+          <h3>Год</h3>
+          <p class="plan-tagline">Лучшая цена за месяц</p>
+          <div class="plan-price"><strong>1 490</strong><span class="stars-amount"><svg class="star-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.26 6.85.66-5.15 4.57 1.5 6.72L12 16.9l-6.1 3.31 1.5-6.72L2.25 8.92l6.85-.66L12 2z"/></svg></span></div>
+          <ul class="plan-list">
+            <li>Всё из «Месяца»</li>
+            <li>Озвучивание ответов</li>
+            <li>Свой системный промпт</li>
+            <li>Бэкапы и QR-перенос</li>
+            <li>DeepSeek R1 · SmolLM3 · Phi-4</li>
+          </ul>
+          <button class="plan-pick" type="button" data-select-plan="year">Выбрать <span aria-hidden="true">→</span></button>
+        </article>
+
+        <article class="plan-card is-lifetime reveal" data-plan="lifetime">
+          <div class="plan-top"><span class="plan-label">НАВСЕГДА</span><span class="plan-badge">ВСЁ СРАЗУ</span></div>
+          <h3>Навсегда</h3>
+          <p class="plan-tagline">Все функции и будущие обновления</p>
+          <div class="plan-price"><strong>4 990</strong><span class="stars-amount"><svg class="star-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.26 6.85.66-5.15 4.57 1.5 6.72L12 16.9l-6.1 3.31 1.5-6.72L2.25 8.92l6.85-.66L12 2z"/></svg></span></div>
+          <ul class="plan-list">
+            <li>Всё из «Года»</li>
+            <li>MCP и плагины</li>
+            <li>Будущие функции</li>
+            <li>Личная поддержка</li>
+            <li>Навсегда</li>
+          </ul>
+          <button class="plan-pick" type="button" data-select-plan="lifetime">Выбрать <span aria-hidden="true">→</span></button>
+        </article>
+      </div>
+    </section>
+
+    <section class="section checkout-section" id="checkout">
+      <div class="checkout-card reveal">
+        <div class="checkout-copy">
+          <span class="eyebrow">02 / ЗАКАЗ</span>
+          <h2>Собери <em>заказ.</em></h2>
+          <p>Сайт подготовит текст заказа. Оплата и выдача кода происходят в Telegram — там же можно задать вопрос.</p>
+
+          <div class="order-summary" aria-live="polite">
+            <div><span>Тариф</span><strong id="order-plan">Месяц</strong></div>
+            <div><span>Срок</span><strong id="order-days">30 дней</strong></div>
+            <div><span>Цена</span><strong id="order-price">249 <span class="star-glyph" aria-hidden="true"></span></strong></div>
+            <div class="order-id-cell"><span>Заказ</span><code id="order-id">—</code></div>
+          </div>
+
+          <div class="checkout-actions">
+            <a class="btn btn-gold" id="pay-link" href="https://t.me/FemClaudeMrrr" target="_blank" rel="noopener">Оплатить в Telegram <span aria-hidden="true">↗</span></a>
+            <button class="btn btn-ghost" id="copy-order" type="button">Скопировать заказ</button>
+          </div>
+          <p class="checkout-note">Откроется чат <a href="https://t.me/FemClaudeMrrr" target="_blank" rel="noopener">@FemClaudeMrrr</a>. Отправь готовый заказ, оплати Stars и получи код активации.</p>
+        </div>
+
+        <aside class="checkout-side">
+          <div class="side-title">Как проходит оплата</div>
+          <ol class="steps">
+            <li><span>01</span><div><strong>Выбери тариф</strong><small>Сайт соберёт номер заказа и цену в Stars.</small></div></li>
+            <li><span>02</span><div><strong>Оплати в Telegram</strong><small>Открой чат, отправь заказ и оплати звёздами.</small></div></li>
+            <li><span>03</span><div><strong>Активируй код</strong><small>Вставь код в приложении: Premium → Активация.</small></div></li>
+          </ol>
+          <div class="side-note">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.4-2.9 8.3-7 10-4.1-1.7-7-5.6-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+            <span>Сайт не принимает карты и не хранит платёжные данные. Telegram Stars — официальная валюта Telegram.</span>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section features-section" id="features">
+      <div class="section-head reveal">
+        <span class="eyebrow">03 / ВОЗМОЖНОСТИ</span>
+        <h2>Больше, чем<br><em>редактор.</em></h2>
+        <p>Выбери тариф — покажем, что открывается. Всё, что ниже, уже есть в приложении.</p>
+      </div>
+
+      <div class="feature-tabs reveal" role="tablist" aria-label="Возможности по тарифам">
+        <button type="button" role="tab" data-feature-tier="week" aria-selected="false">Неделя</button>
+        <button type="button" role="tab" data-feature-tier="month" aria-selected="true" class="is-active">Месяц</button>
+        <button type="button" role="tab" data-feature-tier="year" aria-selected="false">Год</button>
+        <button type="button" role="tab" data-feature-tier="lifetime" aria-selected="false">Навсегда</button>
+      </div>
+      <div class="feature-grid" id="feature-grid" role="tabpanel"></div>
+    </section>
+
+    <section class="section how-section" id="how">
+      <div class="section-head reveal">
+        <span class="eyebrow">04 / ПРОЦЕСС</span>
+        <h2>Три шага<br><em>до Premium.</em></h2>
+        <p>Без регистрации на сайте, без карты и без автосписаний.</p>
+      </div>
+
+      <div class="how-grid" data-stagger>
+        <article class="how-card reveal">
+          <span class="how-num">01</span>
+          <div class="how-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"/></svg></div>
+          <h3>Выбери тариф</h3>
+          <p>Нажми на карточку — сайт соберёт номер заказа и текст для Telegram.</p>
+        </article>
+        <article class="how-card reveal">
+          <span class="how-num">02</span>
+          <div class="how-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4 18-7z"/></svg></div>
+          <h3>Оплати звёздами</h3>
+          <p>Открой чат, отправь заказ и оплати Telegram Stars. Оплата проходит внутри Telegram.</p>
+        </article>
+        <article class="how-card reveal">
+          <span class="how-num">03</span>
+          <div class="how-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l4 4L19 6"/></svg></div>
+          <h3>Получи код</h3>
+          <p>После оплаты тебе выдадут код активации. Вставь его в DevAI Studio → Premium.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section faq-section" id="faq">
+      <div class="section-head reveal">
+        <span class="eyebrow">05 / ВОПРОСЫ</span>
+        <h2>Коротко<br><em>о главном.</em></h2>
+        <p>Если ответа нет — напиши в Telegram, ссылка в подвале.</p>
+      </div>
+      <div class="faq-list" data-stagger>
+        <details class="reveal"><summary>Это официальные Telegram Stars?<i></i></summary><div class="faq-a"><p>Да. Оплата проходит в <a href="https://telegram.org/blog/telegram-stars" target="_blank" rel="noopener">Telegram Stars</a> — официальной валюте Telegram. Сайт только собирает заказ и открывает чат; платёжные данные он не получает.</p></div></details>
+        <details class="reveal"><summary>Когда придёт код активации?<i></i></summary><div class="faq-a"><p>После оплаты. Код выдаётся вручную в Telegram — обычно в тот же день. Если оплата прошла, а код не пришёл, отправь номер заказа в чат.</p></div></details>
+        <details class="reveal"><summary>Можно оплатить картой?<i></i></summary><div class="faq-a"><p>Сайт карты не принимает. Пополнить Telegram Stars можно внутри Telegram удобным способом, затем оплатить заказ звёздами.</p></div></details>
+        <details class="reveal"><summary>Это подписка с автосписанием?<i></i></summary><div class="faq-a"><p>Нет. Это разовая оплата выбранного срока. Когда срок закончится, ничего не спишется автоматически.</p></div></details>
+        <details class="reveal"><summary>Где активировать код?<i></i></summary><div class="faq-a"><p>В приложении DevAI Studio открой Premium → Активация и вставь код. После активации функции появятся сразу.</p></div></details>
+        <details class="reveal"><summary>Vexel входит в Premium?<i></i></summary><div class="faq-a"><p>Vexel — отдельное приложение-конструктор, которое также встроено в DevAI Studio. Premium открывает функции студии; сам Vexel не изменяется.</p></div></details>
+        <details class="reveal"><summary>Можно вернуть звёзды?<i></i></summary><div class="faq-a"><p>Возврат возможен по правилам Telegram Stars и только до выдачи кода. Напиши в чат с номером заказа, чтобы обсудить ситуацию.</p></div></details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a class="brand" href="../index.html"><img src="../favicon.svg" alt="" width="34" height="34"><span class="brand-name">DEVAI<span>/</span>STUDIO</span></a>
+        <p>Android-студия для кода и идей. Premium оплачивается Telegram Stars.</p>
+      </div>
+      <div class="footer-links">
+        <a href="../index.html">Главная</a>
+        <a href="../expressive/">Expressive</a>
+        <a href="../playground/">Playground</a>
+        <a href="../api.html">API-ключи</a>
+        <a href="https://t.me/FemClaudeMrrr" target="_blank" rel="noopener">Telegram ↗</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>Оплата Stars проходит в Telegram. Сайт не хранит платёжные данные.</span>
+      <span>© <span id="year">2026</span> DevAI Studio</span>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="stars.js"></script>
+</body>
+</html>

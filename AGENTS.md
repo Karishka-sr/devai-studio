@@ -77,6 +77,13 @@
 - Android `ProviderCatalog` has a `devai-core` provider (`devai-core-0.1`, OpenAI-compatible). Its `baseUrl` points to the current work host and must be updated together with `DEFAULT_API`. The key dialog has an explicit clipboard paste button.
 - Tests: `python3 -m py_compile server/devai_server.py`; public flow is verified with challenge → SHA-256 nonce → register → `/v1/models`.
 
+## Premium Stars site (docs/stars)
+- `docs/stars/` is a standalone premium storefront with its own `stars.css` and `stars.js`; it is linked from the main site nav/footer and the Expressive footer.
+- Plans mirror `PremiumPlan`: Неделя 75 ⭐, Месяц 249 ⭐, Год 1490 ⭐, Навсегда 4990 ⭐. Keep prices in sync with `PremiumPlan.kt`.
+- Payment is intentionally manual: `stars.js` creates a `DVS-...` order, builds the order text, and opens `https://t.me/FemClaudeMrrr?text=...`. There is no backend, card form, or stored payment data.
+- If automatic Telegram Stars invoices are added later, use a server-side bot with XTR invoices and keep the bot token out of static JavaScript. Do not promise instant payouts without a funded Stars balance and an approved payout path.
+- The UI uses CSS star shapes (and `★` in nav links) instead of the `⭐` emoji so headless/small fonts do not render tofu; keep the emoji only inside the Telegram order text.
+
 ## Mega Settings (3.4.0)
 - `SettingsScreen` home has a live summary card, 5 one-tap generation presets, 8 quick toggles (dynamic color, haptics, code wrap, send-on-enter), popular query chips, and keyword search across `SettingsCategory.keywords`.
 - `SettingsHome` receives `SettingsSummary`, `QuickToggles`, `onPreset`, `onToggle`; `applyQuickPreset`/`toggleQuick` persist through `AppPrefs`.
