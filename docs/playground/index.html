@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DevAI Playground — мини-IDE в браузере</title>
+  <meta name="description" content="DevAI Playground: пишите HTML, CSS и JavaScript в браузере, сразу смотрите результат и просите DevAI улучшить код.">
+  <meta name="theme-color" content="#070a08">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Unbounded:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="playground.css">
+</head>
+<body>
+  <div class="pg-grain" aria-hidden="true"></div>
+  <div class="pg-aura" aria-hidden="true"><i></i><i></i><i></i></div>
+
+  <header class="pg-top">
+    <a class="pg-brand" href="../index.html" aria-label="DevAI Studio — на главную">
+      <img src="../favicon.svg" alt="" width="34" height="34">
+      <span class="pg-brand-text">DEVAI<span>/</span>PLAYGROUND</span>
+    </a>
+    <span class="pg-lab">WEB LAB / 01</span>
+    <nav class="pg-nav" aria-label="Навигация">
+      <a href="../index.html">Studio</a>
+      <a href="../api.html">API-ключи</a>
+      <a href="https://github.com/Karishka-sr/devai-studio" target="_blank" rel="noreferrer">GitHub ↗</a>
+    </nav>
+    <div class="pg-top-actions">
+      <span class="pg-core" id="core-status" data-state="checking" title="Статус DevAI Core">
+        <i aria-hidden="true"></i><span>проверяю</span>
+      </span>
+      <button class="pg-btn pg-btn-ghost" id="save-btn" type="button">Сохранить <kbd>Ctrl S</kbd></button>
+      <button class="pg-btn pg-btn-primary" id="download-btn" type="button">Скачать .html <span aria-hidden="true">↓</span></button>
+    </div>
+  </header>
+
+  <main class="pg-shell">
+    <aside class="pg-rail">
+      <div class="rail-head">
+        <span class="rail-kicker">ПРОЕКТ</span>
+        <span class="rail-index">01</span>
+      </div>
+      <label class="pg-field">
+        <span>Название</span>
+        <input id="project-name" name="project-name" type="text" maxlength="60" autocomplete="off" value="Мой проект">
+      </label>
+
+      <div class="rail-section">
+        <span class="rail-label">ШАБЛОНЫ</span>
+        <div class="templates" id="templates">
+          <button class="template is-active" type="button" data-template="card">
+            <span class="template-num">01</span>
+            <span class="template-copy"><strong>Карточка</strong><small>Стекло, свет и hover</small></span>
+          </button>
+          <button class="template" type="button" data-template="landing">
+            <span class="template-num">02</span>
+            <span class="template-copy"><strong>Лендинг</strong><small>Экран с крупным заголовком</small></span>
+          </button>
+          <button class="template" type="button" data-template="screen">
+            <span class="template-num">03</span>
+            <span class="template-copy"><strong>Экран</strong><small>Мобильный интерфейс</small></span>
+          </button>
+          <button class="template" type="button" data-template="api">
+            <span class="template-num">04</span>
+            <span class="template-copy"><strong>API-запрос</strong><small>Запрос к DevAI Core</small></span>
+          </button>
+          <button class="template" type="button" data-template="blank">
+            <span class="template-num">05</span>
+            <span class="template-copy"><strong>Пустой</strong><small>Чистый холст</small></span>
+          </button>
+        </div>
+        <div class="rail-tip">
+          <span class="rail-label">СОВЕТ</span>
+          <p>Пиши код и жми «Запустить». Проект сохраняется в браузере, превью живёт в песочнице.</p>
+        </div>
+      </div>
+
+      <div class="rail-actions">
+        <button class="rail-link" id="reset-btn" type="button">Сбросить проект</button>
+        <a class="rail-link" href="../api.html#key">Получить API-ключ <span aria-hidden="true">↗</span></a>
+      </div>
+
+      <div class="rail-foot">
+        <span><kbd>Ctrl</kbd><kbd>Enter</kbd> запуск</span>
+        <span><kbd>Ctrl</kbd><kbd>S</kbd> сохранить</span>
+        <span><kbd>Tab</kbd> отступ</span>
+      </div>
+      <span class="rail-mark" aria-hidden="true">01</span>
+    </aside>
+
+    <section class="pg-editor" aria-label="Редактор кода">
+      <div class="editor-top">
+        <div class="file-tabs" role="tablist" aria-label="Файлы проекта">
+          <button class="file-tab is-active" type="button" role="tab" aria-selected="true" data-file="html">index.html <small data-size="html">0 B</small></button>
+          <button class="file-tab" type="button" role="tab" aria-selected="false" data-file="css">style.css <small data-size="css">0 B</small></button>
+          <button class="file-tab" type="button" role="tab" aria-selected="false" data-file="js">app.js <small data-size="js">0 B</small></button>
+        </div>
+        <div class="editor-actions">
+          <span class="save-state" id="save-state">готово</span>
+          <button class="run-btn" id="run-btn" type="button">Запустить <span aria-hidden="true">▶</span></button>
+        </div>
+      </div>
+
+      <div class="editor-body">
+        <pre class="line-gutter" id="line-gutter" aria-hidden="true">1</pre>
+        <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="Редактор кода"></textarea>
+      </div>
+
+      <div class="console">
+        <div class="console-head">
+          <span>CONSOLE</span>
+          <span class="console-count" id="console-count">0</span>
+          <button class="console-clear" id="clear-console" type="button">Очистить</button>
+        </div>
+        <div class="console-output" id="console-output" role="log" aria-live="polite">
+          <span class="console-empty">Здесь появятся console.log и ошибки из превью.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="pg-side" aria-label="Превью и DevAI">
+      <div class="side-tabs" role="tablist" aria-label="Панели">
+        <button class="side-tab is-active" type="button" role="tab" aria-selected="true" data-pane="preview">Превью</button>
+        <button class="side-tab" type="button" role="tab" aria-selected="false" data-pane="ai">DevAI <i class="ai-spark" aria-hidden="true"></i></button>
+        <span class="side-meta" id="preview-meta">sandbox://preview</span>
+      </div>
+
+      <div class="side-pane preview-pane is-active" id="pane-preview">
+        <div class="preview-chrome">
+          <span class="browser-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="address-pill">devai://preview</span>
+          <button class="chrome-btn" id="open-btn" type="button">Открыть <span aria-hidden="true">↗</span></button>
+        </div>
+        <div class="preview-stage">
+          <iframe id="preview" title="Превью проекта" sandbox="allow-scripts allow-modals allow-forms allow-popups"></iframe>
+          <div class="preview-loading" id="preview-loading" aria-hidden="true"><span></span></div>
+        </div>
+      </div>
+
+      <div class="side-pane ai-pane" id="pane-ai" hidden>
+        <div class="ai-scroll">
+          <div class="ai-intro">
+            <span class="ai-kicker"><i aria-hidden="true"></i> DEVAI ASSIST</span>
+            <h2>Пусть DevAI посмотрит код.</h2>
+            <p>Ключ хранится только в этой вкладке. Код проекта уходит на выбранный сервер вместе с запросом.</p>
+          </div>
+
+          <div class="ai-key-row">
+            <label class="pg-field pg-field-mono">
+              <span>API-ключ</span>
+              <input id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="devai_...">
+            </label>
+            <button class="key-toggle" id="key-toggle" type="button" aria-label="Показать ключ">показать</button>
+          </div>
+
+          <details class="ai-settings">
+            <summary>Настройки API <span aria-hidden="true">+</span></summary>
+            <label class="pg-field pg-field-mono">
+              <span>Base URL</span>
+              <input id="api-base" type="url" spellcheck="false" inputmode="url">
+            </label>
+            <label class="pg-field pg-field-mono">
+              <span>Модель</span>
+              <input id="api-model" type="text" spellcheck="false" value="devai-core-0.1">
+            </label>
+            <p class="ai-hint">Сервер должен поддерживать OpenAI Chat Completions и CORS.</p>
+          </details>
+
+          <div class="ai-chips" aria-label="Быстрые действия">
+            <button type="button" data-prompt="Найди ошибки и слабые места в этом коде. Объясни коротко и предложи исправления.">Найти ошибку</button>
+            <button type="button" data-prompt="Улучши этот проект: визуал, адаптивность и читаемость кода. Дай конкретные правки.">Улучшить</button>
+            <button type="button" data-prompt="Объясни, что делает этот код, и как его можно расширить.">Объяснить</button>
+          </div>
+
+          <label class="pg-field ai-prompt-field">
+            <span>Запрос</span>
+            <textarea id="ai-prompt" rows="4" placeholder="Например: сделай карточку адаптивной и добавь анимацию появления"></textarea>
+          </label>
+
+          <div class="ai-send-row">
+            <button class="pg-btn pg-btn-primary ai-send" id="ai-send" type="button">Спросить DevAI <span aria-hidden="true">→</span></button>
+            <span class="ai-hint" id="ai-hint">Ctrl + Enter</span>
+          </div>
+
+          <div class="ai-output" id="ai-output">
+            <div class="ai-empty">
+              <span aria-hidden="true">⌁</span>
+              <p>Ответ появится здесь. Можно попросить найти ошибку, улучшить вёрстку или объяснить код.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="pg-toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="playground.js" defer></script>
+</body>
+</html>
