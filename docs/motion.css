@@ -144,11 +144,11 @@
 }
 
 .motion-on .motion-reveal[data-motion="left"] {
-  transform: translate3d(-42px, 0, 0);
+  transform: translate3d(-18px, 24px, 0);
 }
 
 .motion-on .motion-reveal[data-motion="right"] {
-  transform: translate3d(42px, 0, 0);
+  transform: translate3d(18px, 24px, 0);
 }
 
 .motion-on .motion-reveal[data-motion="scale"] {
@@ -600,13 +600,22 @@
   to { opacity: 0; transform: scale(26); }
 }
 
+@media (max-width: 1023px) {
+  .motion-on .motion-reveal[data-motion="left"],
+  .motion-on .motion-reveal[data-motion="right"] {
+    transform: translate3d(0, 34px, 0);
+  }
+}
+
 @media (max-width: 820px) {
   .motion-cursor,
   .motion-aura {
     display: none;
   }
 
-  .motion-on .motion-reveal {
+  .motion-on .motion-reveal,
+  .motion-on .motion-reveal[data-motion="left"],
+  .motion-on .motion-reveal[data-motion="right"] {
     transform: translate3d(0, 22px, 0);
   }
 }
