@@ -1,0 +1,11 @@
+{
+  "id": "zeek",
+  "name": "Zeek",
+  "short": "Zeek",
+  "extension": "zeek",
+  "comment": "#",
+  "testFramework": "zeek test",
+  "description": "Сетевой мониторинг",
+  "example": "event zeek_init() { print \"Hello, DevAI!\"; }",
+  "order": 1097
+}

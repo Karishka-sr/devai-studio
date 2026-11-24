@@ -1,0 +1,11 @@
+{
+  "id": "idris",
+  "name": "Idris",
+  "short": "Idris",
+  "extension": "idr",
+  "comment": "--",
+  "testFramework": "idris test",
+  "description": "Зависимые типы",
+  "example": "main : IO ()\nmain = putStrLn \"Hello, DevAI!\"",
+  "order": 1033
+}

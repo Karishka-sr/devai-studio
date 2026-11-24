@@ -1,0 +1,11 @@
+{
+  "id": "stata",
+  "name": "Stata",
+  "short": "Stata",
+  "extension": "do",
+  "comment": "*",
+  "testFramework": "Stata test",
+  "description": "Эконометрика и статистика",
+  "example": "display \"Hello, DevAI!\"",
+  "order": 1082
+}

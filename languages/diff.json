@@ -1,0 +1,11 @@
+{
+  "id": "diff",
+  "name": "Diff",
+  "short": "Diff",
+  "extension": "diff",
+  "comment": "#",
+  "testFramework": "patch test",
+  "description": "Патчи и изменения файлов",
+  "example": "--- a/hello.txt\n+++ b/hello.txt\n+Hello, DevAI!",
+  "order": 1020
+}

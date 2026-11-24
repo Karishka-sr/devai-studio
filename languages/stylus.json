@@ -1,0 +1,11 @@
+{
+  "id": "stylus",
+  "name": "Stylus",
+  "short": "Stylus",
+  "extension": "styl",
+  "comment": "//",
+  "testFramework": "stylus test",
+  "description": "Лаконичный CSS",
+  "example": "body\n  content 'Hello, DevAI!'",
+  "order": 1083
+}

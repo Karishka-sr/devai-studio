@@ -1,0 +1,11 @@
+{
+  "id": "autohotkey",
+  "name": "AutoHotkey",
+  "short": "AHK",
+  "extension": "ahk",
+  "comment": ";",
+  "testFramework": "AHKUnit",
+  "description": "Автоматизация Windows",
+  "example": "MsgBox \"Hello, DevAI!\"",
+  "order": 1007
+}

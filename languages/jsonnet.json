@@ -1,0 +1,11 @@
+{
+  "id": "jsonnet",
+  "name": "Jsonnet",
+  "short": "Jsonnet",
+  "extension": "jsonnet",
+  "comment": "//",
+  "testFramework": "jsonnet test",
+  "description": "Генерация JSON-конфигов",
+  "example": "{ greeting: 'Hello, DevAI!' }",
+  "order": 1038
+}

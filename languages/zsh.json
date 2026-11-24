@@ -1,0 +1,11 @@
+{
+  "id": "zsh",
+  "name": "Zsh",
+  "short": "Zsh",
+  "extension": "zsh",
+  "comment": "#",
+  "testFramework": "zunit",
+  "description": "Скрипты Zsh",
+  "example": "echo \"Hello, DevAI!\"",
+  "order": 1098
+}

@@ -1,0 +1,11 @@
+{
+  "id": "lolcode",
+  "name": "LOLCODE",
+  "short": "LOLCODE",
+  "extension": "lol",
+  "comment": "BTW",
+  "testFramework": "lol test",
+  "description": "Эзотерический язык",
+  "example": "HAI 1.2\nVISIBLE \"Hello, DevAI!\"\nKTHXBYE",
+  "order": 1046
+}

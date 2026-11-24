@@ -1,0 +1,11 @@
+{
+  "id": "roff",
+  "name": "Roff",
+  "short": "Roff",
+  "extension": "roff",
+  "comment": ".\\\"",
+  "testFramework": "groff test",
+  "description": "Man-страницы и печать",
+  "example": ".TH HELLO 1\n.SH NAME\nhello \\- Hello, DevAI!",
+  "order": 1072
+}

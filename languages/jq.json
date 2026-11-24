@@ -1,0 +1,11 @@
+{
+  "id": "jq",
+  "name": "jq",
+  "short": "jq",
+  "extension": "jq",
+  "comment": "#",
+  "testFramework": "jq test",
+  "description": "JSON-фильтры",
+  "example": "{greeting: \"Hello, DevAI!\"}",
+  "order": 1037
+}

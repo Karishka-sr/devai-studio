@@ -1,0 +1,11 @@
+{
+  "id": "snakemake",
+  "name": "Snakemake",
+  "short": "Snakemake",
+  "extension": "smk",
+  "comment": "#",
+  "testFramework": "snakemake test",
+  "description": "Пайплайны данных",
+  "example": "rule hello:\n    output: \"hello.txt\"\n    shell: \"echo 'Hello, DevAI!' > {output}\"",
+  "order": 1080
+}

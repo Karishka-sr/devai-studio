@@ -1,0 +1,11 @@
+{
+  "id": "elisp",
+  "name": "Emacs Lisp",
+  "short": "Elisp",
+  "extension": "el",
+  "comment": ";",
+  "testFramework": "ERT",
+  "description": "Расширения Emacs",
+  "example": "(message \"Hello, DevAI!\")",
+  "order": 1021
+}

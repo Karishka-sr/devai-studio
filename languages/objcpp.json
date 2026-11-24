@@ -1,0 +1,11 @@
+{
+  "id": "objcpp",
+  "name": "Objective-C++",
+  "short": "Obj-C++",
+  "extension": "mm",
+  "comment": "//",
+  "testFramework": "XCTest",
+  "description": "iOS/macOS с C++",
+  "example": "#import <Foundation/Foundation.h>\nint main(){ @autoreleasepool { NSLog(@\"Hello, DevAI!\"); } }",
+  "order": 1056
+}

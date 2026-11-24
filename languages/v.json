@@ -1,0 +1,11 @@
+{
+  "id": "v",
+  "name": "V",
+  "short": "V",
+  "extension": "v",
+  "comment": "//",
+  "testFramework": "v test",
+  "description": "Простой компилируемый язык",
+  "example": "fn main() { println('Hello, DevAI!') }",
+  "order": 1090
+}

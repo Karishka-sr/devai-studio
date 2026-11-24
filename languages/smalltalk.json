@@ -1,0 +1,11 @@
+{
+  "id": "smalltalk",
+  "name": "Smalltalk",
+  "short": "Smalltalk",
+  "extension": "st",
+  "comment": "\"",
+  "testFramework": "SUnit",
+  "description": "Объектная среда и live coding",
+  "example": "Transcript show: 'Hello, DevAI!'",
+  "order": 1078
+}

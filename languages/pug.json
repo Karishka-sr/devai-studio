@@ -1,0 +1,11 @@
+{
+  "id": "pug",
+  "name": "Pug",
+  "short": "Pug",
+  "extension": "pug",
+  "comment": "//",
+  "testFramework": "pug test",
+  "description": "Шаблоны HTML",
+  "example": "h1 Hello, DevAI!",
+  "order": 1066
+}

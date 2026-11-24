@@ -21,7 +21,7 @@ object ProviderCatalog {
             format = AiFormat.OPENAI_COMPAT,
             baseUrl = "https://work-2-nizvyfgvcqicrkif.prod-runtime.all-hands.dev/v1",
             models = listOf("devai-core-0.1"),
-            getKeyUrl = "https://karishka-sr.github.io/devai-studio/#key",
+            getKeyUrl = "https://karishka-sr.github.io/devai-studio/api.html#key",
             website = "https://karishka-sr.github.io/devai-studio/",
             freeNote = "Ключ бесплатный: 60 запросов/мин. Нажмите «Ключ» и вставьте ключ с сайта."
         ),

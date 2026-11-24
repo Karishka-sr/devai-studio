@@ -1,0 +1,11 @@
+{
+  "id": "sed",
+  "name": "sed",
+  "short": "sed",
+  "extension": "sed",
+  "comment": "#",
+  "testFramework": "sed test",
+  "description": "Потоковая обработка текста",
+  "example": "s/.*/Hello, DevAI!/",
+  "order": 1076
+}

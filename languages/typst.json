@@ -1,0 +1,11 @@
+{
+  "id": "typst",
+  "name": "Typst",
+  "short": "Typst",
+  "extension": "typ",
+  "comment": "//",
+  "testFramework": "typst test",
+  "description": "Современная вёрстка",
+  "example": "#set text(size: 12pt)\nHello, DevAI!",
+  "order": 1089
+}

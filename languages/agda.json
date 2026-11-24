@@ -1,0 +1,11 @@
+{
+  "id": "agda",
+  "name": "Agda",
+  "short": "Agda",
+  "extension": "agda",
+  "comment": "--",
+  "testFramework": "agda test",
+  "description": "Доказательства и зависимые типы",
+  "example": "module Main where\n\nmain : IO ()\nmain = putStrLn \"Hello, DevAI!\"",
+  "order": 1002
+}

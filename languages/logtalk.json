@@ -1,0 +1,11 @@
+{
+  "id": "logtalk",
+  "name": "Logtalk",
+  "short": "Logtalk",
+  "extension": "lgt",
+  "comment": "%",
+  "testFramework": "logtalk test",
+  "description": "Объектный Prolog",
+  "example": ":- object(hello).\n:- public(run/0).\nrun :- write('Hello, DevAI!'), nl.\n:- end_object.",
+  "order": 1045
+}

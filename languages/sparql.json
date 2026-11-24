@@ -1,0 +1,11 @@
+{
+  "id": "sparql",
+  "name": "SPARQL",
+  "short": "SPARQL",
+  "extension": "rq",
+  "comment": "#",
+  "testFramework": "sparql test",
+  "description": "Запросы к RDF",
+  "example": "SELECT ?greeting WHERE { BIND(\"Hello, DevAI!\" AS ?greeting) }",
+  "order": 1081
+}

@@ -1,0 +1,11 @@
+{
+  "id": "coq",
+  "name": "Coq",
+  "short": "Coq",
+  "extension": "v",
+  "comment": "(*",
+  "testFramework": "coqtest",
+  "description": "Доказательства теорем",
+  "example": "Goal True. exact I. Qed.",
+  "order": 1016
+}

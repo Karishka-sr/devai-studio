@@ -1,0 +1,11 @@
+{
+  "id": "markdown",
+  "name": "Markdown",
+  "short": "MD",
+  "extension": "md",
+  "comment": "<!--",
+  "testFramework": "markdownlint",
+  "description": "Документация и README",
+  "example": "# Hello, DevAI!\n\nПривет из Markdown.",
+  "order": 1047
+}

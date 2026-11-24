@@ -1,0 +1,11 @@
+{
+  "id": "sass",
+  "name": "Sass",
+  "short": "Sass",
+  "extension": "sass",
+  "comment": "//",
+  "testFramework": "sass test",
+  "description": "CSS-препроцессор",
+  "example": "$greeting: \"Hello, DevAI!\"\nbody\n  content: $greeting",
+  "order": 1074
+}

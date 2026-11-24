@@ -1,0 +1,11 @@
+{
+  "id": "xquery",
+  "name": "XQuery",
+  "short": "XQuery",
+  "extension": "xq",
+  "comment": "(:",
+  "testFramework": "XQUnit",
+  "description": "Запросы к XML",
+  "example": "let $g := 'Hello, DevAI!' return <h1>{$g}</h1>",
+  "order": 1095
+}

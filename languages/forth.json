@@ -1,0 +1,11 @@
+{
+  "id": "forth",
+  "name": "Forth",
+  "short": "Forth",
+  "extension": "fth",
+  "comment": "\\",
+  "testFramework": "Forth test",
+  "description": "Стековая модель и embedded",
+  "example": ".",
+  "order": 1024
+}

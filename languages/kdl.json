@@ -1,0 +1,11 @@
+{
+  "id": "kdl",
+  "name": "KDL",
+  "short": "KDL",
+  "extension": "kdl",
+  "comment": "//",
+  "testFramework": "kdl test",
+  "description": "Конфиги в виде дерева",
+  "example": "app \"DevAI\" { greeting \"Hello\" }",
+  "order": 1039
+}

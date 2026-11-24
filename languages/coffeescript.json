@@ -1,0 +1,11 @@
+{
+  "id": "coffeescript",
+  "name": "CoffeeScript",
+  "short": "Coffee",
+  "extension": "coffee",
+  "comment": "#",
+  "testFramework": "Mocha",
+  "description": "JavaScript с лаконичным синтаксисом",
+  "example": "console.log \"Hello, DevAI!\"",
+  "order": 1014
+}

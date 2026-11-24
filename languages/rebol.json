@@ -1,0 +1,11 @@
+{
+  "id": "rebol",
+  "name": "Rebol",
+  "short": "Rebol",
+  "extension": "r",
+  "comment": ";",
+  "testFramework": "Rebol test",
+  "description": "Компактные скрипты",
+  "example": "print \"Hello, DevAI!\"",
+  "order": 1069
+}

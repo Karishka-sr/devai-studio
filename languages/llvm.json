@@ -1,0 +1,11 @@
+{
+  "id": "llvm",
+  "name": "LLVM IR",
+  "short": "LLVM",
+  "extension": "ll",
+  "comment": ";",
+  "testFramework": "lli test",
+  "description": "Промежуточный код компилятора",
+  "example": "@msg = constant [14 x i8] c\"Hello, DevAI!\\00\"",
+  "order": 1044
+}

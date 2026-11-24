@@ -1,0 +1,11 @@
+{
+  "id": "shaderlab",
+  "name": "ShaderLab",
+  "short": "ShaderLab",
+  "extension": "shader",
+  "comment": "//",
+  "testFramework": "Unity Test",
+  "description": "Шейдеры Unity",
+  "example": "Shader \"Hello\" { SubShader { Pass { } } }",
+  "order": 1077
+}

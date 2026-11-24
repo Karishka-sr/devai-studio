@@ -1,0 +1,11 @@
+{
+  "id": "chapel",
+  "name": "Chapel",
+  "short": "Chapel",
+  "extension": "chpl",
+  "comment": "//",
+  "testFramework": "CHPL test",
+  "description": "Параллельные вычисления",
+  "example": "writeln(\"Hello, DevAI!\");",
+  "order": 1012
+}

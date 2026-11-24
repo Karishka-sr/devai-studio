@@ -1,0 +1,11 @@
+{
+  "id": "applescript",
+  "name": "AppleScript",
+  "short": "AppleScript",
+  "extension": "scpt",
+  "comment": "--",
+  "testFramework": "AppleScript test",
+  "description": "Автоматизация macOS",
+  "example": "display dialog \"Hello, DevAI!\"",
+  "order": 1005
+}

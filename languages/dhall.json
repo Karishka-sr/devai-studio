@@ -1,0 +1,11 @@
+{
+  "id": "dhall",
+  "name": "Dhall",
+  "short": "Dhall",
+  "extension": "dhall",
+  "comment": "--",
+  "testFramework": "dhall test",
+  "description": "Конфигурации с типами",
+  "example": "let greeting = \"Hello, DevAI!\" in greeting",
+  "order": 1019
+}

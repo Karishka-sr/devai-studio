@@ -1,0 +1,11 @@
+{
+  "id": "vba",
+  "name": "VBA",
+  "short": "VBA",
+  "extension": "bas",
+  "comment": "'",
+  "testFramework": "Rubberduck",
+  "description": "Макросы Office",
+  "example": "MsgBox \"Hello, DevAI!\"",
+  "order": 1091
+}

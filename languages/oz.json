@@ -1,0 +1,11 @@
+{
+  "id": "oz",
+  "name": "Oz",
+  "short": "Oz",
+  "extension": "oz",
+  "comment": "%",
+  "testFramework": "oz test",
+  "description": "Многопарадигменный язык",
+  "example": "{System.showInfo \"Hello, DevAI!\"}",
+  "order": 1060
+}

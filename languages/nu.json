@@ -1,0 +1,11 @@
+{
+  "id": "nu",
+  "name": "Nushell",
+  "short": "Nu",
+  "extension": "nu",
+  "comment": "#",
+  "testFramework": "nu test",
+  "description": "Структурированная оболочка",
+  "example": "print \"Hello, DevAI!\"",
+  "order": 1055
+}

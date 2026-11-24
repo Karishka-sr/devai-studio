@@ -1,0 +1,11 @@
+{
+  "id": "janet",
+  "name": "Janet",
+  "short": "Janet",
+  "extension": "janet",
+  "comment": "#",
+  "testFramework": "janet test",
+  "description": "Встраиваемый Lisp",
+  "example": "(print \"Hello, DevAI!\")",
+  "order": 1036
+}

@@ -1,0 +1,11 @@
+{
+  "id": "handlebars",
+  "name": "Handlebars",
+  "short": "HBS",
+  "extension": "hbs",
+  "comment": "{{!",
+  "testFramework": "handlebars test",
+  "description": "Шаблоны HTML",
+  "example": "<h1>Hello, {{name}}!</h1>",
+  "order": 1029
+}

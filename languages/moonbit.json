@@ -1,0 +1,11 @@
+{
+  "id": "moonbit",
+  "name": "MoonBit",
+  "short": "MoonBit",
+  "extension": "mbt",
+  "comment": "//",
+  "testFramework": "moon test",
+  "description": "Быстрый язык для Wasm",
+  "example": "fn main { println(\"Hello, DevAI!\") }",
+  "order": 1052
+}

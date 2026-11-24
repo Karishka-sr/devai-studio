@@ -1,0 +1,11 @@
+{
+  "id": "abap",
+  "name": "ABAP",
+  "short": "ABAP",
+  "extension": "abap",
+  "comment": "*",
+  "testFramework": "ABAP Unit",
+  "description": "Корпоративные системы SAP",
+  "example": "WRITE: / 'Hello, DevAI!'.",
+  "order": 1000
+}

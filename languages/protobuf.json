@@ -1,0 +1,11 @@
+{
+  "id": "protobuf",
+  "name": "Protocol Buffers",
+  "short": "Protobuf",
+  "extension": "proto",
+  "comment": "//",
+  "testFramework": "buf test",
+  "description": "Схемы данных и gRPC",
+  "example": "syntax = \"proto3\";\nmessage Hello { string text = 1; }",
+  "order": 1064
+}

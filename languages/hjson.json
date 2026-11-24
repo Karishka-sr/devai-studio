@@ -1,0 +1,11 @@
+{
+  "id": "hjson",
+  "name": "Hjson",
+  "short": "Hjson",
+  "extension": "hjson",
+  "comment": "#",
+  "testFramework": "hjson test",
+  "description": "Читаемые конфиги",
+  "example": "{ greeting: Hello, DevAI! }",
+  "order": 1031
+}

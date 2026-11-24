@@ -1,0 +1,11 @@
+{
+  "id": "sas",
+  "name": "SAS",
+  "short": "SAS",
+  "extension": "sas",
+  "comment": "*",
+  "testFramework": "SAS test",
+  "description": "Статистика и аналитика",
+  "example": "data _null_; put 'Hello, DevAI!'; run;",
+  "order": 1073
+}

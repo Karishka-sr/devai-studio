@@ -1,0 +1,11 @@
+{
+  "id": "commonlisp",
+  "name": "Common Lisp",
+  "short": "CL",
+  "extension": "lisp",
+  "comment": ";",
+  "testFramework": "FiveAM",
+  "description": "Символьные вычисления и AI",
+  "example": "(format t \"Hello, DevAI!~%\")",
+  "order": 1015
+}

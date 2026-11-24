@@ -126,6 +126,7 @@ textarea {
 
 .site-nav a,
 .header-gh,
+.header-api,
 .version-pill {
   font-family: var(--mono);
   font-size: 10px;
@@ -180,6 +181,20 @@ textarea {
 
 .header-gh:hover {
   color: var(--lime);
+  border-color: var(--lime);
+}
+
+.header-api {
+  color: var(--lime);
+  border: 1px solid rgba(200, 255, 61, 0.38);
+  border-radius: 999px;
+  padding: 8px 12px;
+  transition: background 180ms ease, border-color 180ms ease;
+}
+
+.header-api:hover,
+.header-api:focus-visible {
+  background: rgba(200, 255, 61, 0.1);
   border-color: var(--lime);
 }
 
@@ -1653,7 +1668,8 @@ h2 {
     font-size: 10px;
   }
 
-  .header-gh {
+  .header-gh,
+  .header-api {
     display: none;
   }
 

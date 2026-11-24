@@ -1,0 +1,11 @@
+{
+  "id": "modelica",
+  "name": "Modelica",
+  "short": "Modelica",
+  "extension": "mo",
+  "comment": "//",
+  "testFramework": "OpenModelica test",
+  "description": "Физическое моделирование",
+  "example": "model Hello\n  Real x = 1;\nend Hello;",
+  "order": 1051
+}

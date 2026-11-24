@@ -1,0 +1,11 @@
+{
+  "id": "pony",
+  "name": "Pony",
+  "short": "Pony",
+  "extension": "pony",
+  "comment": "//",
+  "testFramework": "pony test",
+  "description": "Акторы и безопасность",
+  "example": "actor Main\n  new create(env: Env) => env.out.print(\"Hello, DevAI!\")",
+  "order": 1061
+}

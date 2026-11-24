@@ -1,0 +1,11 @@
+{
+  "id": "j",
+  "name": "J",
+  "short": "J",
+  "extension": "ijs",
+  "comment": "NB.",
+  "testFramework": "j test",
+  "description": "Массивное программирование",
+  "example": "echo 'Hello, DevAI!'",
+  "order": 1035
+}

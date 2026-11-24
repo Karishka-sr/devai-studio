@@ -1,0 +1,11 @@
+{
+  "id": "arduino",
+  "name": "Arduino",
+  "short": "Arduino",
+  "extension": "ino",
+  "comment": "//",
+  "testFramework": "ArduinoUnit",
+  "description": "Микроконтроллеры и датчики",
+  "example": "void setup() { Serial.begin(9600); }\nvoid loop() { Serial.println(\"Hello, DevAI!\"); delay(1000); }",
+  "order": 1006
+}

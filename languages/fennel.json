@@ -1,0 +1,11 @@
+{
+  "id": "fennel",
+  "name": "Fennel",
+  "short": "Fennel",
+  "extension": "fnl",
+  "comment": ";",
+  "testFramework": "fennel test",
+  "description": "Lisp на Lua",
+  "example": "(print \"Hello, DevAI!\")",
+  "order": 1022
+}

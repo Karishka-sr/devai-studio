@@ -1,0 +1,11 @@
+{
+  "id": "processing",
+  "name": "Processing",
+  "short": "Processing",
+  "extension": "pde",
+  "comment": "//",
+  "testFramework": "Processing test",
+  "description": "Визуальный код и графика",
+  "example": "void setup(){ println(\"Hello, DevAI!\"); }",
+  "order": 1063
+}

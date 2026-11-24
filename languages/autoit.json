@@ -1,0 +1,11 @@
+{
+  "id": "autoit",
+  "name": "AutoIt",
+  "short": "AutoIt",
+  "extension": "au3",
+  "comment": ";",
+  "testFramework": "AutoIt Test",
+  "description": "Автоматизация Windows",
+  "example": "MsgBox(0, \"DevAI\", \"Hello, DevAI!\")",
+  "order": 1008
+}

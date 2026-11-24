@@ -1,0 +1,11 @@
+{
+  "id": "cython",
+  "name": "Cython",
+  "short": "Cython",
+  "extension": "pyx",
+  "comment": "#",
+  "testFramework": "pytest",
+  "description": "Python с C-скоростью",
+  "example": "print(\"Hello, DevAI!\")",
+  "order": 1018
+}

@@ -1,0 +1,11 @@
+{
+  "id": "gherkin",
+  "name": "Gherkin",
+  "short": "Gherkin",
+  "extension": "feature",
+  "comment": "#",
+  "testFramework": "Cucumber",
+  "description": "BDD-сценарии",
+  "example": "Feature: Greeting\n  Scenario: Say hello\n    Given DevAI is ready\n    Then it says hello",
+  "order": 1026
+}

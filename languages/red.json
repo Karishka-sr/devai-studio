@@ -1,0 +1,11 @@
+{
+  "id": "red",
+  "name": "Red",
+  "short": "Red",
+  "extension": "red",
+  "comment": ";",
+  "testFramework": "Red test",
+  "description": "Rebol-наследник",
+  "example": "print \"Hello, DevAI!\"",
+  "order": 1070
+}

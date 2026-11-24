@@ -1,0 +1,11 @@
+{
+  "id": "alloy",
+  "name": "Alloy",
+  "short": "Alloy",
+  "extension": "als",
+  "comment": "//",
+  "testFramework": "Alloy Analyzer",
+  "description": "Формальная проверка моделей",
+  "example": "pred show {}\nrun show for 3",
+  "order": 1003
+}

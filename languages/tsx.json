@@ -1,0 +1,11 @@
+{
+  "id": "tsx",
+  "name": "TSX",
+  "short": "TSX",
+  "extension": "tsx",
+  "comment": "//",
+  "testFramework": "Vitest",
+  "description": "React-компоненты на TypeScript",
+  "example": "export const Hello = () => <h1>Hello, DevAI!</h1>;",
+  "order": 1087
+}

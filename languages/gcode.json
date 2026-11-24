@@ -1,0 +1,11 @@
+{
+  "id": "gcode",
+  "name": "G-code",
+  "short": "G-code",
+  "extension": "gcode",
+  "comment": ";",
+  "testFramework": "G-code test",
+  "description": "ЧПУ и 3D-печать",
+  "example": "G28 ; home\nM117 Hello, DevAI!",
+  "order": 1025
+}

@@ -1,0 +1,11 @@
+{
+  "id": "cuda",
+  "name": "CUDA",
+  "short": "CUDA",
+  "extension": "cu",
+  "comment": "//",
+  "testFramework": "GoogleTest",
+  "description": "GPU-вычисления",
+  "example": "#include <cstdio>\nint main(){ printf(\"Hello, DevAI!\\n\"); }",
+  "order": 1017
+}

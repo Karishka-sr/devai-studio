@@ -1,0 +1,11 @@
+{
+  "id": "apl",
+  "name": "APL",
+  "short": "APL",
+  "extension": "apl",
+  "comment": "⍝",
+  "testFramework": "Dyalog test",
+  "description": "Массивы и математика",
+  "example": "⎕←'Hello, DevAI!'",
+  "order": 1004
+}

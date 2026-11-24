@@ -1,0 +1,11 @@
+{
+  "id": "scss",
+  "name": "SCSS",
+  "short": "SCSS",
+  "extension": "scss",
+  "comment": "//",
+  "testFramework": "sass test",
+  "description": "CSS с переменными",
+  "example": "$greeting: \"Hello, DevAI!\";\nbody { content: $greeting; }",
+  "order": 1075
+}

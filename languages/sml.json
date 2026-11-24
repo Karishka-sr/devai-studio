@@ -1,0 +1,11 @@
+{
+  "id": "sml",
+  "name": "Standard ML",
+  "short": "SML",
+  "extension": "sml",
+  "comment": "(*",
+  "testFramework": "SML/NJ test",
+  "description": "Функциональный язык",
+  "example": "print \"Hello, DevAI!\\n\";",
+  "order": 1079
+}

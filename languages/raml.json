@@ -1,0 +1,11 @@
+{
+  "id": "raml",
+  "name": "RAML",
+  "short": "RAML",
+  "extension": "raml",
+  "comment": "#",
+  "testFramework": "raml test",
+  "description": "Описание REST API",
+  "example": "#%RAML 1.0\ntitle: Hello\n/hello:\n  get:\n    description: Hello, DevAI!",
+  "order": 1068
+}

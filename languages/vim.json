@@ -1,0 +1,11 @@
+{
+  "id": "vim",
+  "name": "Vimscript",
+  "short": "Vim",
+  "extension": "vim",
+  "comment": "\"",
+  "testFramework": "Vader",
+  "description": "Плагины и настройки Vim",
+  "example": "echo 'Hello, DevAI!'",
+  "order": 1092
+}

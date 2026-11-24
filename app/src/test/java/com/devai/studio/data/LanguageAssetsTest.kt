@@ -17,7 +17,7 @@ class LanguageAssetsTest {
             File("src/main/assets/languages").exists(),
         )
         val files = dir.listFiles { file -> file.extension == "json" }.orEmpty()
-        assertTrue("expected at least 75 language files, got ${files.size}", files.size >= 75)
+        assertTrue("expected at least 175 language files, got ${files.size}", files.size >= 175)
         assertEquals(files.size, files.map { it.name }.distinct().size)
     }
 

@@ -1,0 +1,11 @@
+{
+  "id": "hy",
+  "name": "Hy",
+  "short": "Hy",
+  "extension": "hy",
+  "comment": ";",
+  "testFramework": "pytest",
+  "description": "Lisp поверх Python",
+  "example": "(print \"Hello, DevAI!\")",
+  "order": 1032
+}

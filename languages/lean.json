@@ -1,0 +1,11 @@
+{
+  "id": "lean",
+  "name": "Lean",
+  "short": "Lean",
+  "extension": "lean",
+  "comment": "--",
+  "testFramework": "lean test",
+  "description": "Доказательства и математика",
+  "example": "def main : IO Unit := IO.println \"Hello, DevAI!\"",
+  "order": 1041
+}

@@ -547,7 +547,6 @@ object CodeLanguages {
 
     private fun seed(ctx: Context, dir: File?) {
         if (dir == null) return
-        if (dir.listFiles { f -> f.extension == "json" }?.isNotEmpty() == true) return
         runCatching {
             dir.mkdirs()
             ctx.resources.openRawResource(R.raw.languages).use { input ->
@@ -555,7 +554,8 @@ object CodeLanguages {
                     while (true) {
                         val entry = zip.nextEntry ?: break
                         if (!entry.isDirectory && entry.name.endsWith(".json")) {
-                            File(dir, entry.name.substringAfterLast('/')).writeBytes(zip.readBytes())
+                            val target = File(dir, entry.name.substringAfterLast('/'))
+                            if (!target.exists()) target.writeBytes(zip.readBytes())
                         }
                         zip.closeEntry()
                     }

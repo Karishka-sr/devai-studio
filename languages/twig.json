@@ -1,0 +1,11 @@
+{
+  "id": "twig",
+  "name": "Twig",
+  "short": "Twig",
+  "extension": "twig",
+  "comment": "{#",
+  "testFramework": "PHPUnit",
+  "description": "Шаблоны Symfony",
+  "example": "<h1>Hello, {{ name }}</h1>",
+  "order": 1088
+}

@@ -1,0 +1,11 @@
+{
+  "id": "postscript",
+  "name": "PostScript",
+  "short": "PS",
+  "extension": "ps",
+  "comment": "%",
+  "testFramework": "Ghostscript test",
+  "description": "Печать и векторная графика",
+  "example": "/Helvetica findfont 24 scalefont setfont\n72 72 moveto (Hello, DevAI!) show showpage",
+  "order": 1062
+}

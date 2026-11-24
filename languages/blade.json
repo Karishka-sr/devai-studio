@@ -1,0 +1,11 @@
+{
+  "id": "blade",
+  "name": "Blade",
+  "short": "Blade",
+  "extension": "blade",
+  "comment": "{{--",
+  "testFramework": "PHPUnit",
+  "description": "Шаблоны Laravel",
+  "example": "<h1>Hello, {{ $name }}</h1>",
+  "order": 1010
+}

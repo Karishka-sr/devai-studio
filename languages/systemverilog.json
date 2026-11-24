@@ -1,0 +1,11 @@
+{
+  "id": "systemverilog",
+  "name": "SystemVerilog",
+  "short": "SV",
+  "extension": "sv",
+  "comment": "//",
+  "testFramework": "SVUnit",
+  "description": "ПЛИС и верификация",
+  "example": "module hello;\n  initial $display(\"Hello, DevAI!\");\nendmodule",
+  "order": 1084
+}

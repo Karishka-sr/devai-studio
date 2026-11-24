@@ -1,0 +1,11 @@
+{
+  "id": "wat",
+  "name": "WebAssembly Text",
+  "short": "WAT",
+  "extension": "wat",
+  "comment": ";;",
+  "testFramework": "wast test",
+  "description": "Текстовый WebAssembly",
+  "example": "(module (func (export \"hello\") (result i32) i32.const 42))",
+  "order": 1093
+}

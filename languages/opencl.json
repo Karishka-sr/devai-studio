@@ -1,0 +1,11 @@
+{
+  "id": "opencl",
+  "name": "OpenCL",
+  "short": "OpenCL",
+  "extension": "cl",
+  "comment": "//",
+  "testFramework": "OpenCL test",
+  "description": "Параллельные вычисления",
+  "example": "__kernel void hello(__global char* out){ out[0]='!'; }",
+  "order": 1057
+}

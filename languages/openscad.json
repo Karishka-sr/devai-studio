@@ -1,0 +1,11 @@
+{
+  "id": "openscad",
+  "name": "OpenSCAD",
+  "short": "OpenSCAD",
+  "extension": "scad",
+  "comment": "//",
+  "testFramework": "OpenSCAD test",
+  "description": "Параметрическая 3D-печать",
+  "example": "cube([10,10,10]);",
+  "order": 1058
+}

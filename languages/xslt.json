@@ -1,0 +1,11 @@
+{
+  "id": "xslt",
+  "name": "XSLT",
+  "short": "XSLT",
+  "extension": "xsl",
+  "comment": "<!--",
+  "testFramework": "xslt test",
+  "description": "Преобразование XML",
+  "example": "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"/>",
+  "order": 1096
+}

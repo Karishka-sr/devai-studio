@@ -1,0 +1,11 @@
+{
+  "id": "hcl",
+  "name": "HCL",
+  "short": "HCL",
+  "extension": "hcl",
+  "comment": "#",
+  "testFramework": "terraform test",
+  "description": "Инфраструктура Terraform",
+  "example": "output \"greeting\" { value = \"Hello, DevAI!\" }",
+  "order": 1030
+}

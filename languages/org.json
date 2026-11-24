@@ -1,0 +1,11 @@
+{
+  "id": "org",
+  "name": "Org",
+  "short": "Org",
+  "extension": "org",
+  "comment": "#",
+  "testFramework": "org test",
+  "description": "Заметки и задачи",
+  "example": "* Hello, DevAI!\nПривет из Org-mode.",
+  "order": 1059
+}

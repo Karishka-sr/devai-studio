@@ -1,0 +1,11 @@
+{
+  "id": "circom",
+  "name": "Circom",
+  "short": "Circom",
+  "extension": "circom",
+  "comment": "//",
+  "testFramework": "circom test",
+  "description": "ZK-схемы и доказательства",
+  "example": "pragma circom 2.0.0;\ntemplate Hello() { signal output out; out <== 42; }",
+  "order": 1013
+}

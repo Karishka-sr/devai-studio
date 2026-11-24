@@ -1,0 +1,11 @@
+{
+  "id": "kusto",
+  "name": "Kusto",
+  "short": "KQL",
+  "extension": "kql",
+  "comment": "//",
+  "testFramework": "Kusto test",
+  "description": "Аналитика логов",
+  "example": "print greeting = \"Hello, DevAI!\"",
+  "order": 1040
+}

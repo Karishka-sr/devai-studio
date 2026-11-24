@@ -1,0 +1,11 @@
+{
+  "id": "graphql",
+  "name": "GraphQL",
+  "short": "GraphQL",
+  "extension": "graphql",
+  "comment": "#",
+  "testFramework": "graphql-test",
+  "description": "API-запросы и схемы",
+  "example": "query { greeting }",
+  "order": 1028
+}

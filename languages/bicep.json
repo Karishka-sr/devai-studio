@@ -1,0 +1,11 @@
+{
+  "id": "bicep",
+  "name": "Bicep",
+  "short": "Bicep",
+  "extension": "bicep",
+  "comment": "//",
+  "testFramework": "bicep test",
+  "description": "Инфраструктура Azure",
+  "example": "output greeting string = 'Hello, DevAI!'",
+  "order": 1009
+}

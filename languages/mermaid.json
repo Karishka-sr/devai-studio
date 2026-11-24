@@ -1,0 +1,11 @@
+{
+  "id": "mermaid",
+  "name": "Mermaid",
+  "short": "Mermaid",
+  "extension": "mmd",
+  "comment": "%%",
+  "testFramework": "mermaid test",
+  "description": "Диаграммы в тексте",
+  "example": "graph TD\n  A[DevAI] --> B[Hello]",
+  "order": 1050
+}

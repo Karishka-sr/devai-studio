@@ -1,0 +1,11 @@
+{
+  "id": "meson",
+  "name": "Meson",
+  "short": "Meson",
+  "extension": "meson",
+  "comment": "#",
+  "testFramework": "meson test",
+  "description": "Сборка C/C++ проектов",
+  "example": "project('hello', 'c')\nexecutable('hello', 'main.c')",
+  "order": 1049
+}

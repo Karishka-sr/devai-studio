@@ -1,0 +1,11 @@
+{
+  "id": "gnuplot",
+  "name": "Gnuplot",
+  "short": "Gnuplot",
+  "extension": "plt",
+  "comment": "#",
+  "testFramework": "gnuplot test",
+  "description": "Графики и визуализация",
+  "example": "set title 'Hello, DevAI!'\nplot sin(x)",
+  "order": 1099
+}

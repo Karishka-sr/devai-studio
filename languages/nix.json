@@ -1,0 +1,11 @@
+{
+  "id": "nix",
+  "name": "Nix",
+  "short": "Nix",
+  "extension": "nix",
+  "comment": "#",
+  "testFramework": "nix flake check",
+  "description": "Воспроизводимые сборки",
+  "example": "{ greeting = \"Hello, DevAI!\"; }",
+  "order": 1054
+}

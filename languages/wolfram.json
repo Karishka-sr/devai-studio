@@ -1,0 +1,11 @@
+{
+  "id": "wolfram",
+  "name": "Wolfram Language",
+  "short": "Wolfram",
+  "extension": "wl",
+  "comment": "(*",
+  "testFramework": "Wolfram test",
+  "description": "Символьные вычисления",
+  "example": "Print[\"Hello, DevAI!\"]",
+  "order": 1094
+}

@@ -1,0 +1,11 @@
+{
+  "id": "gleam",
+  "name": "Gleam",
+  "short": "Gleam",
+  "extension": "gleam",
+  "comment": "//",
+  "testFramework": "gleeunit",
+  "description": "Типизированный BEAM",
+  "example": "import gleam/io\npub fn main() { io.println(\"Hello, DevAI!\") }",
+  "order": 1027
+}

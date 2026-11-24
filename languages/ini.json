@@ -1,0 +1,11 @@
+{
+  "id": "ini",
+  "name": "INI",
+  "short": "INI",
+  "extension": "ini",
+  "comment": ";",
+  "testFramework": "ini test",
+  "description": "Настройки приложений",
+  "example": "[app]\ngreeting=Hello, DevAI!",
+  "order": 1034
+}

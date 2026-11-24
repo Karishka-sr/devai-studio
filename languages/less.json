@@ -1,0 +1,11 @@
+{
+  "id": "less",
+  "name": "Less",
+  "short": "Less",
+  "extension": "less",
+  "comment": "//",
+  "testFramework": "less test",
+  "description": "CSS-препроцессор",
+  "example": "body { content: \"Hello, DevAI!\"; }",
+  "order": 1042
+}

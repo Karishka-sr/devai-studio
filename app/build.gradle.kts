@@ -25,8 +25,8 @@ android {
         applicationId = "com.devai.studio"
         minSdk = 31
         targetSdk = 34
-        versionCode = 46
-        versionName = "4.1.0"
+        versionCode = 47
+        versionName = "4.2.0"
         vectorDrawables.useSupportLibrary = true
         buildConfigField("String", "FIREBASE_API_KEY", "\"${buildSecret("FIREBASE_API_KEY")}\"")
         buildConfigField("String", "FIREBASE_APP_ID", "\"${buildSecret("FIREBASE_APP_ID")}\"")

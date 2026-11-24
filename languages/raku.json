@@ -1,0 +1,11 @@
+{
+  "id": "raku",
+  "name": "Raku",
+  "short": "Raku",
+  "extension": "raku",
+  "comment": "#",
+  "testFramework": "Test",
+  "description": "Мощный Perl-наследник",
+  "example": "say 'Hello, DevAI!';",
+  "order": 1067
+}

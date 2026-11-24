@@ -1,0 +1,11 @@
+{
+  "id": "robotframework",
+  "name": "Robot Framework",
+  "short": "Robot",
+  "extension": "robot",
+  "comment": "#",
+  "testFramework": "Robot Framework",
+  "description": "Автотесты и RPA",
+  "example": "*** Test Cases ***\nHello\n    Log    Hello, DevAI!",
+  "order": 1071
+}

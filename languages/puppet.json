@@ -1,0 +1,11 @@
+{
+  "id": "puppet",
+  "name": "Puppet",
+  "short": "Puppet",
+  "extension": "pp",
+  "comment": "#",
+  "testFramework": "puppet test",
+  "description": "Управление конфигурациями",
+  "example": "notice('Hello, DevAI!')",
+  "order": 1065
+}

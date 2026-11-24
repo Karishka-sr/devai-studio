@@ -1,0 +1,11 @@
+{
+  "id": "actionscript",
+  "name": "ActionScript",
+  "short": "AS3",
+  "extension": "as",
+  "comment": "//",
+  "testFramework": "FlexUnit",
+  "description": "Flash и AIR-приложения",
+  "example": "trace(\"Hello, DevAI!\");",
+  "order": 1001
+}

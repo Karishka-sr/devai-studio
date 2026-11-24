@@ -1,0 +1,11 @@
+{
+  "id": "nginx",
+  "name": "Nginx",
+  "short": "Nginx",
+  "extension": "conf",
+  "comment": "#",
+  "testFramework": "nginx -t",
+  "description": "Веб-сервер и прокси",
+  "example": "server { listen 80; location / { return 200 'Hello, DevAI!'; } }",
+  "order": 1053
+}

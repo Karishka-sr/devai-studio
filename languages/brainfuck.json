@@ -1,0 +1,11 @@
+{
+  "id": "brainfuck",
+  "name": "Brainfuck",
+  "short": "BF",
+  "extension": "bf",
+  "comment": "",
+  "testFramework": "brainfuck test",
+  "description": "Эзотерический язык",
+  "example": "++++++++[>++++++++<-]>+.>++++++++++.",
+  "order": 1011
+}

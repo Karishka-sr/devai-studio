@@ -1,0 +1,11 @@
+{
+  "id": "fish",
+  "name": "Fish",
+  "short": "Fish",
+  "extension": "fish",
+  "comment": "#",
+  "testFramework": "fishtape",
+  "description": "Скрипты командной строки",
+  "example": "echo \"Hello, DevAI!\"",
+  "order": 1023
+}

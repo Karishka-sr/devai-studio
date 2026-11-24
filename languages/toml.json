@@ -1,0 +1,11 @@
+{
+  "id": "toml",
+  "name": "TOML",
+  "short": "TOML",
+  "extension": "toml",
+  "comment": "#",
+  "testFramework": "toml-test",
+  "description": "Конфиги приложений",
+  "example": "greeting = \"Hello, DevAI!\"",
+  "order": 1086
+}

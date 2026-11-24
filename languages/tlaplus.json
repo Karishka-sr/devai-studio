@@ -1,0 +1,11 @@
+{
+  "id": "tlaplus",
+  "name": "TLA+",
+  "short": "TLA+",
+  "extension": "tla",
+  "comment": "\\*",
+  "testFramework": "TLC",
+  "description": "Формальные спецификации",
+  "example": "---- MODULE Hello ----\nEXTENDS TLC\n======",
+  "order": 1085
+}
