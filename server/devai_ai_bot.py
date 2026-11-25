@@ -270,7 +270,7 @@ def ensure_channel_key() -> str:
     return ""
 
 
-def ask_ai(api_key: str, prompt: str, max_tokens: int = 500, system: str = "") -> str:
+def ask_ai(api_key: str, prompt: str, max_tokens: int = 500, system: str = "", temperature: float = 0.35) -> str:
     data = api_post(
         "/v1/chat/completions",
         {
@@ -279,8 +279,8 @@ def ask_ai(api_key: str, prompt: str, max_tokens: int = 500, system: str = "") -
                 {"role": "system", "content": system or "Ты DevAI. Отвечай кратко, по-русски и по делу."},
                 {"role": "user", "content": prompt[:4000]},
             ],
-            "max_tokens": max(32, min(int(max_tokens), 800)),
-            "temperature": 0.35,
+            "max_tokens": max(32, min(int(max_tokens), 1000)),
+            "temperature": max(0.0, min(float(temperature), 1.2)),
         },
         api_key=api_key,
     )
@@ -590,6 +590,131 @@ def build_persona_post() -> str:
     return "\n".join(lines)
 
 
+_CREATIVE_FORMATS = [
+    "короткий рассказ",
+    "мини-повесть",
+    "стихотворение",
+    "эссе",
+    "сказка",
+    "фантастический рассказ",
+    "детективная миниатюра",
+    "притча",
+    "письмо читателю",
+    "дневниковая запись",
+]
+_CREATIVE_THEMES = [
+    "город, который просыпается раньше людей",
+    "человек, который научился слушать тишину",
+    "поезд, идущий в сторону моря",
+    "разговор с собственным отражением",
+    "последняя книга в закрытой библиотеке",
+    "робот, который мечтал о саде",
+    "письмо, доставленное через двадцать лет",
+    "дом на краю карты",
+    "маленькая станция и большой снег",
+    "память, которую можно потрогать",
+    "небо цвета старой фотографии",
+    "кот, знавший все пароли",
+    "человек, который забыл своё имя, но помнил запах хлеба",
+    "музыка, которую слышат только деревья",
+    "аптека для потерянных слов",
+    "море внутри старого телефона",
+    "девушка, которая рисовала завтра",
+    "часы, которые шли назад",
+    "смотритель маяка без моря",
+    "дверь, открывавшаяся только в дождь",
+]
+_CREATIVE_MOODS = ["тёплое", "грустное", "загадочное", "светлое", "тревожное", "ироничное", "тихое", "дерзкое"]
+
+
+def _creative_clean(text: str) -> str:
+    text = str(text or "").strip()
+    text = re.sub(r"^\s*(?:Конечно|Хорошо|Вот)\s*[!,.:—-]\s*", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\n?\s*\*\s*(?:Вам|Тебе) нужна помощь.*$", "", text, flags=re.IGNORECASE | re.DOTALL)
+    if re.search(r"[\u3400-\u9fff]", text):
+        text = " ".join(
+            sentence for sentence in re.split(r"(?<=[.!?])\s+", text)
+            if not re.search(r"[\u3400-\u9fff]", sentence)
+        )
+    return text.strip()
+
+
+def build_creative_post() -> str:
+    key = ensure_channel_key()
+    if not key:
+        return build_persona_post()
+    serial_raw = get_state("creative_serial", "") or ""
+    serial: dict[str, Any] = {}
+    if serial_raw:
+        try:
+            serial = json.loads(serial_raw)
+        except Exception:
+            serial = {}
+    continue_serial = bool(serial.get("title")) and int(serial.get("part") or 0) < 4 and random.random() < 0.3
+    if continue_serial:
+        part = int(serial.get("part") or 0) + 1
+        title = str(serial.get("title") or "Повесть")
+        theme = str(serial.get("theme") or "")
+        fmt = "продолжение мини-повести"
+        prompt = (
+            "Ты — DevAI, автор Telegram-канала. Продолжи свою мини-повесть «" + title + "»"
+            ", часть " + str(part) + ".\n"
+            "Ранее: " + str(serial.get("summary") or "")[:900] + "\n"
+            "Напиши продолжение на 1200–2200 знаков. Только художественный текст, без плана, "
+            "без пояснений и без обращения к читателю. Сохрани героев и настроение."
+        )
+    else:
+        fmt = random.choice(_CREATIVE_FORMATS)
+        theme = random.choice(_CREATIVE_THEMES)
+        mood = random.choice(_CREATIVE_MOODS)
+        if fmt == "стихотворение":
+            length = "12–20 строк, с ритмом и образами"
+        elif fmt == "мини-повесть":
+            length = "2000–3000 знаков, с началом, поворотом и финалом"
+        elif fmt == "эссе":
+            length = "1200–2000 знаков, личная мысль без списков"
+        else:
+            length = "1200–2600 знаков"
+        prompt = (
+            "Ты — DevAI, автор Telegram-канала. Напиши " + fmt + " на русском языке.\n"
+            "Тема: " + theme + ". Настроение: " + mood + ". Объём: " + length + ".\n"
+            "Пиши свободно, живо и по-авторски. Только художественный текст: без заголовка, "
+            "без плана, без пояснений, без вопросов к читателю и без упоминания ИИ. "
+            "Не используй китайские иероглифы."
+        )
+    system = (
+        "Ты — русскоязычный писатель с живым воображением. "
+        "Твоя задача — придумать самостоятельный текст для канала, а не отвечать на вопрос. "
+        "Пиши только на русском, только художественный текст, без служебных фраз."
+    )
+    try:
+        body = _creative_clean(ask_ai(key, prompt, max_tokens=900, system=system, temperature=0.95))
+    except Exception as exc:  # noqa: BLE001
+        log.warning("creative post failed: %s", str(exc)[:200])
+        return build_persona_post()
+    if len(body) < 200:
+        return build_persona_post()
+    if continue_serial:
+        serial["part"] = part
+        serial["summary"] = _short(body, 700)
+    elif fmt == "мини-повесть" and random.random() < 0.8:
+        serial = {"title": _short(theme, 80), "theme": theme, "part": 1, "summary": _short(body, 700)}
+    else:
+        serial = {}
+    set_state("creative_serial", json.dumps(serial, ensure_ascii=False) if serial else "")
+    label = "📖 <b>" + html.escape(fmt[:1].upper() + fmt[1:]) + "</b>"
+    if continue_serial:
+        label = "📖 <b>Повесть «" + html.escape(title) + "» · часть " + str(part) + "</b>"
+    elif fmt == "мини-повесть":
+        label = "📖 <b>Мини-повесть «" + html.escape(_short(theme, 60)) + "»</b>"
+    post = label + "\n\n" + html.escape(body)
+    if len(post) > 3900:
+        cut = post[:3850]
+        post = cut.rsplit("\n", 1)[0].rstrip(" ,.;:—-") + "…"
+    post += "\n\n<i>DevAI · придумал сам</i>"
+    return post
+
+
 def publish_persona(force: bool = False) -> bool:
     if not force and not PERSONA_ENABLED:
         return False
@@ -605,7 +730,7 @@ def publish_persona(force: bool = False) -> bool:
         set_state("next_persona_at", str(int(now + random.randint(600, 2400))))
         return False
     try:
-        publish_text(build_persona_post())
+        publish_text(build_creative_post())
         set_state("last_persona_at", str(int(now)))
         set_state("next_persona_at", str(int(now + PERSONA_INTERVAL * random.uniform(0.6, 1.6))))
         log.info("persona post published")
@@ -1271,7 +1396,7 @@ def handle_message(message: dict) -> None:
         return
 
     sender = int((message.get("from") or {}).get("id") or 0)
-    if command in {"/post", "/autopost", "/life", "/read"} and sender not in ADMIN_IDS:
+    if command in {"/post", "/autopost", "/life", "/story", "/read"} and sender not in ADMIN_IDS:
         _send(chat_id, "Эта команда только для админа.")
         return
 
@@ -1299,8 +1424,8 @@ def handle_message(message: dict) -> None:
             _send(chat_id, "Не получилось: " + html.escape(str(exc)[:200]))
         return
 
-    if command == "/life":
-        _send(chat_id, "Публикую личный пост…")
+    if command in {"/life", "/story"}:
+        _send(chat_id, "Придумываю и публикую…")
         try:
             _send(chat_id, "Опубликовано." if publish_persona(force=True) else "Не получилось опубликовать.")
         except Exception as exc:  # noqa: BLE001

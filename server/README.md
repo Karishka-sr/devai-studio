@@ -162,9 +162,9 @@ It can:
   the key, and answer `/ai` prompts (or plain text) through the API;
 - publish a formatted digest of new project knowledge in Russian, with a short
   retelling for each item and a source link; English-only items are skipped;
-- publish a first-person persona post on its own schedule (about every 4 hours
-  with jitter): what it likes, what it is learning, how it works and where to
-  find it;
+- publish free-form creative posts on its own schedule (about every 3 hours
+  with jitter): short stories, poems, essays, fairy tales, detective
+  miniatures and serialized mini-novellas written by the model;
 - reply to comments in the channel discussion group;
 - read uploaded books and documents (`txt`, `md`, `html`, `epub`, `fb2`,
   `docx`, `pdf`, `rtf`) and store them in the learning database.
@@ -177,8 +177,10 @@ Required secret files (both ignored by git, mode 600):
 
 Add @devaiAI_bot to the linked discussion group as an administrator so it can
 read comments. Send a book as a file with the optional caption `/book Название`.
-Admins can also use `/read <url>` to learn one public page. The bot never claims to be human: persona posts state that it is
-an AI character. Comment replies are rate-limited per user and per minute.
+Admins can also use `/read <url>` to learn one public page and `/story` to
+generate a creative post immediately. The bot never claims to be human:
+creative posts are signed as DevAI. Comment replies are rate-limited per user
+and per minute.
 
 ## Limits
 
