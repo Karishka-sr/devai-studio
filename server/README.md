@@ -160,7 +160,8 @@ It can:
 
 - accept a DevAI API key with `/key devai-sk-...`, delete the message with
   the key, and answer `/ai` prompts (or plain text) through the API;
-- publish a formatted digest of new project knowledge;
+- publish a formatted digest of new project knowledge in Russian, with a short
+  retelling for each item and a source link; English-only items are skipped;
 - publish a first-person persona post on its own schedule (about every 4 hours
   with jitter): what it likes, what it is learning, how it works and where to
   find it;

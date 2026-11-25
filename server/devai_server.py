@@ -1050,7 +1050,7 @@ def learning_status() -> dict:
 
 
 def featured_learning(limit: int = 5) -> dict:
-    limit = max(1, min(int(limit or 5), 20))
+    limit = max(1, min(int(limit or 5), 200))
     with db() as conn:
         rows = conn.execute(
             "SELECT id, kind, source, title, prompt, answer, quality, created "

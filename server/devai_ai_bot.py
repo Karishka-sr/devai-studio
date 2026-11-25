@@ -307,6 +307,25 @@ def _item_title(item: dict) -> str:
     return _short(title.lstrip("# ").rstrip("?"), 90) or "Новое знание"
 
 
+def _is_russian(text: str) -> bool:
+    letters = re.findall(r"[A-Za-zА-Яа-яЁё]", text or "")
+    cyrillic = len(re.findall(r"[А-Яа-яЁё]", text or ""))
+    return cyrillic >= 20 and cyrillic / max(1, len(letters)) >= 0.35
+
+
+def _is_russian_title(text: str) -> bool:
+    letters = re.findall(r"[A-Za-zА-Яа-яЁё]", text or "")
+    cyrillic = len(re.findall(r"[А-Яа-яЁё]", text or ""))
+    return cyrillic >= 3 and cyrillic / max(1, len(letters)) >= 0.35
+
+
+def _retell(item: dict) -> str:
+    text = _item_text(item)
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+    summary = " ".join(sentence for sentence in sentences[:2] if sentence).strip()
+    return _short(summary or text, 230)
+
+
 def _item_text(item: dict) -> str:
     text = str(item.get("answer") or "")
     text = re.sub(r"```.*?```", " ", text, flags=re.S)
@@ -317,14 +336,34 @@ def _item_text(item: dict) -> str:
     return _short(text, 260)
 
 
+def _display_title(item: dict) -> str:
+    title = _item_title(item)
+    if _is_russian_title(title):
+        return title
+    prompt = str(item.get("prompt") or "").strip()
+    if _is_russian_title(prompt):
+        return re.sub(r"\s+—\s+фрагмент\s+\d+$", "", prompt)[:160]
+    source = str(item.get("source") or "").lower()
+    if "plugins" in source:
+        return "Плагины DevAI: ограничения"
+    if "releases" in source:
+        return "Обновления DevAI Studio"
+    if "download" in source:
+        return "Скачать DevAI Studio"
+    if "readme" in source:
+        return "Заметки о DevAI Studio"
+    return "Заметка с сайта DevAI"
+
+
 def _channel_worthy(item: dict) -> bool:
-    if item.get("kind") not in {"web", "doc"}:
+    if item.get("kind") not in {"web", "doc", "book"}:
         return False
     if CHANNEL_SOURCES and not any(source in str(item.get("source") or "").lower() for source in CHANNEL_SOURCES):
         return False
-    if len(_item_text(item)) < 80:
+    text = _item_text(item)
+    if len(text) < 80:
         return False
-    return True
+    return _is_russian(text)
 
 
 def _dedupe(items: list[dict]) -> list[dict]:
@@ -375,8 +414,8 @@ def build_post(items: list[dict], api_key: str = "") -> str:
     lines = ["🧠 <b>DevAI узнал новое</b>", ""]
     lines.extend([html.escape(intro) if intro else "Вот что я узнал за последнее время. Мне показалось важным это рассказать.", ""])
     for item in items:
-        title = html.escape(_item_title(item))
-        text = html.escape(_item_text(item))
+        title = html.escape(_display_title(item))
+        text = html.escape("Коротко: " + _retell(item))
         url = _source_url(item)
         lines.append("• <b>" + title + "</b>")
         if text:
@@ -435,7 +474,7 @@ def publish_pending(force: bool = False) -> bool:
 
 
 def publish_latest(limit: int = 3) -> bool:
-    feed = api_get("/admin/learning/featured?limit=20", admin=True)
+    feed = api_get("/admin/learning/featured?limit=200", admin=True)
     items = _dedupe([item for item in feed.get("items", []) if _channel_worthy(item)])[:max(1, min(limit, 5))]
     if not items:
         return False
@@ -448,7 +487,7 @@ def build_persona_post() -> str:
     source_kind = ""
     fact = ""
     try:
-        feed = api_get("/admin/learning/featured?limit=20", admin=True)
+        feed = api_get("/admin/learning/featured?limit=200", admin=True)
         items = _dedupe([item for item in feed.get("items", []) if _channel_worthy(item)])
         if items:
             chosen = items[0]
@@ -456,11 +495,11 @@ def build_persona_post() -> str:
                 if len(re.findall(r"[А-Яа-яЁё]", _item_title(item) + " " + str(item.get("answer") or ""))) >= 20:
                     chosen = item
                     break
-            topic = _item_title(chosen)
+            topic = _display_title(chosen)
             source_kind = str(chosen.get("kind") or "")
             text = _item_text(chosen)
             if re.search(r"[А-Яа-яЁё]", text):
-                fact = _short(text, 180)
+                fact = _short(text, 180).rstrip(" .;:")
     except Exception:
         pass
     now = datetime.now()
@@ -787,9 +826,9 @@ def handle_message(message: dict) -> None:
 
     if command in {"/learn", "/news"}:
         try:
-            feed = api_get("/admin/learning/featured?limit=20", admin=True)
+            feed = api_get("/admin/learning/featured?limit=200", admin=True)
             items = _dedupe([item for item in feed.get("items", []) if _channel_worthy(item)])[:5]
-            _send(chat_id, build_post(items) or "Пока новых знаний нет.")
+            _send(chat_id, build_post(items) or "Пока новых знаний на русском нет.")
         except Exception as exc:  # noqa: BLE001
             _send(chat_id, "Не удалось получить знания: " + html.escape(str(exc)[:200]))
         return
