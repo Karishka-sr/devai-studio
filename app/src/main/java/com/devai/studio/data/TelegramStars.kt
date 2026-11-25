@@ -9,7 +9,7 @@ import com.devai.studio.BuildConfig
 
 object TelegramStars {
     private val botUsername = BuildConfig.TELEGRAM_BOT_USERNAME.trim().removePrefix("@")
-    val USERNAME = botUsername.ifBlank { "FemClaudeMrrr" }
+    val USERNAME = botUsername.ifBlank { "devAI_Studio_bot" }
     val URL = "https://t.me/$USERNAME"
 
     fun orderId(plan: PremiumPlan): String =

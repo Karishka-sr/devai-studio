@@ -1,4 +1,4 @@
-const TELEGRAM_USERNAME = "FemClaudeMrrr";
+const TELEGRAM_USERNAME = "devAI_Studio_bot";
 const TELEGRAM_URL = `https://t.me/${TELEGRAM_USERNAME}`;
 
 const PLANS = {
@@ -71,8 +71,8 @@ function orderText(plan, id) {
   ].join("\n");
 }
 
-function telegramLink(plan, id) {
-  return `${TELEGRAM_URL}?text=${encodeURIComponent(orderText(plan, id))}`;
+function telegramLink(plan) {
+  return `${TELEGRAM_URL}?start=buy_${plan}`;
 }
 
 function showToast(text) {
@@ -126,7 +126,7 @@ function setPlan(plan, { scroll = false } = {}) {
   $("#order-days").textContent = item.days;
   $("#order-price").innerHTML = `${formatStars(item.stars)} <span class="star-glyph" aria-hidden="true"></span>`;
   $("#order-id").textContent = orderId;
-  $("#pay-link").href = telegramLink(plan, orderId);
+  $("#pay-link").href = telegramLink(plan);
 
   syncPlanCards();
   syncFeatureTab(plan);

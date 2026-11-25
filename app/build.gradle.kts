@@ -35,7 +35,11 @@ android {
             "https://work-2-nizvyfgvcqicrkif.prod-runtime.all-hands.dev/v1/promo/activate"
         }
         buildConfigField("String", "PROMO_API_URL", "\"$promoApiUrl\"")
-        buildConfigField("String", "TELEGRAM_BOT_USERNAME", "\"${buildSecret("TELEGRAM_BOT_USERNAME")}\"")
+        buildConfigField(
+            "String",
+            "TELEGRAM_BOT_USERNAME",
+            "\"${buildSecret("TELEGRAM_BOT_USERNAME").ifBlank { "devAI_Studio_bot" }}\"",
+        )
         ndk {
             abiFilters += listOf("arm64-v8a")
         }
