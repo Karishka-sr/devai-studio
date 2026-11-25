@@ -1,4 +1,4 @@
-# DevAI Core API v0.2
+# DevAI Core API v0.3
 
 OpenAI-compatible HTTP API for DevAI Core. The first version runs a local
 Qwen2.5 0.5B GGUF model, so prompts do not leave the machine.
@@ -47,6 +47,18 @@ curl -s -X POST http://127.0.0.1:12001/admin/keys \
 ```
 
 The response contains `key` once. The database stores only its SHA-256 hash.
+
+Paid API keys use a plan and get the Premium limits for its duration:
+
+```bash
+curl -s -X POST http://127.0.0.1:12001/admin/keys \
+  -H "X-Admin-Token: $ADMIN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"telegram-123","plan":"month"}'
+```
+
+Plans: `week`, `month`, `year`, `lifetime`. The Stars bot uses this endpoint
+after a successful payment and sends the returned key to the buyer.
 
 ## Public website signup
 

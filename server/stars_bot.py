@@ -84,6 +84,15 @@ PLANS: dict[str, Plan] = {
     "lifetime": Plan("lifetime", "Навсегда", "навсегда", 4990, 0),
 }
 
+API_PLANS: dict[str, Plan] = {
+    "api_week": Plan("api_week", "API · Неделя", "7 дней", 75, 7),
+    "api_month": Plan("api_month", "API · Месяц", "30 дней", 249, 30),
+    "api_year": Plan("api_year", "API · Год", "365 дней", 1490, 365),
+    "api_lifetime": Plan("api_lifetime", "API · Навсегда", "навсегда", 4990, 0),
+}
+
+ALL_PLANS: dict[str, Plan] = {**PLANS, **API_PLANS}
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
     telegram_id INTEGER PRIMARY KEY,
@@ -265,7 +274,7 @@ def partner_link(code: str) -> str:
 
 
 def create_order(buyer_id: int, plan_id: str) -> str:
-    plan = PLANS[plan_id]
+    plan = ALL_PLANS[plan_id]
     order_id = f"DVS-{plan.id.upper()}-{int(time.time()):X}{secrets.token_hex(2).upper()}"
     with connect() as connection:
         connection.execute(
@@ -469,6 +478,22 @@ def issue_promo(plan_id: str) -> str:
     return codes[0] if codes else ""
 
 
+def create_api_key(plan_id: str, telegram_id: int) -> dict[str, Any]:
+    if not DEVAI_ADMIN_TOKEN:
+        raise RuntimeError("DEVAI_ADMIN_TOKEN не задан")
+    plan = API_PLANS.get(plan_id)
+    if plan is None:
+        raise RuntimeError("Неизвестный тариф API")
+    return http_json(
+        DEVAI_API_BASE + "/admin/keys",
+        {
+            "name": f"API · Telegram {telegram_id}",
+            "plan": plan.id.removeprefix("api_"),
+        },
+        {"X-Admin-Token": DEVAI_ADMIN_TOKEN},
+    )
+
+
 def send(chat_id: int, text: str, keyboard: dict[str, Any] | None = None) -> Any:
     payload: dict[str, Any] = {
         "chat_id": chat_id,
@@ -487,7 +512,10 @@ def inline(rows: list[list[dict[str, str]]]) -> dict[str, Any]:
 def main_menu() -> dict[str, Any]:
     rows: list[list[dict[str, Any]]] = [
         [{"text": "Бесплатный промокод", "callback_data": "free_promo"}],
-        [{"text": "Купить Premium", "callback_data": "buy"}],
+        [
+            {"text": "Купить Premium", "callback_data": "buy"},
+            {"text": "Купить API-ключ", "callback_data": "api_buy"},
+        ],
         [
             {"text": "Партнёрка", "callback_data": "partner"},
             {"text": "Баланс", "callback_data": "balance"},
@@ -517,6 +545,7 @@ def welcome_text(first_name: str, referred: bool) -> str:
     return (
         f"Привет{name}.\n\n"
         "Это DevAI Premium — доступ к темам, локальным моделям, поиску, плагинам и MCP.\n"
+        "Здесь же можно купить готовый API-ключ DevAI Core.\n"
         "Оплата проходит в Telegram Stars. Без карт и автосписаний."
         f"{suffix}"
     )
@@ -528,6 +557,8 @@ def handle_start(chat_id: int, user: dict[str, Any], payload: str) -> None:
     send(chat_id, welcome_text(user.get("first_name", ""), bool(row["referred_by"])), main_menu())
     if payload.startswith("buy_"):
         handle_plan(chat_id, int(user["id"]), payload[4:])
+    elif payload == "api":
+        handle_api_buy(chat_id)
     elif payload == "partner":
         handle_partner(chat_id, int(user["id"]))
 
@@ -538,19 +569,39 @@ def handle_buy(chat_id: int) -> None:
         for plan in PLANS.values()
     ]
     rows.append(back_row())
-    send(chat_id, "Выбери тариф. Оплата пройдёт в Telegram Stars.", inline(rows))
+    send(chat_id, "Выбери тариф Premium. Оплата пройдёт в Telegram Stars.", inline(rows))
+
+
+def handle_api_buy(chat_id: int) -> None:
+    rows = [
+        [{"text": f"{plan.title} — {fmt_stars(plan.stars)} ⭐ / {plan.days}", "callback_data": f"apiplan:{plan.id}"}]
+        for plan in API_PLANS.values()
+    ]
+    rows.append(back_row())
+    send(
+        chat_id,
+        "API-ключ DevAI Core\n\n"
+        "После оплаты бот пришлёт готовый ключ прямо в этот чат. "
+        "Лимит Premium: 100 000 токенов в месяц и 60 запросов в минуту.",
+        inline(rows),
+    )
 
 
 def handle_plan(chat_id: int, user_id: int, plan_id: str) -> None:
-    plan = PLANS.get(plan_id)
+    plan = ALL_PLANS.get(plan_id)
     if plan is None:
         send(chat_id, "Такого тарифа нет.", main_menu())
         return
+    is_api = plan.id.startswith("api_")
     order_id = create_order(user_id, plan.id)
     api("sendInvoice", {
         "chat_id": chat_id,
-        "title": f"DevAI Premium — {plan.title}",
-        "description": f"Доступ к Premium на {plan.days}. После оплаты бот пришлёт код активации.",
+        "title": f"{'DevAI API' if is_api else 'DevAI Premium'} — {plan.title}",
+        "description": (
+            f"API-ключ DevAI Core на {plan.days}. После оплаты пришлю ключ в чат."
+            if is_api
+            else f"Доступ к Premium на {plan.days}. После оплаты бот пришлёт код активации."
+        ),
         "payload": f"order:{order_id}",
         "provider_token": "",
         "currency": "XTR",
@@ -580,25 +631,31 @@ def handle_successful_payment(chat_id: int, payment: dict[str, Any]) -> None:
         send(chat_id, "Платёж получен, но заказ уже был обработан. Если код не пришёл — напиши администратору.")
         return
 
-    plan = PLANS.get(order["plan"])
-    code = ""
+    plan = ALL_PLANS.get(order["plan"])
+    is_api = bool(plan and plan.id.startswith("api_"))
+    delivery = ""
+    api_meta: dict[str, Any] = {}
     if plan and DEVAI_ADMIN_TOKEN:
         try:
-            code = issue_promo(plan.id)
+            if is_api:
+                api_meta = create_api_key(plan.id, int(order["buyer_id"]))
+                delivery = str(api_meta.get("key", ""))
+            else:
+                delivery = issue_promo(plan.id)
         except Exception:
-            log.exception("Не удалось создать уникальный промокод для заказа %s", order["id"])
-    if not code:
+            log.exception("Не удалось выдать доступ для заказа %s", order["id"])
+    if not delivery:
         send(
             chat_id,
-            "Оплата прошла, но код не создан.\n\n"
-            "Напиши администратору — он выдаст код вручную.",
+            "Оплата прошла, но доступ не создан.\n\n"
+            "Напиши администратору — он выдаст его вручную.",
             main_menu(),
         )
         for admin_id in ADMIN_IDS:
             try:
                 send(
                     admin_id,
-                    "Оплата без кода\n\n"
+                    "Оплата без доступа\n\n"
                     f"Заказ: {order['id']}\n"
                     f"Покупатель: {order['buyer_id']}\n"
                     f"Тариф: {plan.title if plan else order['plan']}",
@@ -606,14 +663,28 @@ def handle_successful_payment(chat_id: int, payment: dict[str, Any]) -> None:
             except Exception:
                 log.exception("Не удалось уведомить админа %s", admin_id)
         return
-    send(
-        chat_id,
-        "Оплата прошла. Спасибо!\n\n"
-        f"Тариф: {plan.title if plan else order['plan']}\n"
-        f"Код активации: {code}\n\n"
-        "Открой DevAI Studio → Premium → Активация и вставь код.",
-        main_menu(),
-    )
+    if is_api:
+        limit = int(api_meta.get("token_limit") or 0)
+        rpm = int(api_meta.get("rpm") or 60)
+        send(
+            chat_id,
+            "Оплата прошла. Спасибо!\n\n"
+            f"Тариф: {plan.title}\n"
+            f"API-ключ: {delivery}\n\n"
+            f"Base URL: {DEVAI_API_BASE}/v1\n"
+            f"Лимит: {fmt_stars(limit)} токенов/мес · {rpm} запросов/мин.\n\n"
+            "Сохрани ключ: сервер хранит только его хеш.",
+            main_menu(),
+        )
+    else:
+        send(
+            chat_id,
+            "Оплата прошла. Спасибо!\n\n"
+            f"Тариф: {plan.title if plan else order['plan']}\n"
+            f"Код активации: {delivery}\n\n"
+            "Открой DevAI Studio → Premium → Активация и вставь код.",
+            main_menu(),
+        )
 
     if order["partner_id"] and order["commission"]:
         try:
@@ -963,6 +1034,7 @@ def handle_help(chat_id: int) -> None:
         "1. Выбери тариф и оплати Telegram Stars.\n"
         "2. Бот пришлёт код активации.\n"
         "3. Вставь код в DevAI Studio → Premium.\n\n"
+        "API-ключ: /api или кнопка «Купить API-ключ». После оплаты ключ придёт сразу в чат.\n\n"
         f"Бесплатный промокод: кнопка в меню или /free. Один код раз в {FREE_PROMO_COOLDOWN_DAYS} дн., Premium на {FREE_PROMO_DAYS} дн.\n\n"
         "Mini App: кнопка «Mini App» в меню или команда /mini.\n\n"
         "Партнёрка: открой «Партнёрка», получи ссылку и делись ею. "
@@ -989,6 +1061,8 @@ def handle_message(message: dict[str, Any]) -> None:
 
     if text.startswith("/buy"):
         handle_buy(chat_id)
+    elif text.startswith("/api"):
+        handle_api_buy(chat_id)
     elif text.startswith("/free"):
         handle_free_promo(chat_id, user_id)
     elif text.startswith("/trial"):
@@ -1040,9 +1114,13 @@ def handle_callback(callback: dict[str, Any]) -> None:
         return
     if data == "buy":
         handle_buy(chat_id)
+    elif data == "api_buy":
+        handle_api_buy(chat_id)
     elif data == "free_promo":
         handle_free_promo(chat_id, user_id)
     elif data.startswith("plan:"):
+        handle_plan(chat_id, user_id, data.split(":", 1)[1])
+    elif data.startswith("apiplan:"):
         handle_plan(chat_id, user_id, data.split(":", 1)[1])
     elif data == "partner":
         handle_partner(chat_id, user_id)
@@ -1078,6 +1156,8 @@ def configure_bot() -> None:
         api("setMyCommands", {
             "commands": [
                 {"command": "start", "description": "Главное меню"},
+                {"command": "buy", "description": "Купить Premium"},
+                {"command": "api", "description": "Купить API-ключ"},
                 {"command": "free", "description": "Бесплатный промокод"},
                 {"command": "partner", "description": "Партнёрская ссылка и баланс"},
                 {"command": "balance", "description": "Баланс Stars"},

@@ -40,9 +40,10 @@
       <div class="hero-copy reveal">
         <p class="eyebrow"><span class="eyebrow-line"></span> DevAI Core API · v0.3</p>
         <h1>Ваш ИИ.<br><span class="accent">Один ключ.</span><br>Любой стек.</h1>
-        <p class="lede">OpenAI-совместимый API для чата, кода и текстов. Локальная модель и потоковые ответы. Пробный ключ — с небольшим лимитом токенов, Premium — по промокоду из бота.</p>
+        <p class="lede">OpenAI-совместимый API для чата, кода и текстов. Локальная модель и потоковые ответы. Пробный ключ — 5 000 токенов, платный Premium-ключ — 100 000 токенов и готовый доступ из бота.</p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="#key">Получить ключ <span aria-hidden="true">→</span></a>
+          <a class="btn btn-ghost" href="https://t.me/devAI_Studio_bot?start=api" target="_blank" rel="noreferrer">Купить ключ <span aria-hidden="true">↗</span></a>
           <a class="btn btn-ghost" href="#docs">Смотреть API</a>
         </div>
         <dl class="stats">
@@ -90,7 +91,7 @@
           <p class="kicker">Доступ</p>
           <h2>Ключ за <em>10 секунд</em></h2>
         </div>
-        <p class="section-note">Без email и телефона. Пробный ключ имеет лимит; Premium открывается промокодом.</p>
+        <p class="section-note">Без email и телефона. Пробный ключ — 5 000 токенов; Premium-ключ покупается в боте за Stars.</p>
       </div>
 
       <div class="key-grid">
@@ -119,7 +120,7 @@
             <span class="btn-arrow" aria-hidden="true">→</span>
           </button>
 
-          <p class="form-note">Пробный ключ: 5 000 токенов в месяц и 5 запросов в минуту. Premium-ключ: 100 000 токенов в месяц и 60 запросов в минуту — активируется промокодом из @devAI_Studio_bot. Лимит: 3 ключа в сутки с одного IP. Защита: proof-of-work и проверка браузера.</p>
+          <p class="form-note">Пробный ключ: 5 000 токенов в месяц и 5 запросов в минуту. Premium-ключ: 100 000 токенов в месяц и 60 запросов в минуту — покупается в @devAI_Studio_bot за Stars. Лимит: 3 ключа в сутки с одного IP. Защита: proof-of-work и проверка браузера.</p>
           <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
         </form>
 
@@ -143,7 +144,7 @@
           <p class="form-status" id="key-status" role="status" aria-live="polite"></p>
           <div class="upgrade-box">
             <p class="kicker">Premium API</p>
-            <p class="hint">Вставь Premium-промокод из бота, чтобы поднять лимит до 100 000 токенов в месяц и 60 запросов в минуту.</p>
+            <p class="hint">Вставь Premium-промокод из бота, чтобы поднять лимит до 100 000 токенов в месяц и 60 запросов в минуту. Или <a href="https://t.me/devAI_Studio_bot?start=api" target="_blank" rel="noreferrer">купи готовый ключ в боте</a>.</p>
             <label class="field">
               <span class="field-label">Промокод <small>DVS-XXXX-XXXX</small></span>
               <input id="upgrade-code" type="text" autocomplete="off" spellcheck="false" placeholder="DVS-XXXX-XXXX">
@@ -157,6 +158,21 @@
           <div class="empty-glyph" aria-hidden="true">↳</div>
           <p>Здесь появится ваш ключ.<br><span>Скопируйте его сразу — второй раз сервер его не покажет.</span></p>
         </div>
+      </div>
+
+      <div class="panel paid-panel">
+        <div>
+          <p class="kicker">Платный API</p>
+          <h3>Готовый ключ за Telegram Stars</h3>
+          <p>Пробный ключ остаётся бесплатным: 5 000 токенов в месяц. Для нормальной работы купи ключ с лимитом <strong>100 000 токенов/мес и 60 запросов/мин</strong> — бот пришлёт его сразу в чат.</p>
+        </div>
+        <div class="paid-plans" aria-label="Тарифы API">
+          <div><strong>75 Stars</strong><span>7 дней</span></div>
+          <div><strong>249 Stars</strong><span>30 дней</span></div>
+          <div><strong>1 490 Stars</strong><span>365 дней</span></div>
+          <div><strong>4 990 Stars</strong><span>навсегда</span></div>
+        </div>
+        <a class="btn btn-primary" href="https://t.me/devAI_Studio_bot?start=api" target="_blank" rel="noreferrer">Купить API-ключ <span aria-hidden="true">↗</span></a>
       </div>
     </section>
 
@@ -280,13 +296,13 @@ console.log(data.choices[<span class="n">0</span>].message.content);</code></pre
         <article class="card">
           <span class="card-num">04</span>
           <h3>175 языков</h3>
-          <p>В DevAI Studio 4.2.0 добавлено 100 новых языковых пакетов: от ABAP и CUDA до Typst и WebAssembly.</p>
+          <p>В DevAI Studio 4.4.0 добавлено 100 новых языковых пакетов: от ABAP и CUDA до Typst и WebAssembly.</p>
         </article>
       </div>
 
       <div class="hero-actions" style="margin-top: 28px;">
         <a class="btn btn-primary" href="index.html">Сайт DevAI Studio <span aria-hidden="true">→</span></a>
-        <a class="btn btn-ghost" href="https://github.com/Karishka-sr/devai-studio/releases/latest" target="_blank" rel="noreferrer">Скачать APK 4.2.0 <span aria-hidden="true">↗</span></a>
+        <a class="btn btn-ghost" href="https://github.com/Karishka-sr/devai-studio/releases/latest" target="_blank" rel="noreferrer">Скачать APK 4.4.0 <span aria-hidden="true">↗</span></a>
       </div>
     </section>
 
@@ -319,7 +335,7 @@ console.log(data.choices[<span class="n">0</span>].message.content);</code></pre
       <span class="brand-mark" aria-hidden="true"></span>
       <span>DevAI Studio</span>
     </div>
-    <p>Сделано автором DevAI Studio. Модель: <code>devai-core-0.1</code>. Приложение: <a href="index.html">DevAI Studio 4.2.0</a>.</p>
+    <p>Сделано автором DevAI Studio. Модель: <code>devai-core-0.1</code>. Приложение: <a href="index.html">DevAI Studio 4.4.0</a>.</p>
     <div class="footer-links">
       <a href="https://github.com/Karishka-sr/devai-studio" target="_blank" rel="noreferrer">Исходники</a>
       <a href="https://github.com/Karishka-sr/devai-studio/releases" target="_blank" rel="noreferrer">APK</a>

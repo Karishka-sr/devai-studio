@@ -863,19 +863,47 @@ class Handler(BaseHTTPRequestHandler):
                 self._error(401, "Admin token required.", "authentication_error")
                 return
             name = str(body.get("name", "devai-user")).strip()[:80] or "devai-user"
+            plan = str(body.get("plan", "")).strip().lower()
+            tier = str(body.get("tier", "admin")).strip().lower()
+            if plan:
+                if plan not in PROMO_PLANS:
+                    self._error(400, "unknown plan")
+                    return
+                tier = "premium"
+                days = PROMO_PLANS[plan]["days"]
+            else:
+                if tier not in {"admin", "premium"}:
+                    self._error(400, "tier must be admin or premium")
+                    return
+                try:
+                    days = int(body.get("days", 30))
+                except Exception:  # noqa: BLE001
+                    self._error(400, "days must be an integer")
+                    return
+                days = max(0, min(days, 3650))
             try:
-                rpm = int(body.get("rpm", 60))
+                rpm = int(body.get("rpm", PREMIUM_RPM if tier == "premium" else 60))
+                token_limit = int(
+                    body.get(
+                        "token_limit",
+                        PREMIUM_TOKEN_LIMIT if tier == "premium" else 0,
+                    )
+                )
             except Exception:  # noqa: BLE001
-                rpm = 60
+                self._error(400, "rpm and token_limit must be integers")
+                return
             rpm = max(1, min(rpm, 600))
+            token_limit = max(0, min(token_limit, 100_000_000))
+            now = time.time()
+            premium_until = 0.0 if tier == "admin" else (4102444800.0 if days <= 0 else now + days * 86400)
             key_id = secrets.token_hex(8)
             raw, digest = new_key()
             prefix = raw[:18] + "..."
             with db() as conn:
                 conn.execute(
                     "INSERT INTO keys(id, name, prefix, hash, created, rpm, tier, token_limit, tokens_used, period_start, premium_until) "
-                    "VALUES (?, ?, ?, ?, ?, ?, 'admin', 0, 0, ?, 0)",
-                    (key_id, name, prefix, digest, time.time(), rpm, time.time()),
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)",
+                    (key_id, name, prefix, digest, now, rpm, tier, token_limit, now, premium_until),
                 )
             self._send_json(
                 201,
@@ -885,9 +913,11 @@ class Handler(BaseHTTPRequestHandler):
                     "key": raw,
                     "prefix": prefix,
                     "rpm": rpm,
-                    "tier": "admin",
-                    "token_limit": 0,
+                    "tier": tier,
+                    "token_limit": token_limit,
                     "tokens_used": 0,
+                    "tokens_remaining": token_limit if token_limit > 0 else -1,
+                    "premium_until": premium_until,
                     "model": MODEL_ID,
                     "warning": "Store this key now. The server keeps only its hash.",
                 },
