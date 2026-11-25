@@ -2,7 +2,7 @@
   "tag": "v4.4.0",
   "version": "4.4.0",
   "name": "DevAI Studio 4.4.0",
-  "published_at": "2026-11-25T07:30:00Z",
+  "published_at": "2026-11-25T07:52:50Z",
   "page_url": "https://github.com/Karishka-sr/devai-studio/releases/tag/v4.4.0",
   "apk_url": "https://github.com/Karishka-sr/devai-studio/releases/download/v4.4.0/devai-studio-4.4.0.apk",
   "apk_name": "devai-studio-4.4.0.apk",
@@ -11,5 +11,5 @@
   "languages_url": "",
   "languages_name": "",
   "body": "Этот релиз подготовлен AI-агентом (OpenHands) от имени Karishka-sr.\n\n# DevAI Studio 4.4.0 — только серверные промокоды и лимиты AI API\n\n## Что нового\n- Встроенные промокоды `DEVAI-*` и `STARS-*` удалены. Premium активируется только одноразовым кодом `DVS-XXXX-XXXX`, который создаёт сервер или бот.\n- В боте есть кнопка «Бесплатный промокод» и команда `/free`: один код на 2 дня Premium раз в 7 дней.\n- API DevAI Core теперь с лимитами: пробный ключ — 5 000 токенов в месяц и 5 запросов в минуту; Premium — 100 000 токенов в месяц и 60 запросов в минуту.\n- На странице API можно посмотреть остаток токенов и активировать Premium промокодом.\n- Если оплата прошла, а код не создался, бот просит написать администратору и не выдаёт старый встроенный код.\n\n## Проверка\n- `:app:assembleRelease` прошёл.\n- APK подписан, versionCode 49, versionName 4.4.0.\n- Подпись та же, что у 4.3.0: SHA-256 `3b:f3:fe:c4:3f:cd:38:61:7f:9d:8a:59:68:9b:b1:c8:a3:e8:ae:d0:e7:1f:14:e4:05:9a:35:fa:0f:61:e4:bc`.\n- Обновление ставится поверх 4.3.0. Если установлена версия ниже 4.3.0, её нужно удалить.\n- Сервер: бесплатный ключ получает 5 000 токенов/мес, Premium — 100 000 токенов/мес; лимит проверен запросом к API.\n\n## Файлы\n- `devai-studio-4.4.0.apk`\n",
-  "generated_at": "2026-11-25T07:24:40Z"
+  "generated_at": "2026-11-25T07:53:01Z"
 }
