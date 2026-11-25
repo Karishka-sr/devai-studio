@@ -12,8 +12,8 @@ Run:
     python3 server/stars_bot.py
 
 The Mini App is served from docs/mini and uses STARS_MINI_APP_URL
-(default: GitHub Pages). Unique promo codes require DEVAI_API_BASE and
-DEVAI_ADMIN_TOKEN; without them the bot falls back to legacy STARS-* codes.
+(default: GitHub Pages). Promo codes are created only by the server and
+require DEVAI_API_BASE and DEVAI_ADMIN_TOKEN.
 """
 
 from __future__ import annotations
@@ -1131,7 +1131,7 @@ def main() -> int:
     if not ADMIN_IDS:
         log.warning("TELEGRAM_ADMIN_IDS пуст: админ-команды и уведомления о выплатах отключены")
     if not DEVAI_ADMIN_TOKEN:
-        log.warning("DEVAI_ADMIN_TOKEN пуст: уникальные промокоды отключены, будет статический код")
+        log.warning("DEVAI_ADMIN_TOKEN пуст: создание промокодов отключено")
 
     offset = 0
     log.info("Polling started")
