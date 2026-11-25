@@ -5,7 +5,7 @@
 - Android SDK: `/workspace/android-sdk`
 - Gradle 8.9: `/workspace/gradle-8.9/bin/gradle` (wrapper updated to 8.9)
 - Kotlin 2.2.20, AGP 8.6.0, compileSdk 35, targetSdk 34, minSdk 31 (LiteRT-LM requires it), arm64-v8a only.
-- Release: `./gradlew :app:assembleRelease`, then sign with `apksigner` using `/workspace/keys/devai-release.jks` (alias `devai`, password in `pass.txt`).
+- Release: `./gradlew :app:assembleRelease`, then sign with `apksigner` using `/workspace/keys/devai-release-4.3.jks` (alias `devai`, password in `pass-4.3.txt`). Gradle also reads `RELEASE_STORE_FILE`, `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, `RELEASE_KEY_PASSWORD` from `local.properties` or env.
 
 ## Offline models (v2.3)
 - Runtime: `com.google.ai.edge.litertlm:litertlm:0.0.0-alpha05`.

@@ -6,8 +6,11 @@ val localProperties = Properties().apply {
     if (file.exists()) file.inputStream().use { load(it) }
 }
 
+fun secret(name: String): String =
+    localProperties.getProperty(name) ?: System.getenv(name) ?: ""
+
 fun buildSecret(name: String): String =
-    (localProperties.getProperty(name) ?: System.getenv(name) ?: "")
+    secret(name)
         .replace("\\", "\\\\")
         .replace("\"", "\\\"")
 
@@ -25,8 +28,8 @@ android {
         applicationId = "com.devai.studio"
         minSdk = 31
         targetSdk = 34
-        versionCode = 47
-        versionName = "4.2.0"
+        versionCode = 48
+        versionName = "4.3.0"
         vectorDrawables.useSupportLibrary = true
         buildConfigField("String", "FIREBASE_API_KEY", "\"${buildSecret("FIREBASE_API_KEY")}\"")
         buildConfigField("String", "FIREBASE_APP_ID", "\"${buildSecret("FIREBASE_APP_ID")}\"")
@@ -45,8 +48,21 @@ android {
         }
     }
 
+    signingConfigs {
+        val storePath = secret("RELEASE_STORE_FILE")
+        if (storePath.isNotBlank()) {
+            create("release") {
+                storeFile = file(storePath)
+                storePassword = secret("RELEASE_STORE_PASSWORD")
+                keyAlias = secret("RELEASE_KEY_ALIAS").ifBlank { "devai" }
+                keyPassword = secret("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = false
             isShrinkResources = false
         }
