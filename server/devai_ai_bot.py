@@ -999,6 +999,13 @@ def main() -> None:
         check = tg("getChat", chat_id=COMMENTS_CHAT)
         if not check.get("ok"):
             log.warning("comments disabled: add @devaiAI_bot to the linked discussion group as admin")
+        else:
+            me = tg("getMe").get("result") or {}
+            if not me.get("can_read_all_group_messages"):
+                log.warning(
+                    "comments limited: open @BotFather, /setprivacy, choose @devaiAI_bot, "
+                    "select Disable, then re-add the bot to the discussion group"
+                )
     import threading
 
     threading.Thread(target=publisher_worker, name="devai-publisher", daemon=True).start()
