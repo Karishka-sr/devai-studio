@@ -492,12 +492,15 @@ def build_persona_post() -> str:
         feed = api_get("/admin/learning/featured?limit=200", admin=True)
         items = _dedupe([item for item in feed.get("items", []) if _channel_worthy(item)])
         if items:
-            chosen = items[0]
-            for item in items:
-                if len(re.findall(r"[А-Яа-яЁё]", _item_title(item) + " " + str(item.get("answer") or ""))) >= 20:
-                    chosen = item
-                    break
+            candidates = [
+                item for item in items
+                if len(re.findall(r"[А-Яа-яЁё]", _item_title(item) + " " + str(item.get("answer") or ""))) >= 20
+            ] or items
+            last_topic = get_state("last_persona_topic", "")
+            fresh = [item for item in candidates if _display_title(item) != last_topic]
+            chosen = random.choice((fresh or candidates)[:25])
             topic = _display_title(chosen)
+            set_state("last_persona_topic", topic)
             source_kind = str(chosen.get("kind") or "")
             text = _item_text(chosen)
             if re.search(r"[А-Яа-яЁё]", text):
@@ -596,13 +599,14 @@ def publish_persona(force: bool = False) -> bool:
     if not force and now < next_at:
         return False
     # Не по расписанию, а "когда захочется": иногда откладываем на полчаса.
-    if not force and random.random() < 0.22:
-        set_state("next_persona_at", str(int(now + random.randint(900, 2700))))
+    if not force and random.random() < 0.18:
+        set_state("next_persona_at", str(int(now + random.randint(600, 2400))))
         return False
     try:
         publish_text(build_persona_post())
         set_state("last_persona_at", str(int(now)))
-        set_state("next_persona_at", str(int(now + PERSONA_INTERVAL * random.uniform(0.7, 1.45))))
+        set_state("next_persona_at", str(int(now + PERSONA_INTERVAL * random.uniform(0.6, 1.6))))
+        log.info("persona post published")
         return True
     except Exception as exc:  # noqa: BLE001
         log.warning("persona post failed: %s", str(exc)[:200])
