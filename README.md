@@ -166,7 +166,7 @@
 - **Год:** всё из месяца + размер кода, TTS, вся история, свой системный промпт, бэкап настроек и всех чатов, QR-перенос, DeepSeek R1, SmolLM3 3B, Phi-4 Mini, ранний доступ.
 - **Навсегда:** все функции, включая MCP, плагины, будущие модели и темы, агентный режим, GitHub/GitLab, сборку APK, облачную синхронизацию, голос, vision и генерацию изображений (часть — в разработке).
 
-Оплата — **Telegram Stars** через [@FemClaudeMrrr](https://t.me/FemClaudeMrrr). Кнопка «Оплатить» открывает Telegram с готовым заказом; после оплаты продавец выдаёт код активации (`DEVAI-WEEK`, `DEVAI-MONTH`, `DEVAI-YEAR`, `DEVAI-LIFETIME`).
+Оплата — **Telegram Stars** через [@devAI_Studio_bot](https://t.me/devAI_Studio_bot). Кнопка «Оплатить» открывает Telegram с готовым заказом; после оплаты бот выдаёт одноразовый код активации вида `DVS-XXXX-XXXX`. Встроенные коды `DEVAI-*` и `STARS-*` больше не работают.
 
 ## Установка
 1. Скачайте `devai-studio-2.14.2.apk` в разделе [Releases](https://github.com/Karishka-sr/devai-studio/releases).

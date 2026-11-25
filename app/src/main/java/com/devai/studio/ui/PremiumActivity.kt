@@ -152,7 +152,7 @@ private fun PremiumScreen(onBack: () -> Unit) {
                     OutlinedTextField(
                         value = code,
                         onValueChange = { code = it },
-                        label = { Text("DVS-… или DEVAI-…") },
+                        label = { Text("DVS-XXXX-XXXX") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -166,18 +166,15 @@ private fun PremiumScreen(onBack: () -> Unit) {
                                     scope.launch {
                                         activating = true
                                         val result = PromoClient.activate(context, code)
-                                        val serverPlan = result.plan
-                                        val activated = if (serverPlan != null) {
+                                        val activated = result.plan
+                                        if (activated != null) {
                                             PremiumStore.activatePlan(
                                                 context,
-                                                serverPlan,
+                                                activated,
                                                 result.code.ifBlank { code },
                                                 result.days,
                                                 result.title,
                                             )
-                                            serverPlan
-                                        } else {
-                                            PremiumStore.activate(context, code)
                                         }
                                         activating = false
                                         if (activated == null) {
@@ -386,7 +383,7 @@ private fun PaymentHelpCard() {
                 "1. Нажмите «Оплатить» у нужного тарифа.\n" +
                     "2. Telegram откроет чат @${TelegramStars.USERNAME} с заказом.\n" +
                     "3. Отправьте заказ и оплатите звёздами.\n" +
-                    "4. Получите код вида DVS-XXXX-XXXX или DEVAI-MONTH.\n" +
+                    "4. Получите код вида DVS-XXXX-XXXX в боте.\n" +
                     "5. Введите код в поле активации.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

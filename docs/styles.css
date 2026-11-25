@@ -661,6 +661,24 @@ input:focus {
   word-break: break-word;
 }
 
+.upgrade-box {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px dashed var(--line);
+}
+
+.upgrade-box .hint {
+  margin: 4px 0 14px;
+}
+
+.upgrade-box .field {
+  margin-bottom: 12px;
+}
+
+.upgrade-box .form-status {
+  margin-top: 10px;
+}
+
 .key-box {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

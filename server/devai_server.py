@@ -36,6 +36,11 @@ HOST = os.environ.get("DEVAI_HOST", "0.0.0.0")
 PORT = int(os.environ.get("DEVAI_PORT", "12001"))
 MAX_BODY = 2 * 1024 * 1024
 MAX_TOKENS = 1024
+FREE_TOKEN_LIMIT = max(1000, min(int(os.environ.get("DEVAI_FREE_TOKENS", "5000")), 10_000_000))
+PREMIUM_TOKEN_LIMIT = max(FREE_TOKEN_LIMIT, min(int(os.environ.get("DEVAI_PREMIUM_TOKENS", "100000")), 100_000_000))
+FREE_RPM = max(1, min(int(os.environ.get("DEVAI_FREE_RPM", "5")), 600))
+PREMIUM_RPM = max(FREE_RPM, min(int(os.environ.get("DEVAI_PREMIUM_RPM", "60")), 600))
+QUOTA_PERIOD = max(1, int(os.environ.get("DEVAI_QUOTA_DAYS", "30"))) * 86400
 REGISTER_PER_IP_DAY = 3
 REGISTER_GLOBAL_DAY = 300
 CHALLENGE_TTL = 300
@@ -91,8 +96,13 @@ def init_db() -> None:
                 created REAL NOT NULL,
                 last_used REAL,
                 requests INTEGER NOT NULL DEFAULT 0,
-                rpm INTEGER NOT NULL DEFAULT 60,
-                revoked INTEGER NOT NULL DEFAULT 0
+                rpm INTEGER NOT NULL DEFAULT 5,
+                revoked INTEGER NOT NULL DEFAULT 0,
+                tier TEXT NOT NULL DEFAULT 'free',
+                token_limit INTEGER NOT NULL DEFAULT 0,
+                tokens_used INTEGER NOT NULL DEFAULT 0,
+                period_start REAL NOT NULL DEFAULT 0,
+                premium_until REAL NOT NULL DEFAULT 0
             );
             CREATE TABLE IF NOT EXISTS usage (
                 key_id TEXT NOT NULL,
@@ -129,6 +139,24 @@ def init_db() -> None:
                 ON promo_redemptions(code, device_hash);
             """
         )
+        columns = {row["name"] for row in conn.execute("PRAGMA table_info(keys)")}
+        for name, ddl in (
+            ("tier", "TEXT NOT NULL DEFAULT 'free'"),
+            ("token_limit", "INTEGER NOT NULL DEFAULT 0"),
+            ("tokens_used", "INTEGER NOT NULL DEFAULT 0"),
+            ("period_start", "REAL NOT NULL DEFAULT 0"),
+            ("premium_until", "REAL NOT NULL DEFAULT 0"),
+        ):
+            if name not in columns:
+                conn.execute(f"ALTER TABLE keys ADD COLUMN {name} {ddl}")
+        conn.execute(
+            "UPDATE keys SET token_limit = ? WHERE token_limit IS NULL OR (token_limit <= 0 AND tier <> 'admin')",
+            (FREE_TOKEN_LIMIT,),
+        )
+        conn.execute(
+            "UPDATE keys SET period_start = ? WHERE period_start IS NULL OR period_start <= 0",
+            (time.time(),),
+        )
 
 
 def admin_token() -> str:
@@ -148,6 +176,40 @@ ADMIN_TOKEN = admin_token()
 
 def hash_key(raw: str) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
+
+
+def effective_tier(row, now: float | None = None) -> str:
+    now = time.time() if now is None else now
+    tier = str(row["tier"] or "free")
+    if tier == "admin":
+        return "admin"
+    if tier == "premium" and float(row["premium_until"] or 0) > now:
+        return "premium"
+    return "free"
+
+
+def tier_limits(row, tier: str) -> tuple[int, int]:
+    if tier == "admin":
+        return 0, max(1, min(int(row["rpm"] or 60), 600))
+    if tier == "premium":
+        return PREMIUM_TOKEN_LIMIT, PREMIUM_RPM
+    return FREE_TOKEN_LIMIT, FREE_RPM
+
+
+def estimate_tokens(text: str) -> int:
+    return max(1, len(text or "") // 4)
+
+
+def estimate_message_tokens(messages: list[dict]) -> int:
+    return sum(estimate_tokens(str(item.get("content", ""))) + 4 for item in messages)
+
+
+def charge_tokens(key_id: str, tokens: int) -> None:
+    tokens = max(0, int(tokens))
+    if tokens <= 0:
+        return
+    with DB_LOCK, db() as conn:
+        conn.execute("UPDATE keys SET tokens_used = tokens_used + ? WHERE id = ?", (tokens, key_id))
 
 
 def new_key() -> tuple[str, str]:
@@ -411,7 +473,7 @@ class Handler(BaseHTTPRequestHandler):
         token = self.headers.get("X-Admin-Token", "").strip() or self._bearer()
         return bool(token) and hmac.compare_digest(token, ADMIN_TOKEN)
 
-    def _key_row(self):
+    def _key_row(self, *, record: bool = True):
         raw = self._bearer()
         if not raw.startswith("devai-sk-"):
             self._error(401, "Missing or invalid API key.", "authentication_error")
@@ -425,20 +487,60 @@ class Handler(BaseHTTPRequestHandler):
             if row is None:
                 self._error(401, "API key not found or revoked.", "authentication_error")
                 return None
-            conn.execute("DELETE FROM usage WHERE ts < ?", (now - 3600,))
-            recent = conn.execute(
-                "SELECT COUNT(*) FROM usage WHERE key_id = ? AND ts > ?",
-                (row["id"], now - 60),
-            ).fetchone()[0]
-            if recent >= row["rpm"]:
-                self._error(429, "Rate limit exceeded. Try again in a minute.", "rate_limit_error")
-                return None
-            conn.execute("INSERT INTO usage(key_id, ts) VALUES (?, ?)", (row["id"], now))
-            conn.execute(
-                "UPDATE keys SET last_used = ?, requests = requests + 1 WHERE id = ?",
-                (now, row["id"]),
-            )
-        return row
+
+            period_start = float(row["period_start"] or 0)
+            if period_start <= 0 or now - period_start >= QUOTA_PERIOD:
+                conn.execute(
+                    "UPDATE keys SET tokens_used = 0, period_start = ? WHERE id = ?",
+                    (now, row["id"]),
+                )
+                used = 0
+            else:
+                used = int(row["tokens_used"] or 0)
+
+            tier = effective_tier(row, now)
+            limit, rpm = tier_limits(row, tier)
+
+            if record:
+                conn.execute("DELETE FROM usage WHERE ts < ?", (now - 3600,))
+                recent = conn.execute(
+                    "SELECT COUNT(*) FROM usage WHERE key_id = ? AND ts > ?",
+                    (row["id"], now - 60),
+                ).fetchone()[0]
+                if recent >= rpm:
+                    self._error(429, "Rate limit exceeded. Try again in a minute.", "rate_limit_error")
+                    return None
+                if limit > 0 and used >= limit:
+                    self._send_json(
+                        429,
+                        {"error": {"message": "Monthly token limit reached. Upgrade with a Premium promo code.", "type": "rate_limit_error", "code": "429"}},
+                        extra={"X-DevAI-Tier": tier, "X-DevAI-Tokens-Limit": str(limit), "X-DevAI-Tokens-Used": str(used), "X-DevAI-Tokens-Remaining": "0"},
+                    )
+                    return None
+                conn.execute("INSERT INTO usage(key_id, ts) VALUES (?, ?)", (row["id"], now))
+                conn.execute(
+                    "UPDATE keys SET last_used = ?, requests = requests + 1 WHERE id = ?",
+                    (now, row["id"]),
+                )
+
+            data = dict(row)
+            data["_tier"] = tier
+            data["_token_limit"] = limit
+            data["_tokens_used"] = used
+            data["_rpm"] = rpm
+            return data
+
+    def _quota_headers(self, key: dict, extra_tokens: int = 0) -> dict[str, str]:
+        limit = int(key["_token_limit"])
+        used = int(key["_tokens_used"]) + max(0, int(extra_tokens))
+        headers = {"X-DevAI-Tier": str(key["_tier"]), "X-DevAI-Tokens-Used": str(used)}
+        if limit > 0:
+            headers["X-DevAI-Tokens-Limit"] = str(limit)
+            headers["X-DevAI-Tokens-Remaining"] = str(max(0, limit - used))
+        else:
+            headers["X-DevAI-Tokens-Limit"] = "unlimited"
+            headers["X-DevAI-Tokens-Remaining"] = "unlimited"
+        return headers
 
     def do_OPTIONS(self) -> None:  # noqa: N802
         self.send_response(204)
@@ -458,6 +560,10 @@ class Handler(BaseHTTPRequestHandler):
                     "model_ready": model_ready(),
                     "model_error": MODEL_ERROR,
                     "signup_enabled": True,
+                    "free_tokens": FREE_TOKEN_LIMIT,
+                    "premium_tokens": PREMIUM_TOKEN_LIMIT,
+                    "free_rpm": FREE_RPM,
+                    "premium_rpm": PREMIUM_RPM,
                 },
             )
             return
@@ -474,6 +580,8 @@ class Handler(BaseHTTPRequestHandler):
                         "POST /v1/chat/completions",
                         "POST /v1/keys/challenge",
                         "POST /v1/keys/register",
+                        "GET /v1/keys/me",
+                        "POST /v1/keys/upgrade",
                         "POST /v1/promo/activate",
                         "POST /admin/promo",
                         "GET /admin/promo",
@@ -499,13 +607,37 @@ class Handler(BaseHTTPRequestHandler):
                 },
             )
             return
+        if path == "/v1/keys/me":
+            key = self._key_row(record=False)
+            if key is None:
+                return
+            limit = int(key["_token_limit"])
+            used = int(key["_tokens_used"])
+            self._send_json(
+                200,
+                {
+                    "id": key["id"],
+                    "name": key["name"],
+                    "tier": key["_tier"],
+                    "token_limit": limit,
+                    "tokens_used": used,
+                    "tokens_remaining": max(0, limit - used) if limit > 0 else -1,
+                    "period_start": key["period_start"],
+                    "premium_until": key["premium_until"],
+                    "rpm": key["_rpm"],
+                    "model": MODEL_ID,
+                },
+                extra=self._quota_headers(key),
+            )
+            return
         if path == "/admin/keys":
             if not self._is_admin():
                 self._error(401, "Admin token required.", "authentication_error")
                 return
             with db() as conn:
                 rows = conn.execute(
-                    "SELECT id, name, prefix, created, last_used, requests, rpm, revoked "
+                    "SELECT id, name, prefix, created, last_used, requests, rpm, revoked, "
+                    "tier, token_limit, tokens_used, period_start, premium_until "
                     "FROM keys ORDER BY created DESC"
                 ).fetchall()
             self._send_json(200, {"keys": [dict(r) for r in rows]})
@@ -584,9 +716,14 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if path == "/v1/chat/completions":
-            if self._key_row() is None:
+            key = self._key_row()
+            if key is None:
                 return
-            self._chat(body)
+            self._chat(body, key)
+            return
+
+        if path == "/v1/keys/upgrade":
+            self._upgrade_key(body)
             return
 
         if path == "/v1/keys/challenge":
@@ -640,8 +777,9 @@ class Handler(BaseHTTPRequestHandler):
                 raw, key_digest = new_key()
                 prefix = raw[:18] + "..."
                 conn.execute(
-                    "INSERT INTO keys(id, name, prefix, hash, created, rpm) VALUES (?, ?, ?, ?, ?, ?)",
-                    (key_id, name, prefix, key_digest, now, 60),
+                    "INSERT INTO keys(id, name, prefix, hash, created, rpm, tier, token_limit, tokens_used, period_start, premium_until) "
+                    "VALUES (?, ?, ?, ?, ?, ?, 'free', ?, 0, ?, 0)",
+                    (key_id, name, prefix, key_digest, now, FREE_RPM, FREE_TOKEN_LIMIT, now),
                 )
                 conn.execute(
                     "INSERT INTO signups(ip_hash, key_id, created) VALUES (?, ?, ?)",
@@ -654,9 +792,13 @@ class Handler(BaseHTTPRequestHandler):
                     "name": name,
                     "key": raw,
                     "prefix": prefix,
-                    "rpm": 60,
+                    "rpm": FREE_RPM,
+                    "tier": "free",
+                    "token_limit": FREE_TOKEN_LIMIT,
+                    "tokens_used": 0,
+                    "tokens_remaining": FREE_TOKEN_LIMIT,
                     "model": MODEL_ID,
-                    "warning": "Store this key now. The server keeps only its hash.",
+                    "warning": "Store this key now. The server keeps only its hash. Free keys have a monthly token limit.",
                 },
             )
             return
@@ -730,8 +872,9 @@ class Handler(BaseHTTPRequestHandler):
             prefix = raw[:18] + "..."
             with db() as conn:
                 conn.execute(
-                    "INSERT INTO keys(id, name, prefix, hash, created, rpm) VALUES (?, ?, ?, ?, ?, ?)",
-                    (key_id, name, prefix, digest, time.time(), rpm),
+                    "INSERT INTO keys(id, name, prefix, hash, created, rpm, tier, token_limit, tokens_used, period_start, premium_until) "
+                    "VALUES (?, ?, ?, ?, ?, ?, 'admin', 0, 0, ?, 0)",
+                    (key_id, name, prefix, digest, time.time(), rpm, time.time()),
                 )
             self._send_json(
                 201,
@@ -741,6 +884,10 @@ class Handler(BaseHTTPRequestHandler):
                     "key": raw,
                     "prefix": prefix,
                     "rpm": rpm,
+                    "tier": "admin",
+                    "token_limit": 0,
+                    "tokens_used": 0,
+                    "model": MODEL_ID,
                     "warning": "Store this key now. The server keeps only its hash.",
                 },
             )
@@ -767,7 +914,49 @@ class Handler(BaseHTTPRequestHandler):
 
 
 
-    def _chat(self, body: dict) -> None:
+    def _upgrade_key(self, body: dict) -> None:
+        key = self._key_row(record=False)
+        if key is None:
+            return
+        if key["_tier"] == "admin":
+            self._error(400, "Admin keys already have unlimited access.")
+            return
+        ip_hash = ip_digest(self._client_ip())
+        if not promo_rate_ok(ip_hash):
+            self._error(429, "Too many promo attempts. Try again in a minute.", "rate_limit_error")
+            return
+        code = str(body.get("code", "")).strip()
+        device_id = str(body.get("device_id", "") or f"api:{key['id']}")[:200]
+        device_hash = hashlib.sha256(("promo-device|" + device_id).encode()).hexdigest()
+        status, payload = activate_promo(code, device_hash, ip_hash)
+        if status != 200:
+            self._send_json(status, payload)
+            return
+        days = int(payload.get("days") or 0)
+        now = time.time()
+        current_until = float(key.get("premium_until") or 0)
+        base = max(now, current_until)
+        premium_until = 4102444800 if days <= 0 else base + days * 86400
+        with DB_LOCK, db() as conn:
+            conn.execute(
+                "UPDATE keys SET tier = 'premium', premium_until = ?, token_limit = ?, "
+                "rpm = ?, tokens_used = 0, period_start = ? WHERE id = ?",
+                (premium_until, PREMIUM_TOKEN_LIMIT, PREMIUM_RPM, now, key["id"]),
+            )
+        self._send_json(
+            200,
+            {
+                **payload,
+                "tier": "premium",
+                "token_limit": PREMIUM_TOKEN_LIMIT,
+                "tokens_used": 0,
+                "tokens_remaining": PREMIUM_TOKEN_LIMIT,
+                "premium_until": premium_until,
+                "rpm": PREMIUM_RPM,
+            },
+        )
+
+    def _chat(self, body: dict, key: dict) -> None:
         try:
             messages = clean_messages(body.get("messages"))
         except ValueError as exc:
@@ -785,6 +974,10 @@ class Handler(BaseHTTPRequestHandler):
         except Exception:  # noqa: BLE001
             max_tokens = 512
         max_tokens = max(1, min(max_tokens, MAX_TOKENS))
+        limit = int(key["_token_limit"])
+        if limit > 0:
+            remaining = max(1, limit - int(key["_tokens_used"]))
+            max_tokens = min(max_tokens, remaining)
         try:
             temperature = float(body.get("temperature", 0.7))
         except Exception:  # noqa: BLE001
@@ -802,7 +995,7 @@ class Handler(BaseHTTPRequestHandler):
             stop = None
 
         if stream:
-            self._stream_chat(model, messages, max_tokens, temperature, top_p, stop)
+            self._stream_chat(model, messages, max_tokens, temperature, top_p, stop, key)
             return
 
 
@@ -824,6 +1017,10 @@ class Handler(BaseHTTPRequestHandler):
         choice = (result.get("choices") or [{}])[0]
         content = (choice.get("message") or {}).get("content") or ""
         usage = result.get("usage") or {}
+        total_tokens = int(usage.get("total_tokens", 0) or 0)
+        if total_tokens <= 0:
+            total_tokens = estimate_message_tokens(messages) + estimate_tokens(content)
+        charge_tokens(key["id"], total_tokens)
         self._send_json(
             200,
             {
@@ -841,18 +1038,21 @@ class Handler(BaseHTTPRequestHandler):
                 "usage": {
                     "prompt_tokens": usage.get("prompt_tokens", 0),
                     "completion_tokens": usage.get("completion_tokens", 0),
-                    "total_tokens": usage.get("total_tokens", 0),
+                    "total_tokens": total_tokens,
                 },
             },
+            extra=self._quota_headers(key, total_tokens),
         )
 
 
-    def _stream_chat(self, model, messages, max_tokens, temperature, top_p, stop) -> None:
+    def _stream_chat(self, model, messages, max_tokens, temperature, top_p, stop, key: dict) -> None:
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream; charset=utf-8")
         self.send_header("Cache-Control", "no-cache")
         self.send_header("Connection", "close")
         self._cors()
+        for name, value in self._quota_headers(key).items():
+            self.send_header(name, value)
         self.end_headers()
         self.close_connection = True
         chunk_id = "chatcmpl-" + secrets.token_hex(12)
@@ -869,6 +1069,7 @@ class Handler(BaseHTTPRequestHandler):
             kwargs["stop"] = stop
 
 
+        completion_parts: list[str] = []
         try:
             with GEN_LOCK:
                 for chunk in model.create_chat_completion(**kwargs):
@@ -876,6 +1077,9 @@ class Handler(BaseHTTPRequestHandler):
                     delta = choice.get("delta") or {}
                     if not delta:
                         continue
+                    content = delta.get("content")
+                    if isinstance(content, str):
+                        completion_parts.append(content)
                     payload = {
                         "id": chunk_id,
                         "object": "chat.completion.chunk",
@@ -904,9 +1108,11 @@ class Handler(BaseHTTPRequestHandler):
             except Exception:  # noqa: BLE001
                 pass
             return
-
-
-
+        finally:
+            charge_tokens(
+                key["id"],
+                estimate_message_tokens(messages) + estimate_tokens("".join(completion_parts)),
+            )
 
         self.wfile.write(("data: " + chr(91) + "DONE" + chr(93) + "\n\n").encode())
         self.wfile.flush()

@@ -74,15 +74,14 @@ class Plan:
     title: str
     days: str
     stars: int
-    activation_code: str
     days_value: int
 
 
 PLANS: dict[str, Plan] = {
-    "week": Plan("week", "Неделя", "7 дней", 75, "STARS-WEEK", 7),
-    "month": Plan("month", "Месяц", "30 дней", 249, "STARS-MONTH", 30),
-    "year": Plan("year", "Год", "365 дней", 1490, "STARS-YEAR", 365),
-    "lifetime": Plan("lifetime", "Навсегда", "навсегда", 4990, "STARS-LIFETIME", 0),
+    "week": Plan("week", "Неделя", "7 дней", 75, 7),
+    "month": Plan("month", "Месяц", "30 дней", 249, 30),
+    "year": Plan("year", "Год", "365 дней", 1490, 365),
+    "lifetime": Plan("lifetime", "Навсегда", "навсегда", 4990, 0),
 }
 
 SCHEMA = """
@@ -588,8 +587,25 @@ def handle_successful_payment(chat_id: int, payment: dict[str, Any]) -> None:
             code = issue_promo(plan.id)
         except Exception:
             log.exception("Не удалось создать уникальный промокод для заказа %s", order["id"])
-    if not code and plan:
-        code = plan.activation_code
+    if not code:
+        send(
+            chat_id,
+            "Оплата прошла, но код не создан.\n\n"
+            "Напиши администратору — он выдаст код вручную.",
+            main_menu(),
+        )
+        for admin_id in ADMIN_IDS:
+            try:
+                send(
+                    admin_id,
+                    "Оплата без кода\n\n"
+                    f"Заказ: {order['id']}\n"
+                    f"Покупатель: {order['buyer_id']}\n"
+                    f"Тариф: {plan.title if plan else order['plan']}",
+                )
+            except Exception:
+                log.exception("Не удалось уведомить админа %s", admin_id)
+        return
     send(
         chat_id,
         "Оплата прошла. Спасибо!\n\n"

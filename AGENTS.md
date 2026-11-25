@@ -29,7 +29,7 @@
 - Settings categories: Основное (Генерация, Модели, Чат), Интерфейс (Вид), Аккаунт (Premium, Данные), Приложение (О приложении). «Чат» is split into Сообщения / Поведение / Отклик; «Данные» into История / Резервные копии / Сброс.
 - `util/ThemeManager.kt`: M3/Aurora (free, dynamic color), Expressive/Retro (premium).
 - `data/PremiumPlan.kt`: `PremiumPlan` (FREE/WEEK/MONTH/YEAR/LIFETIME) and 59 `PremiumFeature` entries with `minPlan`.
-- `data/PremiumStore.kt`: local entitlement, expiry timestamps, tier-aware codes (`DEVAI-WEEK`, `DEVAI-MONTH`, `DEVAI-YEAR`, `DEVAI-LIFETIME`), legacy codes migrate to LIFETIME.
+- `data/PremiumStore.kt`: local entitlement and expiry timestamps. Promo activation is server-only via `data/PromoClient.kt`; built-in `DEVAI-*` / `STARS-*` codes were removed, so the app never grants Premium from a hardcoded code.
 - `data/TelegramStars.kt`: order text and `t.me/FemClaudeMrrr` payment link; codes are issued manually after Stars payment.
 - Premium UI: `ui/PremiumActivity.kt` (tier cards, feature matrix, activation, Stars buttons). Gates: themes, model tiers, chat export, search/MCP/plugins/TTS/characters, chat customization, prompt library, backups, QR, history limit.
 - Chat backups: `ChatSessionsStore.exportJson/importJson`; prompt library: `data/PromptLibrary.kt` (1024 prompts, searchable).
@@ -66,11 +66,13 @@
 - `DevAIApp` shows `UpdateOverlay` (`ui/UpdateOverlay.kt`) when a newer release exists: a full-screen Compose `Dialog` with «Скачать» and «Позже», scaled from the 360×800 Vexel canvas. Positive results are cached in `devai_update` prefs; negative checks are throttled to 15 minutes.
 - Tests: `SearchClientTest` covers desktop/mobile Bing markup and empty results; `UpdateCheckerTest` covers version ordering.
 
-## DevAI Core API & website (v0.2)
+## DevAI Core API & website (v0.3)
 - `docs/index.html` is the product landing page (GitHub Pages root): hero, features, Vexel, local models, install steps, FAQ and live release panel. `docs/download.html` is the «Скачать с сайта» resolver; it fetches the latest release and redirects to its APK.
 - `docs/site.js` reads `docs/data/latest.json` and falls back to the GitHub Releases API. It updates `[data-version]`, `[data-apk-size]`, `[data-release-notes]`, `[data-apk-sha]` and all download links. Do not hardcode a version in HTML when a data attribute is available.
 - `scripts/update_site_release.py` writes `docs/data/latest.json` from the latest GitHub release. `.github/workflows/site-release.yml` runs it daily, on `release` and manually; the build workflow ignores `docs/**` and `scripts/**`.
 - `docs/api.html` is the DevAI Core API key page (previously `docs/index.html`). It keeps `docs/app.js` and `docs/styles.css`; the product site uses `docs/site.css` and `docs/site.js`. Keep the API page linked from the header/footer.
+- API keys are tiered: a public free key gets `DEVAI_FREE_TOKENS` (default 5000) tokens per `DEVAI_QUOTA_DAYS` (default 30) and `DEVAI_FREE_RPM` (default 5) requests/min. A Premium promo code upgrades the key to `DEVAI_PREMIUM_TOKENS` (default 100000) and `DEVAI_PREMIUM_RPM` (default 60) until the code's expiry. Token usage is tracked in `keys.tokens_used`; `GET /v1/keys/me` reports it and `POST /v1/keys/upgrade` consumes a promo code.
+
 - `server/devai_server.py` is an OpenAI-compatible stdlib server: `/v1/chat/completions` (SSE), `/v1/models`, `/health`, admin key CRUD.
 - Public signup: `POST /v1/keys/challenge` returns a proof-of-work challenge; `POST /v1/keys/register` verifies it, binds to the hashed client IP, and creates a key. Anti-bot: difficulty 4, 1.2s minimum age, honeypot `website`, 8 open challenges/IP, 3 keys/IP/day, 300/day global. Never expose the admin token in the static site.
 - GitHub Pages publishes `docs/` at `https://karishka-sr.github.io/devai-studio/`. The API page is `https://karishka-sr.github.io/devai-studio/api.html`; the API base is stored in `localStorage` and defaults to the current work host. Update `DEFAULT_API` in `docs/app.js` when the server moves.
@@ -148,6 +150,6 @@
 - `server/stars_bot.py` is the Telegram bot: affiliate links/balance, XTR invoices, partner payouts, promo-code admin generation, and the Mini App menu button. It needs `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_IDS`, and (for real unique codes) `DEVAI_ADMIN_TOKEN`; never commit the token.
 - Free weekly promo: main-menu button «Бесплатный промокод» and `/free`; one claim per 7 days, Premium 2 days, code TTL 30 days. Claims are stored in `free_promo_claims`; override with `STARS_FREE_PROMO_DAYS`, `STARS_FREE_PROMO_COOLDOWN_DAYS`, `STARS_FREE_PROMO_CODE_TTL_DAYS`.
 - Promo codes live in `server/devai_server.py`: `POST /admin/promo` (admin token, batch generation), `GET /admin/promo`, `DELETE /admin/promo/<code>`, and public `POST /v1/promo/activate` with `{code, device_id}`. Codes are `DVS-XXXX-XXXX`, one-time by default, device-bound, expiring (30 days default), and stored in `promo_codes` / `promo_redemptions`.
-- On successful payment the bot asks the server for a unique one-time code and falls back to the legacy `STARS-*` code only when `DEVAI_ADMIN_TOKEN` is absent or the API fails. The Android app validates `DVS-*` through `data/PromoClient.kt`; legacy codes still activate locally.
+- On successful payment the bot asks the server for a unique one-time code. If code creation fails, it tells the buyer to contact an admin instead of falling back to a hardcoded code. The Android app validates only server-issued `DVS-*` codes through `data/PromoClient.kt`; there is no local fallback.
 - `app/build.gradle.kts` exposes `PROMO_API_URL` (env/local.properties `PROMO_API_URL`, default current work host) and `TELEGRAM_BOT_USERNAME`. When the bot username is set, the app's «Оплатить» opens `https://t.me/<bot>?start=buy_<plan>`; otherwise it keeps the manual order text flow. Update the API URL with `ProviderCatalog` when the server moves.
 - `docs/mini/` is the Telegram Mini App. It is static, reads the bot username from `?bot=`, and opens `https://t.me/<bot>?start=buy_<plan>` or `?start=partner`. The bot sets it as the chat menu button and main-menu button; it needs a public HTTPS URL (`STARS_MINI_APP_URL`).

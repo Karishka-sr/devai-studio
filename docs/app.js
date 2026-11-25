@@ -10,6 +10,9 @@ const websiteInput = $("#website");
 const generateButton = $("#generate");
 const formStatus = $("#form-status");
 const keyStatus = $("#key-status");
+const quotaStatus = $("#quota-status");
+const upgradeCodeInput = $("#upgrade-code");
+const upgradeButton = $("#upgrade-key");
 const result = $("#result");
 const emptyResult = $("#empty-result");
 const keyValue = $("#api-key");
@@ -18,6 +21,7 @@ const serverState = $("#server-state");
 const statusText = $("#status-text");
 
 let currentKey = "";
+let currentQuota = null;
 let busy = false;
 
 function safeGet(key) {
@@ -150,6 +154,47 @@ async function createKey(name) {
   throw lastError || new Error("Не удалось создать ключ");
 }
 
+function tierName(tier) {
+  if (tier === "premium") return "Premium";
+  if (tier === "admin") return "Admin";
+  return "Пробный";
+}
+
+function formatDate(epochSeconds) {
+  const value = Number(epochSeconds) || 0;
+  if (!value) return "бессрочно";
+  return new Date(value * 1000).toLocaleDateString("ru-RU");
+}
+
+function renderQuota(data) {
+  if (!data) return;
+  currentQuota = data;
+  const limit = Number(data.token_limit) || 0;
+  const used = Number(data.tokens_used) || 0;
+  const remaining = Number(data.tokens_remaining);
+  if (limit > 0) {
+    setStatus(
+      quotaStatus,
+      `Тариф: ${tierName(data.tier)} · ${used.toLocaleString("ru-RU")} / ${limit.toLocaleString("ru-RU")} токенов · осталось ${Math.max(0, remaining).toLocaleString("ru-RU")}.`,
+      "",
+    );
+  } else {
+    setStatus(quotaStatus, `Тариф: ${tierName(data.tier)} · без лимита токенов.`, "");
+  }
+}
+
+async function refreshQuota() {
+  if (!currentKey) return;
+  try {
+    const data = await fetchJson("/keys/me", {
+      headers: { Authorization: `Bearer ${currentKey}` },
+    });
+    renderQuota(data);
+  } catch (error) {
+    setStatus(quotaStatus, error.message || "Не удалось получить лимит ключа.", "error");
+  }
+}
+
 function showKey(payload) {
   currentKey = payload.key || "";
   keyValue.textContent = currentKey;
@@ -157,7 +202,10 @@ function showKey(payload) {
   emptyResult.hidden = true;
   result.hidden = false;
   result.classList.add("is-visible");
+  upgradeCodeInput.value = "";
   setStatus(keyStatus, "Ключ активен. Скопируйте его сейчас.", "");
+  renderQuota(payload);
+  refreshQuota();
   result.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
@@ -192,7 +240,10 @@ function downloadKey() {
     `API key: ${currentKey}`,
     "",
     "Authorization: Bearer " + currentKey,
-    "Limit: 60 requests/minute, 1024 output tokens.",
+    `Tier: ${tierName(currentQuota?.tier)}`,
+    `Token limit: ${currentQuota?.token_limit || "unlimited"}`,
+    `Tokens used: ${currentQuota?.tokens_used || 0}`,
+    "Output limit: 1024 tokens per response.",
     "Keep this key private. The server stores only its SHA-256 hash.",
     "",
   ].join("\n");
@@ -302,17 +353,44 @@ $("#check-key").addEventListener("click", async (event) => {
   button.disabled = true;
   setStatus(keyStatus, "Проверяю ключ…", "muted");
   try {
-    const response = await fetch(apiBase() + "/models", {
+    const data = await fetchJson("/keys/me", {
       headers: { Authorization: `Bearer ${currentKey}` },
     });
-    if (!response.ok) throw new Error(`Ключ не принят (${response.status})`);
-    const data = await response.json();
-    const model = data?.data?.[0]?.id || "devai-core-0.1";
-    setStatus(keyStatus, `Ключ работает. Модель: ${model}.`, "");
+    renderQuota(data);
+    setStatus(keyStatus, `Ключ работает. Модель: ${data.model || "devai-core-0.1"}.`, "");
   } catch (error) {
     setStatus(keyStatus, error.message || "Ключ не работает.", "error");
   } finally {
     button.disabled = false;
+  }
+});
+
+upgradeButton.addEventListener("click", async () => {
+  if (!currentKey) return;
+  const code = upgradeCodeInput.value.trim();
+  if (!code) {
+    setStatus(quotaStatus, "Введите промокод.", "error");
+    return;
+  }
+  upgradeButton.disabled = true;
+  setStatus(quotaStatus, "Активирую Premium…", "muted");
+  try {
+    const data = await fetchJson("/keys/upgrade", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${currentKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ code }),
+    });
+    upgradeCodeInput.value = "";
+    renderQuota(data);
+    setStatus(keyStatus, `Premium активирован до ${formatDate(data.premium_until)}.`, "");
+    await refreshQuota();
+  } catch (error) {
+    setStatus(quotaStatus, error.message || "Не удалось активировать промокод.", "error");
+  } finally {
+    upgradeButton.disabled = false;
   }
 });
 

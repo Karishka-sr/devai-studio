@@ -16,40 +16,6 @@ object PremiumStore {
     private const val KEY_LEGACY_PREMIUM = "premium"
     private const val DAY_MS = 24L * 60L * 60L * 1000L
 
-    private val PLAN_CODES: Map<String, PremiumPlan> = mapOf(
-        "DEVAI-WEEK" to PremiumPlan.WEEK,
-        "DEVAI-WEEK-2026" to PremiumPlan.WEEK,
-        "STARS-WEEK" to PremiumPlan.WEEK,
-        "WEEK" to PremiumPlan.WEEK,
-        "DEVAI-MONTH" to PremiumPlan.MONTH,
-        "DEVAI-MONTH-2026" to PremiumPlan.MONTH,
-        "STARS-MONTH" to PremiumPlan.MONTH,
-        "MONTH" to PremiumPlan.MONTH,
-        "DEVAI-YEAR" to PremiumPlan.YEAR,
-        "DEVAI-YEAR-2026" to PremiumPlan.YEAR,
-        "STARS-YEAR" to PremiumPlan.YEAR,
-        "YEAR" to PremiumPlan.YEAR,
-        "DEVAI-LIFETIME" to PremiumPlan.LIFETIME,
-        "DEVAI-LIFETIME-2026" to PremiumPlan.LIFETIME,
-        "DEVAI-FOREVER" to PremiumPlan.LIFETIME,
-        "STARS-LIFETIME" to PremiumPlan.LIFETIME,
-        "LIFETIME" to PremiumPlan.LIFETIME,
-    )
-
-    private val LEGACY_CODES = setOf(
-        "DEVAI-PRO",
-        "DEVAI-2025",
-        "DEVAI-PRO-2025",
-        "PREMIUM",
-        "DEVAI-2026",
-        "DEVAI2026",
-        "DEVAI26",
-        "DEVAI-TEST",
-        "DEVAI",
-        "TEST",
-        "PROMO",
-    )
-
     fun plan(ctx: Context): PremiumPlan {
         val stored = p(ctx).getString(KEY_PLAN, null)
         if (stored != null) {
@@ -93,15 +59,6 @@ object PremiumStore {
         val expires = expiresAt(ctx)
         if (expires <= 0L) return ""
         return SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date(expires))
-    }
-
-    fun activate(ctx: Context, raw: String): PremiumPlan? {
-        val code = normalize(raw)
-        val plan = PLAN_CODES[code]
-            ?: if (code in LEGACY_CODES) PremiumPlan.LIFETIME else null
-            ?: return null
-        activatePlan(ctx, plan, code)
-        return plan
     }
 
     fun activatePlan(
@@ -153,12 +110,6 @@ object PremiumStore {
     }
 
     fun code(ctx: Context): String = p(ctx).getString(KEY_CODE, "").orEmpty()
-
-    private fun normalize(raw: String): String =
-        raw.trim()
-            .uppercase()
-            .replace(Regex("[^A-Z0-9]+"), "-")
-            .trim('-')
 
     private fun p(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 }
