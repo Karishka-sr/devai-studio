@@ -417,7 +417,7 @@ def send(chat_id: int, text: str, keyboard: dict[str, Any] | None = None) -> Any
         "disable_web_page_preview": True,
     }
     if keyboard:
-        payload["reply_markup"] = json.dumps(keyboard, ensure_ascii=False)
+        payload["reply_markup"] = keyboard
     return api("sendMessage", payload)
 
 
@@ -434,7 +434,11 @@ def main_menu() -> dict[str, Any]:
         ],
     ]
     if BOT_USERNAME:
-        rows.append([{"text": "Mini App", "web_app": {"url": f"{MINI_APP_URL}?bot={BOT_USERNAME}"}}])
+        url = f"{MINI_APP_URL}?bot={BOT_USERNAME}"
+        rows.append([
+            {"text": "Mini App", "web_app": {"url": url}},
+            {"text": "В браузере", "url": url},
+        ])
     rows.append([{"text": "Помощь", "callback_data": "help"}])
     return inline(rows)
 
@@ -490,7 +494,7 @@ def handle_plan(chat_id: int, user_id: int, plan_id: str) -> None:
         "payload": f"order:{order_id}",
         "provider_token": "",
         "currency": "XTR",
-        "prices": json.dumps([{"label": plan.title, "amount": plan.stars}], ensure_ascii=False),
+        "prices": [{"label": plan.title, "amount": plan.stars}],
     })
 
 
@@ -788,7 +792,10 @@ def handle_mini(chat_id: int) -> None:
         send(chat_id, "Сначала задай username бота через @BotFather.")
         return
     url = f"{MINI_APP_URL}?bot={BOT_USERNAME}"
-    send(chat_id, "Mini App с тарифами и партнёркой:", inline([[{"text": "Открыть Mini App", "web_app": {"url": url}}]]))
+    send(chat_id, "Mini App с тарифами и партнёркой:", inline([[
+        {"text": "Открыть Mini App", "web_app": {"url": url}},
+        {"text": "В браузере", "url": url},
+    ]]))
 
 
 def handle_help(chat_id: int) -> None:
@@ -821,7 +828,9 @@ def handle_message(message: dict[str, Any]) -> None:
         handle_start(chat_id, user, payload)
         return
 
-    if text.startswith("/partner"):
+    if text.startswith("/buy"):
+        handle_buy(chat_id)
+    elif text.startswith("/partner"):
         handle_partner(chat_id, user_id)
     elif text.startswith("/balance"):
         handle_balance(chat_id, user_id)
@@ -908,6 +917,7 @@ def configure_bot() -> None:
                 {"command": "balance", "description": "Баланс Stars"},
                 {"command": "payout", "description": "Запросить вывод Stars"},
                 {"command": "mini", "description": "Открыть Mini App"},
+                {"command": "id", "description": "Показать Telegram ID"},
                 {"command": "help", "description": "Как это работает"},
             ]
         })
