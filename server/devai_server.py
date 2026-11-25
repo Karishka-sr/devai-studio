@@ -389,11 +389,12 @@ def activate_promo(code: str, device_hash: str, ip_hash: str) -> tuple[int, dict
         ).fetchone()
         if existing:
             plan = existing["plan"]
+            days = int(row["days"] or 0)
             return 200, {
                 "ok": True,
                 "code": code,
                 "plan": plan,
-                "days": PROMO_PLANS[plan]["days"],
+                "days": days,
                 "title": PROMO_PLANS[plan]["title"],
                 "already_redeemed": True,
             }
@@ -931,6 +932,9 @@ class Handler(BaseHTTPRequestHandler):
         status, payload = activate_promo(code, device_hash, ip_hash)
         if status != 200:
             self._send_json(status, payload)
+            return
+        if payload.get("already_redeemed"):
+            self._error(409, "Промокод уже использован на этом устройстве.", "conflict")
             return
         days = int(payload.get("days") or 0)
         now = time.time()
