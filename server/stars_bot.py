@@ -29,7 +29,7 @@ import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -42,6 +42,9 @@ DEVAI_API_BASE = os.environ.get("DEVAI_API_BASE", "https://work-2-nizvyfgvcqicrk
 DEVAI_ADMIN_TOKEN = os.environ.get("DEVAI_ADMIN_TOKEN", "").strip()
 COMMISSION_RATE = min(max(float(os.environ.get("STARS_COMMISSION_RATE", "0.20")), 0.0), 1.0)
 MIN_PAYOUT = max(int(os.environ.get("STARS_MIN_PAYOUT", "100")), 1)
+FREE_PROMO_DAYS = max(1, min(int(os.environ.get("STARS_FREE_PROMO_DAYS", "2")), 30))
+FREE_PROMO_COOLDOWN_DAYS = max(1, min(int(os.environ.get("STARS_FREE_PROMO_COOLDOWN_DAYS", "7")), 365))
+FREE_PROMO_CODE_TTL_DAYS = max(1, min(int(os.environ.get("STARS_FREE_PROMO_CODE_TTL_DAYS", "30")), 3650))
 BOT_USERNAME = os.environ.get("TELEGRAM_BOT_USERNAME", "").lstrip("@")
 
 
@@ -125,9 +128,17 @@ CREATE TABLE IF NOT EXISTS payouts (
     note TEXT NOT NULL DEFAULT ''
 );
 
+CREATE TABLE IF NOT EXISTS free_promo_claims (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    telegram_id INTEGER NOT NULL,
+    code TEXT NOT NULL DEFAULT '',
+    claimed_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_users_referred_by ON users(referred_by);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_payouts_status ON payouts(status);
+CREATE INDEX IF NOT EXISTS idx_free_promo_claims_user ON free_promo_claims(telegram_id, id);
 """
 
 
@@ -178,6 +189,49 @@ def ensure_user(telegram_id: int, username: str, first_name: str, ref_code: str 
                 connection.execute("UPDATE partners SET starts = starts + 1 WHERE telegram_id = ?", (partner["telegram_id"],))
 
         return connection.execute("SELECT * FROM users WHERE telegram_id = ?", (telegram_id,)).fetchone()
+
+
+def _as_utc(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value)
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def reserve_free_promo(telegram_id: int) -> tuple[int | None, datetime | None]:
+    with connect() as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        last = connection.execute(
+            "SELECT * FROM free_promo_claims WHERE telegram_id = ? AND code <> '' ORDER BY id DESC LIMIT 1",
+            (telegram_id,),
+        ).fetchone()
+        if last:
+            next_at = _as_utc(last["claimed_at"]) + timedelta(days=FREE_PROMO_COOLDOWN_DAYS)
+            if next_at > datetime.now(timezone.utc):
+                return None, next_at
+        cursor = connection.execute(
+            "INSERT INTO free_promo_claims (telegram_id, code, claimed_at) VALUES (?, '', ?)",
+            (telegram_id, now()),
+        )
+        return int(cursor.lastrowid), None
+
+
+def finish_free_promo(claim_id: int, code: str) -> None:
+    with connect() as connection:
+        connection.execute("UPDATE free_promo_claims SET code = ? WHERE id = ?", (code, claim_id))
+
+
+def cancel_free_promo(claim_id: int) -> None:
+    with connect() as connection:
+        connection.execute("DELETE FROM free_promo_claims WHERE id = ?", (claim_id,))
+
+
+def fmt_remaining(target: datetime) -> str:
+    seconds = max(0, int((target - datetime.now(timezone.utc)).total_seconds()))
+    days, remainder = divmod(seconds, 86400)
+    hours = remainder // 3600
+    if days:
+        return f"{days} дн. {hours} ч"
+    minutes = max(1, remainder // 60)
+    return f"{hours} ч {minutes} мин" if hours else f"{minutes} мин"
 
 
 def get_partner(telegram_id: int) -> sqlite3.Row | None:
@@ -433,6 +487,7 @@ def inline(rows: list[list[dict[str, str]]]) -> dict[str, Any]:
 
 def main_menu() -> dict[str, Any]:
     rows: list[list[dict[str, Any]]] = [
+        [{"text": "Бесплатный промокод", "callback_data": "free_promo"}],
         [{"text": "Купить Premium", "callback_data": "buy"}],
         [
             {"text": "Партнёрка", "callback_data": "partner"},
@@ -568,6 +623,50 @@ def handle_successful_payment(chat_id: int, payment: dict[str, Any]) -> None:
             )
         except Exception:
             log.exception("Не удалось уведомить админа %s", admin_id)
+
+
+def handle_free_promo(chat_id: int, user_id: int) -> None:
+    if not DEVAI_ADMIN_TOKEN:
+        send(chat_id, "Бесплатные промокоды временно недоступны. Попробуй позже.", main_menu())
+        return
+    claim_id, next_at = reserve_free_promo(user_id)
+    if claim_id is None:
+        when = fmt_remaining(next_at) if next_at else f"{FREE_PROMO_COOLDOWN_DAYS} дн."
+        send(
+            chat_id,
+            "Бесплатный промокод уже получен.\n\n"
+            f"Следующий можно взять через {when}.\n"
+            f"Один бесплатный код раз в {FREE_PROMO_COOLDOWN_DAYS} дн.",
+            main_menu(),
+        )
+        return
+    try:
+        codes = create_promo_batch(
+            "week",
+            1,
+            max_uses=1,
+            expires_days=FREE_PROMO_CODE_TTL_DAYS,
+            premium_days=FREE_PROMO_DAYS,
+        )
+        code = codes[0] if codes else ""
+        if not code:
+            raise RuntimeError("Сервер не вернул код")
+    except Exception as error:
+        cancel_free_promo(claim_id)
+        log.exception("Не удалось выдать бесплатный промокод пользователю %s", user_id)
+        send(chat_id, f"Не удалось выдать промокод: {error}\nПопробуй позже.", main_menu())
+        return
+    finish_free_promo(claim_id, code)
+    send(
+        chat_id,
+        "Бесплатный промокод\n\n"
+        f"Код: {code}\n"
+        f"Premium: {FREE_PROMO_DAYS} дн.\n"
+        f"Код одноразовый и действует {FREE_PROMO_CODE_TTL_DAYS} дн.\n\n"
+        "Открой DevAI Studio → Premium → Активация и вставь код.\n\n"
+        f"Следующий бесплатный код — через {FREE_PROMO_COOLDOWN_DAYS} дн.",
+        main_menu(),
+    )
 
 
 def handle_partner(chat_id: int, user_id: int) -> None:
@@ -848,6 +947,7 @@ def handle_help(chat_id: int) -> None:
         "1. Выбери тариф и оплати Telegram Stars.\n"
         "2. Бот пришлёт код активации.\n"
         "3. Вставь код в DevAI Studio → Premium.\n\n"
+        f"Бесплатный промокод: кнопка в меню или /free. Один код раз в {FREE_PROMO_COOLDOWN_DAYS} дн., Premium на {FREE_PROMO_DAYS} дн.\n\n"
         "Mini App: кнопка «Mini App» в меню или команда /mini.\n\n"
         "Партнёрка: открой «Партнёрка», получи ссылку и делись ею. "
         f"Комиссия — {round(COMMISSION_RATE * 100)}% с покупки. Вывод — от {fmt_stars(MIN_PAYOUT)} ⭐ вручную.\n\n"
@@ -873,6 +973,8 @@ def handle_message(message: dict[str, Any]) -> None:
 
     if text.startswith("/buy"):
         handle_buy(chat_id)
+    elif text.startswith("/free"):
+        handle_free_promo(chat_id, user_id)
     elif text.startswith("/trial"):
         handle_trial(chat_id, user_id, text.split()[1:])
     elif text.startswith("/partner"):
@@ -922,6 +1024,8 @@ def handle_callback(callback: dict[str, Any]) -> None:
         return
     if data == "buy":
         handle_buy(chat_id)
+    elif data == "free_promo":
+        handle_free_promo(chat_id, user_id)
     elif data.startswith("plan:"):
         handle_plan(chat_id, user_id, data.split(":", 1)[1])
     elif data == "partner":
@@ -958,6 +1062,7 @@ def configure_bot() -> None:
         api("setMyCommands", {
             "commands": [
                 {"command": "start", "description": "Главное меню"},
+                {"command": "free", "description": "Бесплатный промокод"},
                 {"command": "partner", "description": "Партнёрская ссылка и баланс"},
                 {"command": "balance", "description": "Баланс Stars"},
                 {"command": "payout", "description": "Запросить вывод Stars"},
