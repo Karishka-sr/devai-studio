@@ -82,6 +82,7 @@ MAX_BOOK_BYTES = 20 * 1024 * 1024
 COMMENT_LAST: dict[int, float] = {}
 COMMENT_TIMES: list[float] = []
 _FEATURED_CACHE: dict[str, object] = {"at": 0.0, "items": []}
+_WIKI_CACHE: dict[str, str] = {}
 CHANNEL_SOURCES = tuple(
     part.strip().lower()
     for part in os.environ.get(
@@ -272,7 +273,7 @@ def ask_ai(api_key: str, prompt: str, max_tokens: int = 500, system: str = "") -
     data = api_post(
         "/v1/chat/completions",
         {
-            "model": "devai-core-0.5",
+            "model": "devai-core-3.0",
             "messages": [
                 {"role": "system", "content": system or "Ты DevAI. Отвечай кратко, по-русски и по делу."},
                 {"role": "user", "content": prompt[:4000]},
@@ -744,9 +745,86 @@ def _fallback_comment(kind: str) -> str:
     }.get(kind, "Спасибо! Напишите чуть конкретнее — и я отвечу по делу.")
 
 
+def _wiki_answer(text: str) -> str:
+    query = _strip_bot_mention(text).strip(" ?!.")
+    if len(query) < 4:
+        return ""
+    if not re.search(r"(?i)что такое|кто так|кто такая|кто такие|что значит|дай определение|расскажи о", text):
+        return ""
+    cached = _WIKI_CACHE.get(query.lower())
+    if cached is not None:
+        return cached
+    for lang in ("ru", "en"):
+        url = (
+            "https://" + lang + ".wikipedia.org/w/api.php?action=query&generator=search"
+            "&gsrsearch=" + urllib.parse.quote(query) + "&gsrlimit=1&prop=extracts"
+            "&exintro=1&explaintext=1&redirects=1&format=json"
+        )
+        try:
+            request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+            with urllib.request.urlopen(request, timeout=12) as response:
+                data = json.loads(response.read())
+        except Exception:
+            continue
+        pages = list(((data.get("query") or {}).get("pages") or {}).values())
+        if not pages:
+            continue
+        extract = str(pages[0].get("extract") or "")
+        extract = re.sub(r"\[\d+\]", "", extract)
+        extract = re.sub(r"\s+", " ", extract).strip()
+        if len(extract) < 40:
+            continue
+        sentences = re.split(r"(?<=[.!?])\s+", extract)
+        summary = ""
+        for sentence in sentences:
+            if len(summary) + len(sentence) > 500:
+                break
+            summary = (summary + " " + sentence).strip()
+        summary = (summary or _short(extract, 500)).rstrip(" .;:")
+        answer = "Если коротко: " + summary + "."
+        _WIKI_CACHE[query.lower()] = answer
+        return answer
+    _WIKI_CACHE[query.lower()] = ""
+    return ""
+
+
+def _model_answer(text: str, kind: str) -> str:
+    key = ensure_channel_key()
+    if not key:
+        return ""
+    context = _knowledge_for(text)
+    prompt = "Вопрос: " + text[:1200]
+    if context:
+        prompt += "\n\nПроверенные заметки по теме:\n" + context
+    system = (
+        "Ты DevAI — полезный ИИ-помощник проекта DevAI Studio. "
+        "Ответь по-русски, по существу и без встречных вопросов, если можешь ответить сам. "
+        "Пиши 2–4 предложения, не выдумывай факты. Если не знаешь точно — скажи это прямо. "
+        "Никогда не используй китайские иероглифы."
+    )
+    try:
+        answer = ask_ai(key, prompt, max_tokens=240, system=system)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("model answer failed: %s", str(exc)[:200])
+        return ""
+    answer = str(answer or "").strip()
+    if re.search(r"[\u3400-\u9fff]", answer):
+        sentences = re.split(r"(?<=[.!?])\s+", answer)
+        answer = " ".join(sentence for sentence in sentences if not re.search(r"[\u3400-\u9fff]", sentence)).strip()
+    if len(answer) < 12:
+        return ""
+    if re.search(r"уточните детали|хороший вопрос|не могу ответить|подключ\w*\s+ключ|/key", answer.lower()):
+        return ""
+    return answer
+
+
 def _faq_answer(text: str) -> str:
     low = text.lower()
     rules = [
+        (r"вес|весит|размер|сколько.*мб|apk.*больш", (
+            "APK DevAI Studio 4.5.0 весит около 111 МБ (115 979 394 байта). "
+            "Это полная сборка с локальными ресурсами; при установке нужно ещё немного места для данных."
+        )),
         (r"установ|скачать|apk|андроид|android", (
             "Скачайте APK со страницы релиза: https://github.com/Karishka-sr/devai-studio/releases/latest. "
             "Откройте файл и разрешите установку из этого источника; если Play Protect предупреждает — "
@@ -776,7 +854,7 @@ def _faq_answer(text: str) -> str:
             "и 60 запросов в минуту. Ключ можно создать на сайте."
         )),
         (r"модель|локальн|сервер|сколько ждать", (
-            "Сейчас отвечает devai-core-0.5. Он работает локально на сервере проекта; "
+            "Сейчас отвечает devai-core-3.0. Он работает локально на сервере проекта; "
             "на ответ нужно несколько секунд."
         )),
         (r"сайт|ссылк|где скачать|релиз|версия|обнов", (
@@ -803,10 +881,19 @@ def _comment_answer(text: str, kind: str) -> str:
     if faq:
         return faq
     if kind == "question":
-        context = _knowledge_for(text)
-        if context:
-            first = context.splitlines()[0].removeprefix("• ")
-            return "Если коротко: " + first + "\n\nМогу разобрать подробнее."
+        wiki = _wiki_answer(text)
+        if wiki:
+            return wiki
+        model = _model_answer(text, kind)
+        if model:
+            return model
+        return (
+            "Пока не нашёл проверенных данных по этому вопросу. "
+            "Пришлите ссылку или книгу — разберу и запомню."
+        )
+    model = _model_answer(text, kind)
+    if model:
+        return model
     return _fallback_comment(kind)
 
 
@@ -957,29 +1044,14 @@ def handle_message(message: dict) -> None:
         handle_comment(message)
         return
     if not text.startswith("/"):
-        sender = int((message.get("from") or {}).get("id") or 0)
         is_group = str(chat.get("type") or "") in {"group", "supergroup"}
         if is_group:
             if not _mentions_bot(message):
                 return
             text = _strip_bot_mention(text) or "привет"
-        key = get_key(chat_id)
-        if not key and (is_group or sender in ADMIN_IDS):
-            key = ensure_channel_key()
-        if key:
-            if is_group:
-                tg("sendChatAction", chat_id=chat_id, action="typing")
-            system = _comment_system(_comment_kind(text)) if is_group else ""
-            try:
-                if is_group:
-                    answer = _comment_answer(text, _comment_kind(text))
-                else:
-                    answer = ask_ai(key, text, system=system) or "Модель вернула пустой ответ."
-                _send(chat_id, answer)
-            except Exception as exc:  # noqa: BLE001
-                _send(chat_id, "Ошибка API: " + html.escape(str(exc)[:300]))
-        else:
-            _send(chat_id, "Напишите вопрос — я отвечу. Ключ нужен только для личного доступа через API.")
+            tg("sendChatAction", chat_id=chat_id, action="typing")
+        answer = _comment_answer(text, _comment_kind(text))
+        _send(chat_id, answer)
         return
     command, _, argument = text.partition(" ")
     command = command.split("@", 1)[0].lower()

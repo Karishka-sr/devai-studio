@@ -36,7 +36,7 @@ from devai_web import (
 )
 
 SERVER_VERSION = "0.5.0"
-MODEL_ID = "devai-core-0.5"
+MODEL_ID = "devai-core-3.0"
 ROOT = Path(__file__).resolve().parent
 DATA = Path(os.environ.get("DEVAI_DATA_DIR", ROOT / "data"))
 DATA.mkdir(parents=True, exist_ok=True)
@@ -45,9 +45,11 @@ ADMIN_FILE = DATA / "admin_token"
 DEFAULT_MODEL = Path(
     os.environ.get(
         "DEVAI_MODEL_PATH",
-        str(ROOT / "models" / "qwen2.5-0.5b-instruct-q4_k_m.gguf"),
+        str(ROOT / "models" / "qwen2.5-3b-instruct-q4_k_m.gguf"),
     )
 )
+if not DEFAULT_MODEL.exists():
+    DEFAULT_MODEL = ROOT / "models" / "qwen2.5-0.5b-instruct-q4_k_m.gguf"
 HOST = os.environ.get("DEVAI_HOST", "0.0.0.0")
 PORT = int(os.environ.get("DEVAI_PORT", "12001"))
 MAX_BODY = 2 * 1024 * 1024
@@ -587,8 +589,8 @@ def get_model():
                 raise FileNotFoundError(f"model not found: {DEFAULT_MODEL}")
             MODEL = Llama(
                 model_path=str(DEFAULT_MODEL),
-                n_ctx=2048,
-                n_threads=max(1, min(2, os.cpu_count() or 1)),
+                n_ctx=4096,
+                n_threads=max(1, min(4, os.cpu_count() or 1)),
                 verbose=False,
             )
             MODEL_ERROR = None
