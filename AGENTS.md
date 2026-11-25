@@ -153,3 +153,9 @@
 - On successful payment the bot asks the server for a unique one-time code. If code creation fails, it tells the buyer to contact an admin instead of falling back to a hardcoded code. The Android app validates only server-issued `DVS-*` codes through `data/PromoClient.kt`; there is no local fallback.
 - `app/build.gradle.kts` exposes `PROMO_API_URL` (env/local.properties `PROMO_API_URL`, default current work host) and `TELEGRAM_BOT_USERNAME`. When the bot username is set, the app's «Оплатить» opens `https://t.me/<bot>?start=buy_<plan>`; otherwise it keeps the manual order text flow. Update the API URL with `ProviderCatalog` when the server moves.
 - `docs/mini/` is the Telegram Mini App. It is static, reads the bot username from `?bot=`, and opens `https://t.me/<bot>?start=buy_<plan>` or `?start=partner`. The bot sets it as the chat menu button and main-menu button; it needs a public HTTPS URL (`STARS_MINI_APP_URL`).
+
+## Shared accounts (server + docs)
+- `docs/auth.js` is the shared account widget. It derives the site from the GitHub Pages path (or `data-site`), stores the bearer token in `localStorage` under `devai.account.token.v1`, and calls `GET /v1/auth/me?site=...` on page load.
+- Backend tables: `accounts`, `auth_sessions`, `site_memberships`. Registration creates memberships for every id in `SITES`; nicknames are unique case-insensitively and immutable (`PUT /v1/auth/profile` rejects changes). Passwords use scrypt and require score >= 2.
+- Public auth endpoints: `GET /v1/auth/sites`, `GET /v1/auth/check?nickname=`, `POST /v1/auth/register`, `POST /v1/auth/login`, `GET /v1/auth/me`, `POST /v1/auth/logout`, `PUT /v1/auth/profile`. Owner bootstrap: `POST /admin/accounts/owner` with the admin token.
+- Other Pages repositories load `https://karishka-sr.github.io/devai-studio/auth.js` with a `data-site` attribute. `Calculators` must keep its entry page named `index.html` (lowercase) for the Pages root.
