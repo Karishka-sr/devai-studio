@@ -36,7 +36,7 @@ from devai_web import (
 )
 
 SERVER_VERSION = "0.5.0"
-MODEL_ID = "devai-core-0.2"
+MODEL_ID = "devai-core-0.5"
 ROOT = Path(__file__).resolve().parent
 DATA = Path(os.environ.get("DEVAI_DATA_DIR", ROOT / "data"))
 DATA.mkdir(parents=True, exist_ok=True)
