@@ -22,6 +22,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from devai_av import scan_base64, scan_bytes
+from devai_books import chunk_text
 from devai_web import (
     UnsafeUrl,
     analyze_url,
@@ -34,7 +35,7 @@ from devai_web import (
     telegram_preview_url,
 )
 
-SERVER_VERSION = "0.4.0"
+SERVER_VERSION = "0.5.0"
 MODEL_ID = "devai-core-0.2"
 ROOT = Path(__file__).resolve().parent
 DATA = Path(os.environ.get("DEVAI_DATA_DIR", ROOT / "data"))
@@ -112,7 +113,7 @@ LEARN_STOP = {
     "про", "над", "под", "без", "его", "она", "они", "все", "всё", "там", "тут",
 }
 
-SYSTEM_PROMPT = """Ты — DevAI Core v0.2, собственный ИИ DevAI Studio. Ты умеешь учиться на документации, сайтах и прошлых диалогах, а также проверять ссылки и файлы встроенным антивирусом.
+SYSTEM_PROMPT = """Ты — DevAI Core v0.5, собственный ИИ DevAI Studio. Ты умеешь учиться на документации, сайтах и прошлых диалогах, а также проверять ссылки и файлы встроенным антивирусом.
 Ты помогаешь разработчику: код, архитектура, ошибки, тесты, интерфейс и тексты.
 Правила:
 - отвечай по-русски, если пользователь пишет по-русски;
@@ -587,7 +588,7 @@ def get_model():
             MODEL = Llama(
                 model_path=str(DEFAULT_MODEL),
                 n_ctx=2048,
-                n_threads=max(1, min(4, os.cpu_count() or 1)),
+                n_threads=max(1, min(2, os.cpu_count() or 1)),
                 verbose=False,
             )
             MODEL_ERROR = None
@@ -710,7 +711,7 @@ def retrieve_learned(query: str, limit: int = 3) -> list[dict]:
             score += 0.35
         if row["kind"] == "chat":
             score += 0.12
-        elif row["kind"] in {"web", "doc"}:
+        elif row["kind"] in {"web", "doc", "book"}:
             score += 0.08
         age_days = max(0.0, (now - float(row["created"])) / 86400)
         score += max(0.0, 0.08 - age_days / 3650)
@@ -852,6 +853,8 @@ def _should_follow(link: str, page_url: str, depth: int) -> bool:
     if any(part in path for part in ("/login", "/logout", "/signin", "/signup", "/cart", "/checkout", "/admin", "/wp-admin")):
         return False
     page_domain = urllib.parse.urlsplit(page_url).hostname or ""
+    if domain == "github.com" and not path.startswith("/karishka-sr/devai-studio"):
+        return False
     if depth >= 1 and domain not in OUR_DOMAINS and domain != page_domain:
         return False
     return True
@@ -1044,6 +1047,64 @@ def learning_status() -> dict:
         "recent": [dict(row) for row in recent],
         "seeds": DEFAULT_SEEDS,
     }
+
+
+def featured_learning(limit: int = 5) -> dict:
+    limit = max(1, min(int(limit or 5), 20))
+    with db() as conn:
+        rows = conn.execute(
+            "SELECT id, kind, source, title, prompt, answer, quality, created "
+            "FROM learned_items WHERE enabled = 1 AND kind IN ('web', 'doc', 'book') AND ("
+            "source LIKE 'doc:%' OR source LIKE 'book:%' OR source LIKE 'https://karishka-sr.github.io/%' "
+            "OR source LIKE 'https://github.com/Karishka-sr/devai-studio%' "
+            "OR source LIKE 'https://t.me/%') "
+            "ORDER BY quality DESC, id DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+    items = []
+    for row in rows:
+        item = dict(row)
+        item["answer"] = redact_private(item.get("answer") or "")[:1600]
+        item["prompt"] = redact_private(item.get("prompt") or "")[:500]
+        items.append(item)
+    return {"items": items}
+
+
+def learn_text(title: str, source: str, text: str, kind: str = "book") -> dict:
+    chunks = chunk_text(text, 1800)
+    learned = 0
+    safe_title = clean_text(title or "Книга", 180)
+    safe_source = clean_text(source or "book:upload", 480)
+    for index, chunk in enumerate(chunks, 1):
+        prompt = safe_title + " — часть " + str(index)
+        if record_learned(
+            kind if kind in {"book", "doc"} else "book",
+            safe_source + "#" + str(index),
+            prompt,
+            chunk,
+            title=safe_title,
+            quality=0.84,
+        ):
+            learned += 1
+    return {"title": safe_title, "chunks": len(chunks), "learned": learned}
+
+
+def learning_feed(after: int = 0, limit: int = 20) -> dict:
+    limit = max(1, min(int(limit or 20), 100))
+    with db() as conn:
+        rows = conn.execute(
+            "SELECT id, kind, source, title, prompt, answer, quality, created "
+            "FROM learned_items WHERE enabled = 1 AND id > ? ORDER BY id ASC LIMIT ?",
+            (max(0, int(after or 0)), limit),
+        ).fetchall()
+        total = conn.execute("SELECT COALESCE(MAX(id), 0) FROM learned_items").fetchone()[0]
+    items = []
+    for row in rows:
+        item = dict(row)
+        item["answer"] = redact_private(item.get("answer") or "")[:1600]
+        item["prompt"] = redact_private(item.get("prompt") or "")[:500]
+        items.append(item)
+    return {"items": items, "next": rows[-1]["id"] if rows else max(0, int(after or 0)), "latest": int(total)}
 
 
 def store_scan(report: dict) -> str:
@@ -1593,6 +1654,32 @@ class Handler(BaseHTTPRequestHandler):
                 return
             self._send_json(200, learning_status())
             return
+        if path == "/admin/learning/featured":
+            if not self._is_admin():
+                self._error(401, "Admin token required.", "authentication_error")
+                return
+            query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            try:
+                limit = int((query.get("limit") or ["5"])[0])
+            except Exception:
+                limit = 5
+            self._send_json(200, featured_learning(limit))
+            return
+        if path == "/admin/learning/feed":
+            if not self._is_admin():
+                self._error(401, "Admin token required.", "authentication_error")
+                return
+            query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            try:
+                after = int((query.get("after") or ["0"])[0])
+            except Exception:
+                after = 0
+            try:
+                limit = int((query.get("limit") or ["20"])[0])
+            except Exception:
+                limit = 20
+            self._send_json(200, learning_feed(after, limit))
+            return
         if path == "/admin/scans":
             if not self._is_admin():
                 self._error(401, "Admin token required.", "authentication_error")
@@ -1677,7 +1764,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802
         path = urllib.parse.urlparse(self.path).path
         try:
-            body = self._read_json(SCAN_BODY if path == "/v1/scan" else None)
+            body = self._read_json(
+                SCAN_BODY if path == "/v1/scan"
+                else (5 * 1024 * 1024 if path == "/admin/learning/text" else None)
+            )
         except Exception as exc:  # noqa: BLE001
             self._error(400, f"Invalid JSON: {exc}")
             return
@@ -1790,6 +1880,26 @@ class Handler(BaseHTTPRequestHandler):
                 self._error(401, "Admin token required.", "authentication_error")
                 return
             self._send_json(200, learn_cycle(force=True))
+            return
+
+        if path == "/admin/learning/text":
+            if not self._is_admin():
+                self._error(401, "Admin token required.", "authentication_error")
+                return
+            text = str(body.get("text") or "")
+            if len(text.encode("utf-8", "replace")) > 5 * 1024 * 1024:
+                self._error(400, "Text is too large (max 5 MB).")
+                return
+            if len(text.strip()) < 80:
+                self._error(400, "Text is too short.")
+                return
+            result = learn_text(
+                str(body.get("title") or "Книга"),
+                str(body.get("source") or "book:upload"),
+                text,
+                str(body.get("kind") or "book"),
+            )
+            self._send_json(200, result)
             return
 
         if path == "/admin/learning/url":

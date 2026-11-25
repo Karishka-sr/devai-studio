@@ -1,4 +1,4 @@
-# DevAI Core API v0.4
+# DevAI Core API v0.5
 
 OpenAI-compatible HTTP API for DevAI Core. It runs a local Qwen2.5 0.5B GGUF
 model, learns from documentation and public pages without user involvement,
@@ -47,6 +47,8 @@ private: it can create and revoke API keys.
 - `POST /admin/accounts/owner` — create the owner account, admin token required.
 - `POST /v1/scan` — check `{url}`, `{text, filename}` or `{content_base64, filename}`; returns verdict, score, SHA-256 and findings.
 - `GET /admin/learning` — learning counters, queue and recent items, admin token required.
+- `GET /admin/learning/feed?after=<id>&limit=20` — new learned items for the channel publisher, admin token required.
+- `GET /admin/learning/featured?limit=5` — best project-related items for a digest, admin token required.
 - `POST /admin/learning/run` — run one crawl/learning cycle now, admin token required.
 - `POST /admin/learning/url` — open a URL and queue its links for learning, admin token required.
 - `GET /admin/scans?limit=30` — recent scan results, admin token required.
@@ -149,6 +151,33 @@ private/loopback hosts, follows at most four redirects, re-checks every redirect
 respects `robots.txt`, limits downloads to 1.5 MB and extracts readable text,
 titles, descriptions and links. Telegram launch pages are fetched through the
 public preview page because chat contents require the Telegram app.
+
+## Telegram channel bot
+
+`server/devai_ai_bot.py` runs @devaiAI_bot and publishes to `@devaiAI`.
+
+It can:
+
+- accept a DevAI API key with `/key devai-sk-...`, delete the message with
+  the key, and answer `/ai` prompts (or plain text) through the API;
+- publish a formatted digest of new project knowledge;
+- publish a first-person persona post on its own schedule (about every 4 hours
+  with jitter): what it likes, what it is learning, how it works and where to
+  find it;
+- reply to comments in the channel discussion group;
+- read uploaded books and documents (`txt`, `md`, `html`, `epub`, `fb2`,
+  `docx`, `pdf`, `rtf`) and store them in the learning database.
+
+Required secret files (both ignored by git, mode 600):
+
+- `server/data/devai_ai_bot_token` — token of @devaiAI_bot;
+- `server/data/devai_ai_bot.env` — `TELEGRAM_COMMENTS_CHAT`, admin ids and
+  intervals.
+
+Add @devaiAI_bot to the linked discussion group as an administrator so it can
+read comments. Send a book as a file with the optional caption `/book Название`.
+Admins can also use `/read <url>` to learn one public page. The bot never claims to be human: persona posts state that it is
+an AI character. Comment replies are rate-limited per user and per minute.
 
 ## Limits
 

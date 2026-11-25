@@ -38,7 +38,7 @@
   <main id="top">
     <section class="hero">
       <div class="hero-copy reveal">
-        <p class="eyebrow"><span class="eyebrow-line"></span> DevAI Core API · v0.4</p>
+        <p class="eyebrow"><span class="eyebrow-line"></span> DevAI Core API · v0.5</p>
         <h1>Ваш ИИ.<br><span class="accent">Один ключ.</span><br>Любой стек.</h1>
         <p class="lede">OpenAI-совместимый API для чата, кода и текстов. Локальная модель и потоковые ответы. Пробный ключ — 5 000 токенов, платный Premium-ключ — 100 000 токенов и готовый доступ из бота.</p>
         <div class="hero-actions">
@@ -311,13 +311,13 @@ console.log(data.choices[<span class="n">0</span>].message.content);</code></pre
         <article class="card">
           <span class="card-num">04</span>
           <h3>175 языков</h3>
-          <p>В DevAI Studio 4.4.0 добавлено 100 новых языковых пакетов: от ABAP и CUDA до Typst и WebAssembly.</p>
+          <p>DevAI теперь ведёт Telegram-канал: публикует, что узнал, отвечает на комментарии и рассказывает о себе. Ключ можно подключить прямо в боте.</p>
         </article>
       </div>
 
       <div class="hero-actions" style="margin-top: 28px;">
         <a class="btn btn-primary" href="index.html">Сайт DevAI Studio <span aria-hidden="true">→</span></a>
-        <a class="btn btn-ghost" href="https://github.com/Karishka-sr/devai-studio/releases/latest" target="_blank" rel="noreferrer">Скачать APK 4.4.0 <span aria-hidden="true">↗</span></a>
+        <a class="btn btn-ghost" href="https://github.com/Karishka-sr/devai-studio/releases/latest" target="_blank" rel="noreferrer">Скачать APK 4.5.0 <span aria-hidden="true">↗</span></a>
       </div>
     </section>
 
@@ -325,17 +325,17 @@ console.log(data.choices[<span class="n">0</span>].message.content);</code></pre
       <div class="section-head">
         <span class="index">04</span>
         <div>
-          <p class="kicker">Обновление v0.4</p>
+          <p class="kicker">Обновление v0.5</p>
           <h2>Сам учится. Сам <em>проверяет</em>.</h2>
         </div>
       </div>
       <div class="limits-grid">
-        <div class="limit"><span class="limit-key">24 / 7</span><p>Автообучение читает документацию, сайты и прошлые ответы. Знания ищутся по смыслу и подмешиваются в контекст.</p></div>
+        <div class="limit"><span class="limit-key">24 / 7</span><p>Автообучение читает документацию и сайты. Новые знания публикуются в <a href="https://t.me/devaiAI" target="_blank" rel="noreferrer">канале DevAI</a>, а комментарии разбирает бот.</p></div>
         <div class="limit"><span class="limit-key">любая ссылка</span><p>Публичные http(s)-адреса, включая <code>t.me</code>. DevAI открывает страницу, читает текст и проверяет редирект, домен и форму пароля.</p></div>
         <div class="limit"><span class="limit-key">скан файла</span><p>Пришлите файл или ссылку в чат. В ответе будет вердикт, риск 0–100, SHA-256 и найденные признаки. Файлы не запускаются.</p></div>
         <div class="limit"><span class="limit-key">честно</span><p>Это эвристический антивирус, а не ClamAV. Он ловит типовые угрозы, но не заменяет проверку в песочнице.</p></div>
       </div>
-      <p class="fair-use">API: <code>POST /v1/scan</code> с <code>url</code>, <code>text</code> или <code>content_base64</code>. Админ: <code>GET /admin/learning</code>, <code>POST /admin/learning/run</code>, <code>POST /admin/learning/url</code>.</p>
+      <p class="fair-use">API: <code>POST /v1/scan</code> с <code>url</code>, <code>text</code> или <code>content_base64</code>. Админ: <code>GET /admin/learning</code>, <code>POST /admin/learning/run</code>, <code>POST /admin/learning/url</code>, <code>POST /admin/learning/text</code>.</p>
     </section>
 
     <section class="section limits-section">
@@ -367,7 +367,7 @@ console.log(data.choices[<span class="n">0</span>].message.content);</code></pre
       <span class="brand-mark" aria-hidden="true"></span>
       <span>DevAI Studio</span>
     </div>
-    <p>Сделано автором DevAI Studio. Модель: <code>devai-core-0.2</code>. Приложение: <a href="index.html">DevAI Studio 4.4.0</a>.</p>
+    <p>Сделано автором DevAI Studio. Модель: <code>devai-core-0.2</code>. Приложение: <a href="index.html">DevAI Studio 4.5.0</a>.</p>
     <div class="footer-links">
       <a href="https://github.com/Karishka-sr/devai-studio" target="_blank" rel="noreferrer">Исходники</a>
       <a href="https://github.com/Karishka-sr/devai-studio/releases" target="_blank" rel="noreferrer">APK</a>
