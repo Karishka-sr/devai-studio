@@ -89,21 +89,44 @@
         <span class="index">01</span>
         <div>
           <p class="kicker">Доступ</p>
-          <h2>Ключ за <em>10 секунд</em></h2>
+          <h2>Ключ через <em>Telegram</em></h2>
         </div>
-        <p class="section-note">Без email и телефона. Пробный ключ — 5 000 токенов; Premium-ключ покупается в боте за Stars.</p>
+        <p class="section-note">Чтобы получить ключ, войдите через Telegram-бота. Пробный ключ на 5 000 токенов можно создать на сайте.</p>
       </div>
 
       <div class="key-grid">
         <form class="panel form-panel" id="key-form" novalidate>
+          <div class="telegram-gate">
+            <div class="telegram-gate-head">
+              <span class="telegram-gate-mark" aria-hidden="true">TG</span>
+              <div>
+                <p class="kicker">Telegram</p>
+                <h3>Чтобы получить ключ, войдите через бота</h3>
+              </div>
+            </div>
+            <p>Бот откроется в Telegram, пришлёт готовый API-ключ прямо в чат и покажет тарифы Premium за Stars.</p>
+            <a class="btn btn-primary btn-wide" href="https://t.me/devAI_Studio_bot?start=api" target="_blank" rel="noreferrer">
+              <span class="btn-label">Войти через @devAI_Studio_bot</span>
+              <span class="btn-arrow" aria-hidden="true">→</span>
+            </a>
+            <p class="form-note">Без email и телефона. Premium-ключ: 100 000 токенов в месяц и 60 запросов в минуту. Ключ показывается один раз — сохраните его из чата.</p>
+          </div>
+
           <div class="hp-field" aria-hidden="true">
             <label for="website">Website</label>
             <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
           </div>
-          <label class="field">
-            <span class="field-label">Как вас называть <small>необязательно</small></span>
-            <input id="name" name="name" type="text" maxlength="80" autocomplete="nickname" placeholder="например, karishka">
-          </label>
+          <input id="name" name="name" type="hidden" value="devai-user">
+
+          <details class="advanced trial-fallback">
+            <summary>Нужен только пробный ключ? Создать на сайте <span aria-hidden="true">+</span></summary>
+            <p class="hint">5 000 токенов в месяц и 5 запросов в минуту. Без email и телефона.</p>
+            <button class="btn btn-ghost btn-wide" type="submit" id="generate">
+              <span class="btn-label">Создать пробный ключ</span>
+              <span class="btn-arrow" aria-hidden="true">→</span>
+            </button>
+            <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+          </details>
 
           <details class="advanced">
             <summary>Адрес сервера <span aria-hidden="true">+</span></summary>
@@ -114,14 +137,6 @@
             <p class="hint" id="api-base-hint">Нужен, если сервер переехал. Оставьте по умолчанию, если не уверены.</p>
             <button class="text-button" type="button" id="reset-base">Сбросить адрес</button>
           </details>
-
-          <button class="btn btn-primary btn-wide" type="submit" id="generate">
-            <span class="btn-label">Создать ключ</span>
-            <span class="btn-arrow" aria-hidden="true">→</span>
-          </button>
-
-          <p class="form-note">Пробный ключ: 5 000 токенов в месяц и 5 запросов в минуту. Premium-ключ: 100 000 токенов в месяц и 60 запросов в минуту — покупается в @devAI_Studio_bot за Stars. Лимит: 3 ключа в сутки с одного IP. Защита: proof-of-work и проверка браузера.</p>
-          <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
         </form>
 
         <div class="panel result-panel" id="result" hidden>
@@ -155,8 +170,8 @@
         </div>
 
         <div class="panel empty-panel" id="empty-result">
-          <div class="empty-glyph" aria-hidden="true">↳</div>
-          <p>Здесь появится ваш ключ.<br><span>Скопируйте его сразу — второй раз сервер его не покажет.</span></p>
+          <div class="empty-glyph" aria-hidden="true">TG</div>
+          <p>Premium-ключ придёт в чат.<br><span>Нажмите «Войти через @devAI_Studio_bot» — бот откроется и выдаст ключ после оплаты. Пробный ключ с сайта появится здесь.</span></p>
         </div>
       </div>
 

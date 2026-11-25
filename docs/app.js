@@ -319,7 +319,7 @@ function setupCopyButtons() {
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (busy) return;
+  if (busy || event.submitter?.id !== "generate") return;
   if (websiteInput.value.trim() || navigator.webdriver) {
     setStatus(formStatus, "Проверка не пройдена. Откройте страницу в обычном браузере.", "error");
     return;
