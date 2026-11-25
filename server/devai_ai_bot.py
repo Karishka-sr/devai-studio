@@ -66,6 +66,7 @@ TOKEN = _secret("DEVAI_AI_BOT_TOKEN")
 ADMIN_TOKEN = _secret("DEVAI_ADMIN_TOKEN")
 API_BASE = os.environ.get("DEVAI_API_BASE", "http://127.0.0.1:12001").rstrip("/")
 CHANNEL = os.environ.get("TELEGRAM_CHANNEL", "@devaiAI").strip()
+BOT_USERNAME = os.environ.get("TELEGRAM_BOT_USERNAME", "devaiAI_bot").strip().lstrip("@")
 CHANNEL_INTERVAL = max(300, int(os.environ.get("DEVAI_CHANNEL_INTERVAL", "1800")))
 CHANNEL_AI = os.environ.get("DEVAI_CHANNEL_AI", "0") not in {"0", "false", "no"}
 AUTOPOST_DEFAULT = os.environ.get("DEVAI_AUTOPOST", "1") not in {"0", "false", "no"}
@@ -805,6 +806,22 @@ def _comment_answer(text: str, kind: str) -> str:
     return _fallback_comment(kind)
 
 
+def _mentions_bot(message: dict) -> bool:
+    text = str(message.get("text") or message.get("caption") or "")
+    if re.search(r"(?i)@" + re.escape(BOT_USERNAME) + r"\b", text):
+        return True
+    entities = list(message.get("entities") or []) + list(message.get("caption_entities") or [])
+    for entity in entities:
+        user = entity.get("user") or {}
+        if str(user.get("username") or "").lower() == BOT_USERNAME.lower():
+            return True
+    return False
+
+
+def _strip_bot_mention(text: str) -> str:
+    return re.sub(r"(?i)@" + re.escape(BOT_USERNAME) + r"\b[,:]?\s*", "", text).strip()
+
+
 def _is_comment(message: dict) -> bool:
     chat = message.get("chat") or {}
     chat_id = int(chat.get("id") or 0)
@@ -887,6 +904,9 @@ def handle_comment(message: dict) -> None:
     text = str(message.get("text") or message.get("caption") or "").strip()
     if not chat_id or not message_id or not text or text.startswith("/"):
         return
+    if not _mentions_bot(message):
+        return
+    text = _strip_bot_mention(text) or "привет"
     sender = int((message.get("from") or {}).get("id") or 0)
     now = time.time()
     if sender and now - COMMENT_LAST.get(sender, 0) < COMMENT_COOLDOWN:
@@ -929,12 +949,16 @@ def handle_message(message: dict) -> None:
         return
     if not text:
         return
-    if _is_comment(message):
+    if _is_comment(message) and not text.startswith("/"):
         handle_comment(message)
         return
     if not text.startswith("/"):
         sender = int((message.get("from") or {}).get("id") or 0)
         is_group = str(chat.get("type") or "") in {"group", "supergroup"}
+        if is_group:
+            if not _mentions_bot(message):
+                return
+            text = _strip_bot_mention(text) or "привет"
         key = get_key(chat_id)
         if not key and (is_group or sender in ADMIN_IDS):
             key = ensure_channel_key()
@@ -974,6 +998,7 @@ def handle_message(message: dict) -> None:
             "/about — обо мне\n"
             "/stats — статус\n"
             "/unlink — отключить ключ\n\n"
+            "В группе я отвечаю только по упоминанию: <code>@devaiAI_bot как дела?</code>\n"
             "Ключ создаётся на сайте DevAI Studio. Я удаляю сообщение с ключом из чата.",
         )
         return
