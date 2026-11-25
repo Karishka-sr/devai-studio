@@ -35,6 +35,14 @@ private: it can create and revoke API keys.
 - `GET /admin/keys` — list key metadata, admin token required.
 - `DELETE /admin/keys/<id>` — revoke a key, admin token required.
 - `POST /admin/keys/<id>/rotate` — replace a key, admin token required.
+- `GET /v1/auth/sites` — websites sharing one account.
+- `GET /v1/auth/check?nickname=` — nickname availability.
+- `POST /v1/auth/register` — `{nickname, password, site}`; creates memberships for all sites.
+- `POST /v1/auth/login` — `{nickname, password, site}`; returns a bearer token.
+- `GET /v1/auth/me?site=` — current account and its site memberships.
+- `POST /v1/auth/logout` — revoke the bearer token.
+- `PUT /v1/auth/profile` — change password; nickname changes are rejected.
+- `POST /admin/accounts/owner` — create the owner account, admin token required.
 
 ## Create a key
 
@@ -59,6 +67,15 @@ curl -s -X POST http://127.0.0.1:12001/admin/keys \
 
 Plans: `week`, `month`, `year`, `lifetime`. The Stars bot uses this endpoint
 after a successful payment and sends the returned key to the buyer.
+
+## Shared accounts
+
+`docs/auth.js` adds one account widget to every DevAI site. A registration
+creates the account and a membership for every site in `SITES`; other sites
+restore the same bearer token from `localStorage` and call `/v1/auth/me`.
+Nicknames are unique (case-insensitive) and immutable: `PUT /v1/auth/profile`
+rejects any nickname change. Passwords are scrypt-hashed and must reach at
+least the "Средний" level (8+ characters and multiple character classes).
 
 ## Public website signup
 

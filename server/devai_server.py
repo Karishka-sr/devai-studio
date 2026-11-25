@@ -6,6 +6,7 @@ API keys are stored hashed in SQLite; the admin token is local-only.
 """
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import json
@@ -15,6 +16,7 @@ import secrets
 import sqlite3
 import threading
 import time
+import unicodedata
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -58,6 +60,18 @@ PROMO_ATTEMPTS: dict[str, list[float]] = {}
 PROMO_ATTEMPT_LOCK = threading.Lock()
 CHALLENGES: dict[str, tuple[float, str]] = {}
 CHALLENGE_LOCK = threading.Lock()
+AUTH_SESSION_TTL = 30 * 86400
+AUTH_ATTEMPTS: dict[str, list[float]] = {}
+AUTH_ATTEMPT_LOCK = threading.Lock()
+AUTH_MAX_ATTEMPTS = 20
+AUTH_ATTEMPT_WINDOW = 600
+NICK_RE = re.compile(r"^[A-Za-zА-Яа-яЁё0-9][A-Za-zА-Яа-яЁё0-9_.-]{1,30}[A-Za-zА-Яа-яЁё0-9]$")
+SITES = {
+    "devai-studio": {"name": "DevAI Studio", "url": "https://karishka-sr.github.io/devai-studio/"},
+    "calculators": {"name": "Calculators", "url": "https://karishka-sr.github.io/Calculators/"},
+    "gramhub": {"name": "GramHub", "url": "https://karishka-sr.github.io/gramhub/"},
+    "telegram-sender": {"name": "Telegram Sender", "url": "https://karishka-sr.github.io/telegram-sender/"},
+}
 
 SYSTEM_PROMPT = """Ты — DevAI Core v0.1, собственный ИИ DevAI Studio.
 Ты помогаешь разработчику: код, архитектура, ошибки, тесты, интерфейс и тексты.
@@ -137,6 +151,27 @@ def init_db() -> None:
             );
             CREATE INDEX IF NOT EXISTS idx_promo_redemptions_code_device
                 ON promo_redemptions(code, device_hash);
+            CREATE TABLE IF NOT EXISTS accounts (
+                id TEXT PRIMARY KEY,
+                nickname TEXT NOT NULL,
+                nickname_key TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'user',
+                created REAL NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS auth_sessions (
+                token_hash TEXT PRIMARY KEY,
+                account_id TEXT NOT NULL,
+                created REAL NOT NULL,
+                expires REAL NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_auth_sessions_account ON auth_sessions(account_id);
+            CREATE TABLE IF NOT EXISTS site_memberships (
+                account_id TEXT NOT NULL,
+                site TEXT NOT NULL,
+                created REAL NOT NULL,
+                PRIMARY KEY (account_id, site)
+            );
             """
         )
         columns = {row["name"] for row in conn.execute("PRAGMA table_info(keys)")}
@@ -176,6 +211,178 @@ ADMIN_TOKEN = admin_token()
 
 def hash_key(raw: str) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
+
+
+class AuthError(Exception):
+    def __init__(self, status: int, message: str):
+        super().__init__(message)
+        self.status = status
+        self.message = message
+
+
+def normalize_nickname(value: str) -> str:
+    return unicodedata.normalize("NFKC", str(value or "")).strip()
+
+
+def nickname_key(nickname: str) -> str:
+    return normalize_nickname(nickname).casefold()
+
+
+def validate_nickname(nickname: str) -> None:
+    if not NICK_RE.fullmatch(nickname):
+        raise AuthError(
+            400,
+            "Ник: 3–32 символа, только буквы, цифры, точка, дефис и подчёркивание.",
+        )
+
+
+def password_score(password: str) -> int:
+    if len(password) < 8:
+        return 0
+    score = 1
+    if len(password) >= 12:
+        score += 1
+    if re.search(r"[a-z]", password) and re.search(r"[A-Z]", password):
+        score += 1
+    if re.search(r"\d", password):
+        score += 1
+    if re.search(r"[^A-Za-zА-Яа-яЁё0-9]", password):
+        score += 1
+    return min(4, score)
+
+
+def password_label(score: int) -> str:
+    return ("Лёгкий", "Лёгкий", "Средний", "Сильный", "Максимальный")[max(0, min(4, score))]
+
+
+def hash_password(password: str) -> str:
+    salt = secrets.token_bytes(16)
+    digest = hashlib.scrypt(password.encode("utf-8"), salt=salt, n=2**14, r=8, p=1, dklen=64)
+    return "scrypt$" + base64.b64encode(salt).decode() + "$" + base64.b64encode(digest).decode()
+
+
+def verify_password(password: str, stored: str) -> bool:
+    try:
+        algorithm, salt_b64, digest_b64 = stored.split("$", 2)
+        if algorithm != "scrypt":
+            return False
+        salt = base64.b64decode(salt_b64)
+        expected = base64.b64decode(digest_b64)
+        actual = hashlib.scrypt(password.encode("utf-8"), salt=salt, n=2**14, r=8, p=1, dklen=64)
+        return hmac.compare_digest(actual, expected)
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def auth_rate_ok(ip: str) -> bool:
+    now = time.time()
+    with AUTH_ATTEMPT_LOCK:
+        recent = [ts for ts in AUTH_ATTEMPTS.get(ip, []) if ts > now - AUTH_ATTEMPT_WINDOW]
+        AUTH_ATTEMPTS[ip] = recent
+        if len(recent) >= AUTH_MAX_ATTEMPTS:
+            return False
+        recent.append(now)
+        return True
+
+
+def site_info(site_id: str) -> dict:
+    info = SITES.get(site_id) or SITES["devai-studio"]
+    return {"id": site_id if site_id in SITES else "devai-studio", **info}
+
+
+def ensure_membership(account_id: str, site_id: str) -> None:
+    site_id = site_id if site_id in SITES else "devai-studio"
+    with DB_LOCK, db() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO site_memberships(account_id, site, created) VALUES (?, ?, ?)",
+            (account_id, site_id, time.time()),
+        )
+
+
+def account_sites(account_id: str) -> list[dict]:
+    with db() as conn:
+        rows = conn.execute(
+            "SELECT site FROM site_memberships WHERE account_id = ? ORDER BY site", (account_id,)
+        ).fetchall()
+    return [{"id": row["site"], **SITES[row["site"]]} for row in rows if row["site"] in SITES]
+
+
+def account_payload(row) -> dict:
+    return {
+        "id": row["id"],
+        "nickname": row["nickname"],
+        "role": row["role"],
+        "created": row["created"],
+        "sites": account_sites(row["id"]),
+    }
+
+
+def create_session(account_id: str) -> str:
+    token = "devai-acct-" + secrets.token_urlsafe(32)
+    now = time.time()
+    with DB_LOCK, db() as conn:
+        conn.execute(
+            "INSERT INTO auth_sessions(token_hash, account_id, created, expires) VALUES (?, ?, ?, ?)",
+            (hash_key(token), account_id, now, now + AUTH_SESSION_TTL),
+        )
+    return token
+
+
+def account_from_token(raw: str):
+    if not raw:
+        return None
+    now = time.time()
+    with DB_LOCK, db() as conn:
+        row = conn.execute(
+            "SELECT a.* FROM auth_sessions s JOIN accounts a ON a.id = s.account_id "
+            "WHERE s.token_hash = ? AND s.expires > ?",
+            (hash_key(raw), now),
+        ).fetchone()
+        if row is None:
+            conn.execute("DELETE FROM auth_sessions WHERE expires <= ?", (now,))
+        return row
+
+
+def register_account(
+    nickname: str,
+    password: str,
+    role: str = "user",
+    site: str = "devai-studio",
+    issue_session: bool = True,
+) -> tuple[dict, str]:
+    nickname = normalize_nickname(nickname)
+    validate_nickname(nickname)
+    if password_score(password) < 2:
+        raise AuthError(400, "Пароль слишком лёгкий. Нужен хотя бы средний уровень (8+ символов).")
+    key = nickname_key(nickname)
+    account_id = secrets.token_hex(12)
+    now = time.time()
+    with DB_LOCK, db() as conn:
+        if conn.execute("SELECT 1 FROM accounts WHERE nickname_key = ?", (key,)).fetchone():
+            raise AuthError(409, "Этот ник уже занят.")
+        conn.execute(
+            "INSERT INTO accounts(id, nickname, nickname_key, password_hash, role, created) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (account_id, nickname, key, hash_password(password), role, now),
+        )
+        for site_id in SITES:
+            conn.execute(
+                "INSERT OR IGNORE INTO site_memberships(account_id, site, created) VALUES (?, ?, ?)",
+                (account_id, site_id, now),
+            )
+        row = conn.execute("SELECT * FROM accounts WHERE id = ?", (account_id,)).fetchone()
+    ensure_membership(account_id, site)
+    return account_payload(row), (create_session(account_id) if issue_session else "")
+
+
+def login_account(nickname: str, password: str, site: str = "devai-studio") -> tuple[dict, str]:
+    nickname = normalize_nickname(nickname)
+    with db() as conn:
+        row = conn.execute("SELECT * FROM accounts WHERE nickname_key = ?", (nickname_key(nickname),)).fetchone()
+    if row is None or not verify_password(password, row["password_hash"]):
+        raise AuthError(401, "Неверный ник или пароль.")
+    ensure_membership(row["id"], site)
+    return account_payload(row), create_session(row["id"])
 
 
 def effective_tier(row, now: float | None = None) -> str:
@@ -427,7 +634,7 @@ class Handler(BaseHTTPRequestHandler):
     def _cors(self) -> None:
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Admin-Token")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 
     def _send_json(self, code: int, payload: dict, extra: dict | None = None) -> None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -568,6 +775,31 @@ class Handler(BaseHTTPRequestHandler):
                 },
             )
             return
+        if path == "/v1/auth/sites":
+            self._send_json(200, {"sites": [{"id": key, **value} for key, value in SITES.items()]})
+            return
+        if path == "/v1/auth/check":
+            query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            nickname = normalize_nickname((query.get("nickname") or [""])[0])
+            try:
+                validate_nickname(nickname)
+            except AuthError as exc:
+                self._send_json(200, {"available": False, "reason": exc.message})
+                return
+            with db() as conn:
+                taken = conn.execute("SELECT 1 FROM accounts WHERE nickname_key = ?", (nickname_key(nickname),)).fetchone()
+            self._send_json(200, {"available": taken is None, "nickname": nickname})
+            return
+        if path == "/v1/auth/me":
+            row = account_from_token(self._bearer())
+            if row is None:
+                self._error(401, "Нужно войти в аккаунт.", "authentication_error")
+                return
+            query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            site = (query.get("site") or ["devai-studio"])[0].strip().lower()
+            ensure_membership(row["id"], site)
+            self._send_json(200, {"account": account_payload(row), "site": site_info(site)})
+            return
         if path == "/":
             self._send_json(
                 200,
@@ -586,6 +818,13 @@ class Handler(BaseHTTPRequestHandler):
                         "POST /v1/promo/activate",
                         "POST /admin/promo",
                         "GET /admin/promo",
+                        "GET /v1/auth/sites",
+                        "GET /v1/auth/check?nickname=",
+                        "POST /v1/auth/register",
+                        "POST /v1/auth/login",
+                        "GET /v1/auth/me",
+                        "POST /v1/auth/logout",
+                        "PUT /v1/auth/profile",
                     ],
                 },
             )
@@ -677,6 +916,38 @@ class Handler(BaseHTTPRequestHandler):
             return
         self._error(404, "Not found.", "not_found")
 
+    def do_PUT(self) -> None:  # noqa: N802
+        path = urllib.parse.urlparse(self.path).path
+        if path != "/v1/auth/profile":
+            self._error(404, "Not found.", "not_found")
+            return
+        row = account_from_token(self._bearer())
+        if row is None:
+            self._error(401, "Нужно войти в аккаунт.", "authentication_error")
+            return
+        try:
+            body = self._read_json()
+        except Exception as exc:  # noqa: BLE001
+            self._error(400, f"Invalid JSON: {exc}")
+            return
+        if "nickname" in body:
+            requested = normalize_nickname(body.get("nickname", ""))
+            if nickname_key(requested) != nickname_key(row["nickname"]):
+                self._error(403, "Никнейм изменить нельзя.", "permission_error")
+                return
+        if "password" in body:
+            current = str(body.get("current_password", ""))
+            new_password = str(body.get("password", ""))
+            if not verify_password(current, row["password_hash"]):
+                self._error(401, "Текущий пароль неверный.", "authentication_error")
+                return
+            if password_score(new_password) < 2:
+                self._error(400, "Пароль слишком лёгкий. Нужен хотя бы средний уровень (8+ символов).")
+                return
+            with DB_LOCK, db() as conn:
+                conn.execute("UPDATE accounts SET password_hash = ? WHERE id = ?", (hash_password(new_password), row["id"]))
+        self._send_json(200, {"account": account_payload(row), "message": "Данные сохранены. Ник остался прежним."})
+
     def do_DELETE(self) -> None:  # noqa: N802
         path = urllib.parse.urlparse(self.path).path
         parts = path.strip("/").split("/")
@@ -714,6 +985,78 @@ class Handler(BaseHTTPRequestHandler):
             body = self._read_json()
         except Exception as exc:  # noqa: BLE001
             self._error(400, f"Invalid JSON: {exc}")
+            return
+
+        if path == "/v1/auth/register":
+            if not auth_rate_ok(self._client_ip()):
+                self._error(429, "Слишком много попыток. Попробуй через 10 минут.", "rate_limit_error")
+                return
+            try:
+                account, token = register_account(
+                    str(body.get("nickname", "")),
+                    str(body.get("password", "")),
+                    site=str(body.get("site", "devai-studio")).strip().lower(),
+                )
+            except AuthError as exc:
+                self._error(exc.status, exc.message, "authentication_error")
+                return
+            self._send_json(
+                201,
+                {
+                    "account": account,
+                    "token": token,
+                    "site": site_info(str(body.get("site", "devai-studio")).strip().lower()),
+                    "message": "Аккаунт создан на всех сайтах.",
+                },
+            )
+            return
+
+        if path == "/v1/auth/login":
+            if not auth_rate_ok(self._client_ip()):
+                self._error(429, "Слишком много попыток. Попробуй через 10 минут.", "rate_limit_error")
+                return
+            try:
+                account, token = login_account(
+                    str(body.get("nickname", "")),
+                    str(body.get("password", "")),
+                    site=str(body.get("site", "devai-studio")).strip().lower(),
+                )
+            except AuthError as exc:
+                self._error(exc.status, exc.message, "authentication_error")
+                return
+            self._send_json(
+                200,
+                {
+                    "account": account,
+                    "token": token,
+                    "site": site_info(str(body.get("site", "devai-studio")).strip().lower()),
+                },
+            )
+            return
+
+        if path == "/v1/auth/logout":
+            token = self._bearer()
+            if token:
+                with DB_LOCK, db() as conn:
+                    conn.execute("DELETE FROM auth_sessions WHERE token_hash = ?", (hash_key(token),))
+            self._send_json(200, {"ok": True})
+            return
+
+        if path == "/admin/accounts/owner":
+            if not self._is_admin():
+                self._error(401, "Admin token required.", "authentication_error")
+                return
+            try:
+                account, _ = register_account(
+                    str(body.get("nickname", "")),
+                    str(body.get("password", "")),
+                    role="owner",
+                    issue_session=False,
+                )
+            except AuthError as exc:
+                self._error(exc.status, exc.message, "authentication_error")
+                return
+            self._send_json(201, {"account": account, "message": "Владелец создан."})
             return
 
         if path == "/v1/chat/completions":
