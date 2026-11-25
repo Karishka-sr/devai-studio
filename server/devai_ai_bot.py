@@ -83,6 +83,7 @@ COMMENT_LAST: dict[int, float] = {}
 COMMENT_TIMES: list[float] = []
 _FEATURED_CACHE: dict[str, object] = {"at": 0.0, "items": []}
 _WIKI_CACHE: dict[str, str] = {}
+_HISTORY: dict[tuple[int, int], list[tuple[str, str]]] = {}
 CHANNEL_SOURCES = tuple(
     part.strip().lower()
     for part in os.environ.get(
@@ -273,7 +274,7 @@ def ask_ai(api_key: str, prompt: str, max_tokens: int = 500, system: str = "") -
     data = api_post(
         "/v1/chat/completions",
         {
-            "model": "devai-core-3.0",
+            "model": "devai-core-4.0",
             "messages": [
                 {"role": "system", "content": system or "Ты DevAI. Отвечай кратко, по-русски и по делу."},
                 {"role": "user", "content": prompt[:4000]},
@@ -745,6 +746,114 @@ def _fallback_comment(kind: str) -> str:
     }.get(kind, "Спасибо! Напишите чуть конкретнее — и я отвечу по делу.")
 
 
+def _history_text(chat_id: int, sender: int) -> str:
+    turns = _HISTORY.get((chat_id, sender), [])[-3:]
+    lines = []
+    for question, answer in turns:
+        lines.append("Пользователь: " + question[:300])
+        lines.append("DevAI: " + answer[:400])
+    return "\n".join(lines)
+
+
+def _remember(chat_id: int, sender: int, question: str, answer: str) -> None:
+    turns = _HISTORY.setdefault((chat_id, sender), [])
+    turns.append((question[:500], answer[:800]))
+    del turns[:-6]
+
+
+def _weather_answer(text: str) -> str:
+    match = re.search(r"(?i)погода(?:\s+(?:в|во))?\s+([А-Яа-яЁёA-Za-z -]{2,40})", text)
+    if not match:
+        return ""
+    city = match.group(1).strip(" ?!.,")
+    try:
+        geo_url = (
+            "https://geocoding-api.open-meteo.com/v1/search?name="
+            + urllib.parse.quote(city) + "&count=1&language=ru&format=json"
+        )
+        request = urllib.request.Request(geo_url, headers={"User-Agent": USER_AGENT})
+        with urllib.request.urlopen(request, timeout=10) as response:
+            geo = json.loads(response.read())
+        place = (geo.get("results") or [{}])[0]
+        if not place.get("latitude"):
+            return ""
+        forecast_url = (
+            "https://api.open-meteo.com/v1/forecast?latitude=" + str(place["latitude"])
+            + "&longitude=" + str(place["longitude"])
+            + "&current=temperature_2m,apparent_temperature,wind_speed_10m&timezone=auto"
+        )
+        request = urllib.request.Request(forecast_url, headers={"User-Agent": USER_AGENT})
+        with urllib.request.urlopen(request, timeout=10) as response:
+            data = json.loads(response.read())
+        current = data.get("current") or {}
+        name = city
+        return (
+            "Сейчас в " + str(name) + ": " + str(current.get("temperature_2m")) + "°C, "
+            "ощущается как " + str(current.get("apparent_temperature")) + "°C, "
+            "ветер " + str(current.get("wind_speed_10m")) + " км/ч."
+        )
+    except Exception:
+        return ""
+
+
+def _currency_answer(text: str) -> str:
+    if not re.search(r"(?i)курс|сколько стоит", text):
+        return ""
+    match = re.search(r"(?i)(доллар|евро|юань|фунт|тенге|гривн)", text)
+    if not match:
+        return ""
+    code = {"доллар": "USD", "евро": "EUR", "юань": "CNY", "фунт": "GBP", "тенге": "KZT", "гривн": "UAH"}[match.group(1).lower()]
+    try:
+        url = "https://open.er-api.com/v6/latest/" + code
+        request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        with urllib.request.urlopen(request, timeout=10) as response:
+            data = json.loads(response.read())
+        rate = (data.get("rates") or {}).get("RUB")
+        if not rate:
+            return ""
+        return "Курс " + code + "/RUB: " + str(round(float(rate), 2)) + " ₽ за 1 " + code + "."
+    except Exception:
+        return ""
+
+
+def _news_answer(text: str) -> str:
+    if not re.search(r"(?i)новост|что случилось|последние событ|что нового", text):
+        return ""
+    try:
+        url = (
+            "https://news.google.com/rss/search?q=" + urllib.parse.quote(text[:120])
+            + "&hl=ru&gl=RU&ceid=RU:ru"
+        )
+        request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        with urllib.request.urlopen(request, timeout=12) as response:
+            data = response.read().decode("utf-8", "replace")
+        titles = re.findall(r"<title><!\[CDATA\[(.*?)\]\]></title>", data)
+        if len(titles) < 2:
+            titles = re.findall(r"<title>(.*?)</title>", data)
+        titles = [html.unescape(re.sub(r"<[^>]+>", "", title)).strip() for title in titles[1:6]]
+        titles = [title for title in titles if title and title.lower() != "google новости"]
+        if not titles:
+            return ""
+        return "Свежие заголовки:\n" + "\n".join("• " + title for title in titles[:4])
+    except Exception:
+        return ""
+
+
+def _live_answer(text: str) -> str:
+    low = text.lower()
+    if re.search(r"погода", low):
+        return _weather_answer(text)
+    if re.search(r"курс|сколько стоит", low):
+        return _currency_answer(text)
+    if re.search(r"новост|что случилось|последние событ|что нового", low):
+        return _news_answer(text)
+    if re.search(r"который час|сколько времени", low):
+        return "Сейчас " + datetime.now().strftime("%H:%M") + " по времени сервера."
+    if re.search(r"какое сегодня число|какая дата", low):
+        return "Сегодня " + datetime.now().strftime("%d.%m.%Y") + "."
+    return ""
+
+
 def _wiki_answer(text: str) -> str:
     query = _strip_bot_mention(text).strip(" ?!.")
     if len(query) < 4:
@@ -788,19 +897,19 @@ def _wiki_answer(text: str) -> str:
     return ""
 
 
-def _model_answer(text: str, kind: str) -> str:
+def _model_answer(text: str, kind: str, history: str = "") -> str:
     key = ensure_channel_key()
     if not key:
         return ""
     context = _knowledge_for(text)
-    prompt = "Вопрос: " + text[:1200]
+    prompt = ("Недавний диалог:\n" + history + "\n\n" if history else "") + "Вопрос: " + text[:1200]
     if context:
         prompt += "\n\nПроверенные заметки по теме:\n" + context
     system = (
         "Ты DevAI — полезный ИИ-помощник проекта DevAI Studio. "
         "Ответь по-русски, по существу и без встречных вопросов, если можешь ответить сам. "
         "Пиши 2–4 предложения, не выдумывай факты. Если не знаешь точно — скажи это прямо. "
-        "Никогда не используй китайские иероглифы."
+        "Никогда не используй китайские иероглифы. Учитывай недавний диалог, если он есть."
     )
     try:
         answer = ask_ai(key, prompt, max_tokens=240, system=system)
@@ -808,6 +917,12 @@ def _model_answer(text: str, kind: str) -> str:
         log.warning("model answer failed: %s", str(exc)[:200])
         return ""
     answer = str(answer or "").strip()
+    answer = re.sub(
+        r"\n?\s*\*\s*(?:Вам|Тебе) нужна помощь.*$",
+        "",
+        answer,
+        flags=re.IGNORECASE | re.DOTALL,
+    ).strip()
     if re.search(r"[\u3400-\u9fff]", answer):
         sentences = re.split(r"(?<=[.!?])\s+", answer)
         answer = " ".join(sentence for sentence in sentences if not re.search(r"[\u3400-\u9fff]", sentence)).strip()
@@ -854,7 +969,7 @@ def _faq_answer(text: str) -> str:
             "и 60 запросов в минуту. Ключ можно создать на сайте."
         )),
         (r"модель|локальн|сервер|сколько ждать", (
-            "Сейчас отвечает devai-core-3.0. Он работает локально на сервере проекта; "
+            "Сейчас отвечает devai-core-4.0. Он работает локально на сервере проекта; "
             "на ответ нужно несколько секунд."
         )),
         (r"сайт|ссылк|где скачать|релиз|версия|обнов", (
@@ -876,22 +991,26 @@ def _faq_answer(text: str) -> str:
     return ""
 
 
-def _comment_answer(text: str, kind: str) -> str:
+def _comment_answer(text: str, kind: str, history: str = "") -> str:
     faq = _faq_answer(text) if kind not in {"criticism", "spam"} else ""
     if faq:
         return faq
+    if kind not in {"criticism", "spam"}:
+        live = _live_answer(text)
+        if live:
+            return live
     if kind == "question":
         wiki = _wiki_answer(text)
         if wiki:
             return wiki
-        model = _model_answer(text, kind)
+        model = _model_answer(text, kind, history)
         if model:
             return model
         return (
             "Пока не нашёл проверенных данных по этому вопросу. "
             "Пришлите ссылку или книгу — разберу и запомню."
         )
-    model = _model_answer(text, kind)
+    model = _model_answer(text, kind, history)
     if model:
         return model
     return _fallback_comment(kind)
@@ -1009,7 +1128,9 @@ def handle_comment(message: dict) -> None:
     COMMENT_LAST[sender] = now
     COMMENT_TIMES.append(now)
     kind = _comment_kind(text)
-    answer = _comment_answer(text, kind)
+    history = _history_text(chat_id, sender)
+    answer = _comment_answer(text, kind, history)
+    _remember(chat_id, sender, text, answer)
     result = tg(
         "sendMessage",
         chat_id=chat_id,
@@ -1050,7 +1171,10 @@ def handle_message(message: dict) -> None:
                 return
             text = _strip_bot_mention(text) or "привет"
             tg("sendChatAction", chat_id=chat_id, action="typing")
-        answer = _comment_answer(text, _comment_kind(text))
+        sender = int((message.get("from") or {}).get("id") or 0)
+        history = _history_text(chat_id, sender)
+        answer = _comment_answer(text, _comment_kind(text), history)
+        _remember(chat_id, sender, text, answer)
         _send(chat_id, answer)
         return
     command, _, argument = text.partition(" ")

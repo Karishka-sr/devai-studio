@@ -6,7 +6,7 @@
   const SETTINGS_KEY = "devai.playground.settings.v1";
   const KEY_SESSION = "devai.playground.key";
   const DEFAULT_BASE = "https://work-2-nizvyfgvcqicrkif.prod-runtime.all-hands.dev/v1";
-  const DEFAULT_MODEL = "devai-core-0.2";
+  const DEFAULT_MODEL = "devai-core-4.0";
   const MAX_CONTEXT = 14000;
 
   const $ = (selector, scope = document) => scope.querySelector(selector);

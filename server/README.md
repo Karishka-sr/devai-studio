@@ -23,7 +23,7 @@ private: it can create and revoke API keys.
 
 - Base URL: `https://<host>/v1`
 - API key: `devai-sk-...`
-- Model: `devai-core-0.2`
+- Model: `devai-core-4.0`
 
 ## Endpoints
 

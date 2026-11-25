@@ -236,7 +236,7 @@ function downloadKey() {
     "DevAI Core API",
     "",
     `Base URL: ${apiBase()}`,
-    "Model: devai-core-0.2",
+    "Model: devai-core-4.0",
     `API key: ${currentKey}`,
     "",
     "Authorization: Bearer " + currentKey,
@@ -357,7 +357,7 @@ $("#check-key").addEventListener("click", async (event) => {
       headers: { Authorization: `Bearer ${currentKey}` },
     });
     renderQuota(data);
-    setStatus(keyStatus, `Ключ работает. Модель: ${data.model || "devai-core-0.2"}.`, "");
+    setStatus(keyStatus, `Ключ работает. Модель: ${data.model || "devai-core-4.0"}.`, "");
   } catch (error) {
     setStatus(keyStatus, error.message || "Ключ не работает.", "error");
   } finally {

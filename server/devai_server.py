@@ -36,7 +36,7 @@ from devai_web import (
 )
 
 SERVER_VERSION = "0.5.0"
-MODEL_ID = "devai-core-3.0"
+MODEL_ID = "devai-core-4.0"
 ROOT = Path(__file__).resolve().parent
 DATA = Path(os.environ.get("DEVAI_DATA_DIR", ROOT / "data"))
 DATA.mkdir(parents=True, exist_ok=True)
@@ -45,9 +45,11 @@ ADMIN_FILE = DATA / "admin_token"
 DEFAULT_MODEL = Path(
     os.environ.get(
         "DEVAI_MODEL_PATH",
-        str(ROOT / "models" / "qwen2.5-3b-instruct-q4_k_m.gguf"),
+        str(ROOT / "models" / "google_gemma-3-4b-it-Q4_K_M.gguf"),
     )
 )
+if not DEFAULT_MODEL.exists():
+    DEFAULT_MODEL = ROOT / "models" / "qwen2.5-3b-instruct-q4_k_m.gguf"
 if not DEFAULT_MODEL.exists():
     DEFAULT_MODEL = ROOT / "models" / "qwen2.5-0.5b-instruct-q4_k_m.gguf"
 HOST = os.environ.get("DEVAI_HOST", "0.0.0.0")

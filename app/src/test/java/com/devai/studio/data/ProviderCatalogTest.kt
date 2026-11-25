@@ -14,7 +14,7 @@ class ProviderCatalogTest {
         assertEquals("DevAI Core", provider!!.name)
         assertEquals(Category.FULLY_FREE, provider.category)
         assertEquals(AiFormat.OPENAI_COMPAT, provider.format)
-        assertEquals(listOf("devai-core-0.1"), provider.models)
+        assertEquals(listOf("devai-core-4.0"), provider.models)
         assertTrue(provider.baseUrl.endsWith("/v1"))
         assertTrue(provider.getKeyUrl.contains("github.io/devai-studio"))
     }

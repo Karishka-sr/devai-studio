@@ -65,7 +65,7 @@
   -H <span class="s">"Authorization: Bearer $DEVAI_KEY"</span> \
   -H <span class="s">"Content-Type: application/json"</span> \
   -d <span class="s">'{
-    "model": "devai-core-0.2",
+    "model": "devai-core-4.0",
     "messages": [
       {"role": "user", "content": "Привет!"}
     ]
@@ -214,7 +214,7 @@
   -H <span class="s">"Authorization: Bearer $DEVAI_KEY"</span> \
   -H <span class="s">"Content-Type: application/json"</span> \
   -d <span class="s">'{
-    "model": "devai-core-0.2",
+    "model": "devai-core-4.0",
     "messages": [{"role": "user", "content": "Напиши hello world на Kotlin"}],
     "stream": false
   }'</span></code></pre>
@@ -230,7 +230,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model=<span class="s">"devai-core-0.2"</span>,
+    model=<span class="s">"devai-core-4.0"</span>,
     messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: <span class="s">"Привет!"</span>}],
 )
 <span class="k">print</span>(response.choices[<span class="n">0</span>].message.content)</code></pre>
@@ -247,7 +247,7 @@ response = client.chat.completions.create(
       <span class="s">"Content-Type"</span>: <span class="s">"application/json"</span>,
     },
     body: JSON.stringify({
-      model: <span class="s">"devai-core-0.2"</span>,
+      model: <span class="s">"devai-core-4.0"</span>,
       messages: [{ role: <span class="s">"user"</span>, content: <span class="s">"Привет!"</span> }],
     }),
   },
@@ -306,7 +306,7 @@ console.log(data.choices[<span class="n">0</span>].message.content);</code></pre
         <article class="card">
           <span class="card-num">03</span>
           <h3>Модель и лимиты</h3>
-          <p><code>devai-core-0.2</code>, до 1024 токенов в ответе. Пробный ключ — 5 запросов/мин и 5 000 токенов/мес, Premium — 60 запросов/мин и 100 000 токенов/мес.</p>
+          <p><code>devai-core-4.0</code>, до 1024 токенов в ответе. Пробный ключ — 5 запросов/мин и 5 000 токенов/мес, Premium — 60 запросов/мин и 100 000 токенов/мес.</p>
         </article>
         <article class="card">
           <span class="card-num">04</span>
@@ -367,7 +367,7 @@ console.log(data.choices[<span class="n">0</span>].message.content);</code></pre
       <span class="brand-mark" aria-hidden="true"></span>
       <span>DevAI Studio</span>
     </div>
-    <p>Сделано автором DevAI Studio. Модель: <code>devai-core-0.2</code>. Приложение: <a href="index.html">DevAI Studio 4.5.0</a>.</p>
+    <p>Сделано автором DevAI Studio. Модель: <code>devai-core-4.0</code>. Приложение: <a href="index.html">DevAI Studio 4.5.0</a>.</p>
     <div class="footer-links">
       <a href="https://github.com/Karishka-sr/devai-studio" target="_blank" rel="noreferrer">Исходники</a>
       <a href="https://github.com/Karishka-sr/devai-studio/releases" target="_blank" rel="noreferrer">APK</a>

@@ -14,8 +14,11 @@ object AiSupport {
 
     fun provider(ctx: Context): ProviderInfo? = ProviderCatalog.find(AppPrefs.activeProvider(ctx))
 
-    fun model(ctx: Context, p: ProviderInfo): String =
-        AppPrefs.modelFor(ctx, p.id)?.takeIf { it.isNotBlank() } ?: p.models.firstOrNull().orEmpty()
+    fun model(ctx: Context, p: ProviderInfo): String {
+        val saved = AppPrefs.modelFor(ctx, p.id)?.takeIf { it.isNotBlank() }
+        if (saved != null && (p.models.isEmpty() || saved in p.models)) return saved
+        return p.models.firstOrNull().orEmpty()
+    }
 
     /** Собирает конфиг для активного провайдера или бросает IllegalStateException с понятным текстом. */
     fun config(ctx: Context): AiConfig {
