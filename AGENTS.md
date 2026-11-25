@@ -143,3 +143,10 @@
 - Installer: `desktop/installer.nsi` (NSIS), build with `makensis installer.nsi` from the stage directory. It selects Windows 7/10/11, writes `target.ini`, and has a custom components page (full/minimal).
 - Full components: Vexel APK, ADB platform-tools, desktop/Start-menu shortcuts, `Vexel.cmd` launcher.
 - The app resolves the bundled APK, ADB, and `target.ini` from the JAR's parent directory, so shortcuts do not depend on `user.dir`.
+
+## Telegram Stars bot & promo codes (server/stars_bot.py)
+- `server/stars_bot.py` is the Telegram bot: affiliate links/balance, XTR invoices, partner payouts, promo-code admin generation, and the Mini App menu button. It needs `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_IDS`, and (for real unique codes) `DEVAI_ADMIN_TOKEN`; never commit the token.
+- Promo codes live in `server/devai_server.py`: `POST /admin/promo` (admin token, batch generation), `GET /admin/promo`, `DELETE /admin/promo/<code>`, and public `POST /v1/promo/activate` with `{code, device_id}`. Codes are `DVS-XXXX-XXXX`, one-time by default, device-bound, expiring (30 days default), and stored in `promo_codes` / `promo_redemptions`.
+- On successful payment the bot asks the server for a unique one-time code and falls back to the legacy `STARS-*` code only when `DEVAI_ADMIN_TOKEN` is absent or the API fails. The Android app validates `DVS-*` through `data/PromoClient.kt`; legacy codes still activate locally.
+- `app/build.gradle.kts` exposes `PROMO_API_URL` (env/local.properties `PROMO_API_URL`, default current work host) and `TELEGRAM_BOT_USERNAME`. When the bot username is set, the app's «Оплатить» opens `https://t.me/<bot>?start=buy_<plan>`; otherwise it keeps the manual order text flow. Update the API URL with `ProviderCatalog` when the server moves.
+- `docs/mini/` is the Telegram Mini App. It is static, reads the bot username from `?bot=`, and opens `https://t.me/<bot>?start=buy_<plan>` or `?start=partner`. The bot sets it as the chat menu button and main-menu button; it needs a public HTTPS URL (`STARS_MINI_APP_URL`).

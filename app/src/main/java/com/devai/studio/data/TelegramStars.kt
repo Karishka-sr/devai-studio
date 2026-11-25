@@ -5,10 +5,12 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import com.devai.studio.BuildConfig
 
 object TelegramStars {
-    const val USERNAME = "FemClaudeMrrr"
-    const val URL = "https://t.me/$USERNAME"
+    private val botUsername = BuildConfig.TELEGRAM_BOT_USERNAME.trim().removePrefix("@")
+    val USERNAME = botUsername.ifBlank { "FemClaudeMrrr" }
+    val URL = "https://t.me/$USERNAME"
 
     fun orderId(plan: PremiumPlan): String =
         "DVS-${plan.id.uppercase()}-${System.currentTimeMillis().toString(36).uppercase()}"
@@ -25,9 +27,13 @@ object TelegramStars {
     }
 
     fun open(ctx: Context, plan: PremiumPlan, orderId: String): Boolean = runCatching {
-        val text = Uri.encode(orderText(plan, orderId))
+        val target = if (botUsername.isNotBlank()) {
+            "$URL?start=buy_${plan.id}"
+        } else {
+            "$URL?text=${Uri.encode(orderText(plan, orderId))}"
+        }
         ctx.startActivity(
-            Intent(Intent.ACTION_VIEW, Uri.parse("$URL?text=$text"))
+            Intent(Intent.ACTION_VIEW, Uri.parse(target))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         )
     }.isSuccess

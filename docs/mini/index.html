@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#070707">
+  <title>DevAI Premium — Mini App</title>
+  <meta name="description" content="Telegram Mini App для покупки DevAI Premium за Telegram Stars и партнёрской программы.">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="mini.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <div class="glow glow-a" aria-hidden="true"></div>
+  <div class="glow glow-b" aria-hidden="true"></div>
+
+  <header class="top">
+    <a class="brand" href="../index.html">
+      <img src="../favicon.svg" alt="" width="28" height="28">
+      <span>DEVAI<span class="slash">/</span>STUDIO</span>
+    </a>
+    <span class="who" id="who">MINI APP</span>
+  </header>
+
+  <main class="wrap">
+    <p class="eyebrow"><i aria-hidden="true"></i> TELEGRAM MINI APP</p>
+    <h1>Premium<br><span>за Stars.</span></h1>
+    <p class="lede">Выбери тариф — бот пришлёт счёт в Telegram Stars. После оплаты код активации придёт в этот чат.</p>
+
+    <section class="plans" id="plans" aria-label="Тарифы Premium"></section>
+
+    <div class="actions">
+      <button class="ghost" type="button" id="partner">Партнёрская программа</button>
+      <a class="ghost" href="../stars/">Сайт Premium</a>
+    </div>
+
+    <p class="hint" id="hint">Открой мини-апп из бота, чтобы кнопки работали.</p>
+    <p class="fine">Оплата проходит в Telegram Stars. Сайт и мини-апп не принимают карты и не хранят платёжные данные.</p>
+  </main>
+
+  <script src="mini.js"></script>
+</body>
+</html>

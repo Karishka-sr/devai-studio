@@ -31,6 +31,11 @@ android {
         buildConfigField("String", "FIREBASE_API_KEY", "\"${buildSecret("FIREBASE_API_KEY")}\"")
         buildConfigField("String", "FIREBASE_APP_ID", "\"${buildSecret("FIREBASE_APP_ID")}\"")
         buildConfigField("String", "FIREBASE_PROJECT_ID", "\"${buildSecret("FIREBASE_PROJECT_ID")}\"")
+        val promoApiUrl = buildSecret("PROMO_API_URL").ifBlank {
+            "https://work-2-nizvyfgvcqicrkif.prod-runtime.all-hands.dev/v1/promo/activate"
+        }
+        buildConfigField("String", "PROMO_API_URL", "\"$promoApiUrl\"")
+        buildConfigField("String", "TELEGRAM_BOT_USERNAME", "\"${buildSecret("TELEGRAM_BOT_USERNAME")}\"")
         ndk {
             abiFilters += listOf("arm64-v8a")
         }

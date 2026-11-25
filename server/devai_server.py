@@ -10,6 +10,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import secrets
 import sqlite3
 import threading
@@ -18,7 +19,7 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-SERVER_VERSION = "0.2.0"
+SERVER_VERSION = "0.3.0"
 MODEL_ID = "devai-core-0.1"
 ROOT = Path(__file__).resolve().parent
 DATA = Path(os.environ.get("DEVAI_DATA_DIR", ROOT / "data"))
@@ -41,6 +42,15 @@ CHALLENGE_TTL = 300
 CHALLENGE_DIFFICULTY = 4
 CHALLENGE_MIN_AGE = 1.2
 CHALLENGE_PER_IP_ACTIVE = 8
+PROMO_PLANS = {
+    "week": {"days": 7, "title": "Неделя"},
+    "month": {"days": 30, "title": "Месяц"},
+    "year": {"days": 365, "title": "Год"},
+    "lifetime": {"days": 0, "title": "Навсегда"},
+}
+PROMO_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+PROMO_ATTEMPTS: dict[str, list[float]] = {}
+PROMO_ATTEMPT_LOCK = threading.Lock()
 CHALLENGES: dict[str, tuple[float, str]] = {}
 CHALLENGE_LOCK = threading.Lock()
 
@@ -96,6 +106,27 @@ def init_db() -> None:
                 created REAL NOT NULL
             );
             CREATE INDEX IF NOT EXISTS idx_signups_ip_ts ON signups(ip_hash, created);
+            CREATE TABLE IF NOT EXISTS promo_codes (
+                code TEXT PRIMARY KEY,
+                plan TEXT NOT NULL,
+                days INTEGER NOT NULL,
+                max_uses INTEGER NOT NULL DEFAULT 1,
+                used INTEGER NOT NULL DEFAULT 0,
+                active INTEGER NOT NULL DEFAULT 1,
+                note TEXT NOT NULL DEFAULT '',
+                created REAL NOT NULL,
+                expires REAL
+            );
+            CREATE TABLE IF NOT EXISTS promo_redemptions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                code TEXT NOT NULL,
+                plan TEXT NOT NULL,
+                device_hash TEXT NOT NULL,
+                ip_hash TEXT NOT NULL,
+                created REAL NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_promo_redemptions_code_device
+                ON promo_redemptions(code, device_hash);
             """
         )
 
@@ -215,6 +246,112 @@ def clean_messages(raw_messages) -> list[dict]:
     while len(out) > 2 and sum(len(m["content"]) for m in out) > 7000:
         out.pop(1)
     return out
+
+
+def normalize_promo(raw: str) -> str:
+    return re.sub(r"[^A-Z0-9]+", "-", str(raw or "").strip().upper()).strip("-")
+
+
+def new_promo_code() -> str:
+    body = "".join(secrets.choice(PROMO_ALPHABET) for _ in range(8))
+    return "DVS-" + body[:4] + "-" + body[4:]
+
+
+def create_promo_codes(
+    plan: str,
+    count: int,
+    max_uses: int = 1,
+    days: int | None = None,
+    expires_days: int = 30,
+    note: str = "",
+) -> list[str]:
+    plan = str(plan or "").strip().lower()
+    if plan not in PROMO_PLANS:
+        raise ValueError("unknown plan")
+    count = max(1, min(int(count), 100))
+    max_uses = max(1, min(int(max_uses), 1000))
+    plan_days = PROMO_PLANS[plan]["days"]
+    days = plan_days if days is None else max(0, min(int(days), 3650))
+    expires_days = max(0, min(int(expires_days), 3650))
+    expires = time.time() + expires_days * 86400 if expires_days else None
+    codes: list[str] = []
+    with DB_LOCK, db() as conn:
+        for _ in range(count * 5):
+            if len(codes) >= count:
+                break
+            code = new_promo_code()
+            try:
+                conn.execute(
+                    "INSERT INTO promo_codes(code, plan, days, max_uses, note, created, expires) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (code, plan, days, max_uses, note[:200], time.time(), expires),
+                )
+                codes.append(code)
+            except sqlite3.IntegrityError:
+                continue
+    if len(codes) < count:
+        raise RuntimeError("could not allocate enough unique codes")
+    return codes
+
+
+def promo_rate_ok(ip_hash: str) -> bool:
+    now = time.time()
+    with PROMO_ATTEMPT_LOCK:
+        bucket = [item for item in PROMO_ATTEMPTS.get(ip_hash, []) if item > now - 60]
+        if len(bucket) >= 20:
+            PROMO_ATTEMPTS[ip_hash] = bucket
+            return False
+        bucket.append(now)
+        PROMO_ATTEMPTS[ip_hash] = bucket
+    return True
+
+
+def activate_promo(code: str, device_hash: str, ip_hash: str) -> tuple[int, dict]:
+    code = normalize_promo(code)
+    if not code or len(code) > 40:
+        return 400, {"error": {"message": "Введите промокод.", "type": "invalid_request_error"}}
+    if not device_hash:
+        return 400, {"error": {"message": "Не удалось определить устройство.", "type": "invalid_request_error"}}
+    now = time.time()
+    with DB_LOCK, db() as conn:
+        row = conn.execute("SELECT * FROM promo_codes WHERE code = ?", (code,)).fetchone()
+        if row is None:
+            return 404, {"error": {"message": "Промокод не найден.", "type": "not_found"}}
+        if not row["active"]:
+            return 410, {"error": {"message": "Промокод отключён.", "type": "gone"}}
+        if row["expires"] and row["expires"] < now:
+            return 410, {"error": {"message": "Срок действия промокода истёк.", "type": "gone"}}
+        existing = conn.execute(
+            "SELECT plan FROM promo_redemptions WHERE code = ? AND device_hash = ?",
+            (code, device_hash),
+        ).fetchone()
+        if existing:
+            plan = existing["plan"]
+            return 200, {
+                "ok": True,
+                "code": code,
+                "plan": plan,
+                "days": PROMO_PLANS[plan]["days"],
+                "title": PROMO_PLANS[plan]["title"],
+                "already_redeemed": True,
+            }
+        if row["used"] >= row["max_uses"]:
+            return 409, {"error": {"message": "Промокод уже использован.", "type": "conflict"}}
+        conn.execute("UPDATE promo_codes SET used = used + 1 WHERE code = ?", (code,))
+        conn.execute(
+            "INSERT INTO promo_redemptions(code, plan, device_hash, ip_hash, created) VALUES (?, ?, ?, ?, ?)",
+            (code, row["plan"], device_hash, ip_hash, now),
+        )
+    plan = row["plan"]
+    return 200, {
+        "ok": True,
+        "code": code,
+        "plan": plan,
+        "days": row["days"],
+        "title": PROMO_PLANS[plan]["title"],
+        "already_redeemed": False,
+    }
+
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -337,6 +474,9 @@ class Handler(BaseHTTPRequestHandler):
                         "POST /v1/chat/completions",
                         "POST /v1/keys/challenge",
                         "POST /v1/keys/register",
+                        "POST /v1/promo/activate",
+                        "POST /admin/promo",
+                        "GET /admin/promo",
                     ],
                 },
             )
@@ -370,6 +510,26 @@ class Handler(BaseHTTPRequestHandler):
                 ).fetchall()
             self._send_json(200, {"keys": [dict(r) for r in rows]})
             return
+        if path == "/admin/promo":
+            if not self._is_admin():
+                self._error(401, "Admin token required.", "authentication_error")
+                return
+            query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            plan = (query.get("plan") or [""])[0].strip().lower()
+            with db() as conn:
+                if plan:
+                    rows = conn.execute(
+                        "SELECT code, plan, days, max_uses, used, active, note, created, expires "
+                        "FROM promo_codes WHERE plan = ? ORDER BY created DESC LIMIT 500",
+                        (plan,),
+                    ).fetchall()
+                else:
+                    rows = conn.execute(
+                        "SELECT code, plan, days, max_uses, used, active, note, created, expires "
+                        "FROM promo_codes ORDER BY created DESC LIMIT 500"
+                    ).fetchall()
+            self._send_json(200, {"codes": [dict(row) for row in rows]})
+            return
         if path == "/admin/stats":
             if not self._is_admin():
                 self._error(401, "Admin token required.", "authentication_error")
@@ -387,6 +547,18 @@ class Handler(BaseHTTPRequestHandler):
     def do_DELETE(self) -> None:  # noqa: N802
         path = urllib.parse.urlparse(self.path).path
         parts = path.strip("/").split("/")
+        if len(parts) == 3 and parts[0] == "admin" and parts[1] == "promo":
+            if not self._is_admin():
+                self._error(401, "Admin token required.", "authentication_error")
+                return
+            code = normalize_promo(parts[2])
+            with db() as conn:
+                cur = conn.execute("UPDATE promo_codes SET active = 0 WHERE code = ?", (code,))
+            if cur.rowcount == 0:
+                self._error(404, "Promo code not found.", "not_found")
+                return
+            self._send_json(200, {"code": code, "active": False})
+            return
         if len(parts) == 3 and parts[0] == "admin" and parts[1] == "keys":
             if not self._is_admin():
                 self._error(401, "Admin token required.", "authentication_error")
@@ -485,6 +657,60 @@ class Handler(BaseHTTPRequestHandler):
                     "rpm": 60,
                     "model": MODEL_ID,
                     "warning": "Store this key now. The server keeps only its hash.",
+                },
+            )
+            return
+
+        if path == "/v1/promo/activate":
+            ip_hash = ip_digest(self._client_ip())
+            if not promo_rate_ok(ip_hash):
+                self._error(429, "Too many promo attempts. Try again in a minute.", "rate_limit_error")
+                return
+            code = str(body.get("code", "")).strip()
+            device_id = str(body.get("device_id", "")).strip()[:200]
+            device_hash = hashlib.sha256(("promo-device|" + device_id).encode()).hexdigest() if device_id else ""
+            status, payload = activate_promo(code, device_hash, ip_hash)
+            self._send_json(status, payload)
+            return
+
+        if path == "/admin/promo":
+            if not self._is_admin():
+                self._error(401, "Admin token required.", "authentication_error")
+                return
+            plan = str(body.get("plan", "")).strip().lower()
+            try:
+                count = int(body.get("count", 1))
+                max_uses = int(body.get("max_uses", 1))
+                expires_days = int(body.get("expires_days", 30))
+                days = body.get("days")
+                days = None if days is None else int(days)
+            except Exception:  # noqa: BLE001
+                self._error(400, "count, max_uses, days and expires_days must be integers.")
+                return
+            try:
+                codes = create_promo_codes(
+                    plan,
+                    count,
+                    max_uses=max_uses,
+                    days=days,
+                    expires_days=expires_days,
+                    note=str(body.get("note", "")).strip(),
+                )
+            except ValueError as exc:
+                self._error(400, str(exc))
+                return
+            except Exception as exc:  # noqa: BLE001
+                self._error(500, str(exc), "server_error")
+                return
+            self._send_json(
+                201,
+                {
+                    "codes": codes,
+                    "plan": plan,
+                    "count": len(codes),
+                    "max_uses": max(1, min(max_uses, 1000)),
+                    "days": PROMO_PLANS[plan]["days"] if days is None else max(0, min(days, 3650)),
+                    "expires_days": max(0, min(expires_days, 3650)),
                 },
             )
             return

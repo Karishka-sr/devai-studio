@@ -41,6 +41,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,8 +52,10 @@ import android.widget.Toast
 import com.devai.studio.data.PremiumFeature
 import com.devai.studio.data.PremiumPlan
 import com.devai.studio.data.PremiumStore
+import com.devai.studio.data.PromoClient
 import com.devai.studio.data.TelegramStars
 import com.devai.studio.util.ThemeManager
+import kotlinx.coroutines.launch
 
 class PremiumActivity : AppCompatActivity() {
 
@@ -68,11 +71,13 @@ class PremiumActivity : AppCompatActivity() {
 @Composable
 private fun PremiumScreen(onBack: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = rememberCoroutineScope()
     var current by remember { mutableStateOf(PremiumStore.plan(context)) }
     var selected by remember {
         mutableStateOf(if (current.isPaid) current else PremiumPlan.LIFETIME)
     }
     var code by remember { mutableStateOf("") }
+    var activating by remember { mutableStateOf(false) }
     val orders = remember { mutableStateMapOf<String, String>() }
 
     fun toast(text: String) = Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
@@ -147,28 +152,48 @@ private fun PremiumScreen(onBack: () -> Unit) {
                     OutlinedTextField(
                         value = code,
                         onValueChange = { code = it },
-                        label = { Text("DEVAI-…") },
+                        label = { Text("DVS-… или DEVAI-…") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
+                            enabled = !activating,
                             onClick = {
-                                val activated = PremiumStore.activate(context, code)
-                                if (activated == null) {
-                                    toast("Неверный код")
+                                if (code.isBlank()) {
+                                    toast("Введите код")
                                 } else {
-                                    code = ""
-                                    refresh()
-                                    selected = activated
-                                    toast("Активирован тариф «${activated.title}»")
+                                    scope.launch {
+                                        activating = true
+                                        val result = PromoClient.activate(context, code)
+                                        val serverPlan = result.plan
+                                        val activated = if (serverPlan != null) {
+                                            PremiumStore.activatePlan(
+                                                context,
+                                                serverPlan,
+                                                result.code.ifBlank { code },
+                                            )
+                                            serverPlan
+                                        } else {
+                                            PremiumStore.activate(context, code)
+                                        }
+                                        activating = false
+                                        if (activated == null) {
+                                            toast(result.error ?: "Неверный код")
+                                        } else {
+                                            code = ""
+                                            refresh()
+                                            selected = activated
+                                            toast("Активирован тариф «${activated.title}»")
+                                        }
+                                    }
                                 }
                             },
                             modifier = Modifier.weight(1f),
                         ) {
                             Icon(Icons.Default.CheckCircle, contentDescription = null)
                             Spacer(Modifier.width(6.dp))
-                            Text("Активировать")
+                            Text(if (activating) "Проверяем…" else "Активировать")
                         }
                         if (current.isPaid) {
                             OutlinedButton(
@@ -353,7 +378,7 @@ private fun PaymentHelpCard() {
                 "1. Нажмите «Оплатить» у нужного тарифа.\n" +
                     "2. Telegram откроет чат @${TelegramStars.USERNAME} с заказом.\n" +
                     "3. Отправьте заказ и оплатите звёздами.\n" +
-                    "4. Получите код вида DEVAI-WEEK, DEVAI-MONTH, DEVAI-YEAR или DEVAI-LIFETIME.\n" +
+                    "4. Получите код вида DVS-XXXX-XXXX или DEVAI-MONTH.\n" +
                     "5. Введите код в поле активации.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
