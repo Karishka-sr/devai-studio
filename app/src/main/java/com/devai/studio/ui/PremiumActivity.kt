@@ -172,6 +172,8 @@ private fun PremiumScreen(onBack: () -> Unit) {
                                                 context,
                                                 serverPlan,
                                                 result.code.ifBlank { code },
+                                                result.days,
+                                                result.title,
                                             )
                                             serverPlan
                                         } else {
@@ -184,7 +186,13 @@ private fun PremiumScreen(onBack: () -> Unit) {
                                             code = ""
                                             refresh()
                                             selected = activated
-                                            toast("Активирован тариф «${activated.title}»")
+                                            toast(
+                                                if (result.days > 0 && result.days < activated.days) {
+                                                    "Пробный Premium на ${result.days} дн."
+                                                } else {
+                                                    "Активирован тариф «${activated.title}»"
+                                                }
+                                            )
                                         }
                                     }
                                 }
@@ -284,7 +292,7 @@ private fun StatusCard(plan: PremiumPlan) {
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(
-                    if (plan.isPaid) "Premium ${plan.title}" else "Premium не активен",
+                    if (plan.isPaid) "Premium ${PremiumStore.planLabel(context)}" else "Premium не активен",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                 )

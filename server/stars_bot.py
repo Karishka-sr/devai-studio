@@ -382,7 +382,13 @@ def http_json(url: str, payload: dict[str, Any], headers: dict[str, str] | None 
     return json.loads(body)
 
 
-def create_promo_batch(plan_id: str, count: int, max_uses: int = 1, expires_days: int = 30) -> list[str]:
+def create_promo_batch(
+    plan_id: str,
+    count: int,
+    max_uses: int = 1,
+    expires_days: int = 30,
+    premium_days: int | None = None,
+) -> list[str]:
     if not DEVAI_ADMIN_TOKEN:
         raise RuntimeError("DEVAI_ADMIN_TOKEN не задан")
     plan = PLANS.get(plan_id)
@@ -394,7 +400,7 @@ def create_promo_batch(plan_id: str, count: int, max_uses: int = 1, expires_days
             "plan": plan.id,
             "count": max(1, min(int(count), 100)),
             "max_uses": max(1, min(int(max_uses), 1000)),
-            "days": plan.days_value,
+            "days": plan.days_value if premium_days is None else max(0, min(int(premium_days), 3650)),
             "expires_days": max(0, min(int(expires_days), 3650)),
         },
         {"X-Admin-Token": DEVAI_ADMIN_TOKEN},
@@ -787,6 +793,43 @@ def handle_promo(chat_id: int, user_id: int, args: list[str]) -> None:
     send(chat_id, "\n".join(lines))
 
 
+def handle_trial(chat_id: int, user_id: int, args: list[str]) -> None:
+    if not is_admin(user_id):
+        send(chat_id, "Нет доступа.")
+        return
+    if not args or args[0].lower() in {"help", "?"}:
+        send(
+            chat_id,
+            "Бесплатные временные промокоды\n\n"
+            "/trial <дней> [количество] [дней_жизни]\n"
+            "Пример: /trial 2 10 30 — 10 кодов на 2 дня Premium, сами коды действуют 30 дней.\n\n"
+            "Коды одноразовые, бесплатные и активируются в DevAI.",
+        )
+        return
+    try:
+        days = int(args[0])
+        count = int(args[1]) if len(args) > 1 else 1
+        expires_days = int(args[2]) if len(args) > 2 else 30
+    except ValueError:
+        send(chat_id, "Дни, количество и срок должны быть числами.")
+        return
+    days = max(1, min(days, 30))
+    count = max(1, min(count, 50))
+    expires_days = max(0, min(expires_days, 3650))
+    try:
+        codes = create_promo_batch("week", count, max_uses=1, expires_days=expires_days, premium_days=days)
+    except Exception as error:
+        send(chat_id, f"Не удалось создать коды: {error}")
+        return
+    lines = [
+        f"Бесплатные пробные коды · Premium на {days} дн.",
+        f"Кодов: {len(codes)} · каждый код действует {expires_days or 'бессрочно'} дн.",
+        "",
+    ]
+    lines.extend(codes)
+    send(chat_id, "\n".join(lines))
+
+
 def handle_mini(chat_id: int) -> None:
     if not BOT_USERNAME:
         send(chat_id, "Сначала задай username бота через @BotFather.")
@@ -830,6 +873,8 @@ def handle_message(message: dict[str, Any]) -> None:
 
     if text.startswith("/buy"):
         handle_buy(chat_id)
+    elif text.startswith("/trial"):
+        handle_trial(chat_id, user_id, text.split()[1:])
     elif text.startswith("/partner"):
         handle_partner(chat_id, user_id)
     elif text.startswith("/balance"):

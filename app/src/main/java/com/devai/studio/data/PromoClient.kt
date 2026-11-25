@@ -16,6 +16,8 @@ import java.util.concurrent.TimeUnit
 data class PromoActivation(
     val plan: PremiumPlan? = null,
     val code: String = "",
+    val days: Int = 0,
+    val title: String = "",
     val error: String? = null,
 )
 
@@ -53,7 +55,19 @@ object PromoClient {
                 if (plan == null) {
                     PromoActivation(error = "Сервер вернул неизвестный тариф.")
                 } else {
-                    PromoActivation(plan = plan, code = json?.optString("code", code) ?: code)
+                    val days = json?.optInt("days", 0) ?: 0
+                    val title = when {
+                        days <= 0 || !plan.isTemporary -> plan.title
+                        days < plan.days -> "Пробный доступ · $days дн."
+                        days > plan.days -> "Premium · $days дн."
+                        else -> plan.title
+                    }
+                    PromoActivation(
+                        plan = plan,
+                        code = json?.optString("code", code) ?: code,
+                        days = days,
+                        title = title,
+                    )
                 }
             }
         }.getOrElse {

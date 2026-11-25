@@ -12,6 +12,7 @@ object PremiumStore {
     private const val KEY_PLAN = "plan"
     private const val KEY_EXPIRES = "expires_at"
     private const val KEY_CODE = "code"
+    private const val KEY_LABEL = "label"
     private const val KEY_LEGACY_PREMIUM = "premium"
     private const val DAY_MS = 24L * 60L * 60L * 1000L
 
@@ -103,13 +104,24 @@ object PremiumStore {
         return plan
     }
 
-    fun activatePlan(ctx: Context, plan: PremiumPlan, code: String = "") {
+    fun activatePlan(
+        ctx: Context,
+        plan: PremiumPlan,
+        code: String = "",
+        days: Int? = null,
+        label: String = "",
+    ) {
         if (!plan.isPaid) {
             clear(ctx)
             return
         }
+        val duration = if (plan.isTemporary) {
+            days?.takeIf { it > 0 } ?: plan.days
+        } else {
+            0
+        }
         val expires = if (plan.isTemporary) {
-            System.currentTimeMillis() + TimeUnit.DAYS.toMillis(plan.days.toLong())
+            System.currentTimeMillis() + TimeUnit.DAYS.toMillis(duration.toLong())
         } else {
             0L
         }
@@ -117,8 +129,15 @@ object PremiumStore {
             .putString(KEY_PLAN, plan.id)
             .putLong(KEY_EXPIRES, expires)
             .putString(KEY_CODE, code)
+            .putString(KEY_LABEL, label.ifBlank { plan.title })
             .putBoolean(KEY_LEGACY_PREMIUM, true)
             .apply()
+    }
+
+    fun planLabel(ctx: Context): String {
+        val plan = plan(ctx)
+        if (!plan.isPaid) return plan.title
+        return p(ctx).getString(KEY_LABEL, plan.title).orEmpty().ifBlank { plan.title }
     }
 
     fun deactivate(ctx: Context) = clear(ctx)
@@ -128,6 +147,7 @@ object PremiumStore {
             .remove(KEY_PLAN)
             .remove(KEY_EXPIRES)
             .remove(KEY_CODE)
+            .remove(KEY_LABEL)
             .remove(KEY_LEGACY_PREMIUM)
             .apply()
     }
