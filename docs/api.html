@@ -38,7 +38,7 @@
   <main id="top">
     <section class="hero">
       <div class="hero-copy reveal">
-        <p class="eyebrow"><span class="eyebrow-line"></span> DevAI Core API · v0.3</p>
+        <p class="eyebrow"><span class="eyebrow-line"></span> DevAI Core API · v0.4</p>
         <h1>Ваш ИИ.<br><span class="accent">Один ключ.</span><br>Любой стек.</h1>
         <p class="lede">OpenAI-совместимый API для чата, кода и текстов. Локальная модель и потоковые ответы. Пробный ключ — 5 000 токенов, платный Premium-ключ — 100 000 токенов и готовый доступ из бота.</p>
         <div class="hero-actions">
@@ -65,7 +65,7 @@
   -H <span class="s">"Authorization: Bearer $DEVAI_KEY"</span> \
   -H <span class="s">"Content-Type: application/json"</span> \
   -d <span class="s">'{
-    "model": "devai-core-0.1",
+    "model": "devai-core-0.2",
     "messages": [
       {"role": "user", "content": "Привет!"}
     ]
@@ -214,7 +214,7 @@
   -H <span class="s">"Authorization: Bearer $DEVAI_KEY"</span> \
   -H <span class="s">"Content-Type: application/json"</span> \
   -d <span class="s">'{
-    "model": "devai-core-0.1",
+    "model": "devai-core-0.2",
     "messages": [{"role": "user", "content": "Напиши hello world на Kotlin"}],
     "stream": false
   }'</span></code></pre>
@@ -230,7 +230,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model=<span class="s">"devai-core-0.1"</span>,
+    model=<span class="s">"devai-core-0.2"</span>,
     messages=[{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: <span class="s">"Привет!"</span>}],
 )
 <span class="k">print</span>(response.choices[<span class="n">0</span>].message.content)</code></pre>
@@ -247,7 +247,7 @@ response = client.chat.completions.create(
       <span class="s">"Content-Type"</span>: <span class="s">"application/json"</span>,
     },
     body: JSON.stringify({
-      model: <span class="s">"devai-core-0.1"</span>,
+      model: <span class="s">"devai-core-0.2"</span>,
       messages: [{ role: <span class="s">"user"</span>, content: <span class="s">"Привет!"</span> }],
     }),
   },
@@ -306,7 +306,7 @@ console.log(data.choices[<span class="n">0</span>].message.content);</code></pre
         <article class="card">
           <span class="card-num">03</span>
           <h3>Модель и лимиты</h3>
-          <p><code>devai-core-0.1</code>, до 1024 токенов в ответе. Пробный ключ — 5 запросов/мин и 5 000 токенов/мес, Premium — 60 запросов/мин и 100 000 токенов/мес.</p>
+          <p><code>devai-core-0.2</code>, до 1024 токенов в ответе. Пробный ключ — 5 запросов/мин и 5 000 токенов/мес, Premium — 60 запросов/мин и 100 000 токенов/мес.</p>
         </article>
         <article class="card">
           <span class="card-num">04</span>
@@ -321,9 +321,26 @@ console.log(data.choices[<span class="n">0</span>].message.content);</code></pre
       </div>
     </section>
 
-    <section class="section limits-section">
+    <section class="section limits-section" id="auto">
       <div class="section-head">
         <span class="index">04</span>
+        <div>
+          <p class="kicker">Обновление v0.4</p>
+          <h2>Сам учится. Сам <em>проверяет</em>.</h2>
+        </div>
+      </div>
+      <div class="limits-grid">
+        <div class="limit"><span class="limit-key">24 / 7</span><p>Автообучение читает документацию, сайты и прошлые ответы. Знания ищутся по смыслу и подмешиваются в контекст.</p></div>
+        <div class="limit"><span class="limit-key">любая ссылка</span><p>Публичные http(s)-адреса, включая <code>t.me</code>. DevAI открывает страницу, читает текст и проверяет редирект, домен и форму пароля.</p></div>
+        <div class="limit"><span class="limit-key">скан файла</span><p>Пришлите файл или ссылку в чат. В ответе будет вердикт, риск 0–100, SHA-256 и найденные признаки. Файлы не запускаются.</p></div>
+        <div class="limit"><span class="limit-key">честно</span><p>Это эвристический антивирус, а не ClamAV. Он ловит типовые угрозы, но не заменяет проверку в песочнице.</p></div>
+      </div>
+      <p class="fair-use">API: <code>POST /v1/scan</code> с <code>url</code>, <code>text</code> или <code>content_base64</code>. Админ: <code>GET /admin/learning</code>, <code>POST /admin/learning/run</code>, <code>POST /admin/learning/url</code>.</p>
+    </section>
+
+    <section class="section limits-section">
+      <div class="section-head">
+        <span class="index">05</span>
         <div>
           <p class="kicker">Правила</p>
           <h2>Лимиты и <em>честность</em></h2>
@@ -350,7 +367,7 @@ console.log(data.choices[<span class="n">0</span>].message.content);</code></pre
       <span class="brand-mark" aria-hidden="true"></span>
       <span>DevAI Studio</span>
     </div>
-    <p>Сделано автором DevAI Studio. Модель: <code>devai-core-0.1</code>. Приложение: <a href="index.html">DevAI Studio 4.4.0</a>.</p>
+    <p>Сделано автором DevAI Studio. Модель: <code>devai-core-0.2</code>. Приложение: <a href="index.html">DevAI Studio 4.4.0</a>.</p>
     <div class="footer-links">
       <a href="https://github.com/Karishka-sr/devai-studio" target="_blank" rel="noreferrer">Исходники</a>
       <a href="https://github.com/Karishka-sr/devai-studio/releases" target="_blank" rel="noreferrer">APK</a>

@@ -159,3 +159,12 @@
 - Backend tables: `accounts`, `auth_sessions`, `site_memberships`. Registration creates memberships for every id in `SITES`; nicknames are unique case-insensitively and immutable (`PUT /v1/auth/profile` rejects changes). Passwords use scrypt and require score >= 2.
 - Public auth endpoints: `GET /v1/auth/sites`, `GET /v1/auth/check?nickname=`, `POST /v1/auth/register`, `POST /v1/auth/login`, `GET /v1/auth/me`, `POST /v1/auth/logout`, `PUT /v1/auth/profile`. Owner bootstrap: `POST /admin/accounts/owner` with the admin token.
 - Other Pages repositories load `https://karishka-sr.github.io/devai-studio/auth.js` with a `data-site` attribute. `Calculators` must keep its entry page named `index.html` (lowercase) for the Pages root.
+
+## Autonomous learning & antivirus (server v0.4.0)
+- `server/devai_server.py` starts a daemon thread `devai-autolearn` when `DEVAI_AUTOL_EARN` is not `0`. It seeds `DEFAULT_SEEDS` (project sites, GitHub repo, `https://t.me/devAI_Studio_bot`), indexes Markdown docs, crawls up to 3 pages per 90 seconds, and stores chunks in `learned_items`.
+- Tables: `learned_items` (kind `chat|web|doc`, source, prompt, answer, keywords, quality), `web_pages`, `crawl_queue`, `learning_runs`, `learning_state`, `scans`. Retrieval is token/BM25-like and injects the best 3 items into the chat system prompt; this is RAG-style continual learning, not weight fine-tuning.
+- `POST /admin/learning/run`, `POST /admin/learning/url`, `GET /admin/learning`, `GET /admin/scans`. Env knobs are documented in `server/README.md`.
+- `server/devai_web.py` is a stdlib-only safe fetcher: normalises `http(s)`, `www`, `t.me`, blocks private/loopback hosts, re-checks redirects, respects robots.txt, caps at 1.5 MB, parses text/title/links. Telegram launch pages fall back to the public preview page.
+- `server/devai_av.py` is a stdlib-only heuristic antivirus for PE/ELF, archives/APK/JAR, Office macros, PDF JS, PowerShell/download-and-execute, phishing HTML, EICAR, double extensions and RLE. `POST /v1/scan` accepts `url`, `text` or `content_base64`; max file 8 MB. It never executes uploads.
+- Android chat sends attachments as `Файл «name»:` followed by a fenced code block; `prepare_auto_context` scans those blocks and any `http(s)`/`t.me` link in the last user message. Binary files are currently rejected by `readAttachment` (64 KB text-only), so use `/v1/scan` for binaries.
+- Malicious pages are never learned; web text is labelled untrusted in the prompt.

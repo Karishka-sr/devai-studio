@@ -1,7 +1,9 @@
-# DevAI Core API v0.3
+# DevAI Core API v0.4
 
-OpenAI-compatible HTTP API for DevAI Core. The first version runs a local
-Qwen2.5 0.5B GGUF model, so prompts do not leave the machine.
+OpenAI-compatible HTTP API for DevAI Core. It runs a local Qwen2.5 0.5B GGUF
+model, learns from documentation and public pages without user involvement,
+opens links shared in chat (including `t.me`), and scans links/files with a
+dependency-free heuristic antivirus.
 
 ## Quick start
 
@@ -21,7 +23,7 @@ private: it can create and revoke API keys.
 
 - Base URL: `https://<host>/v1`
 - API key: `devai-sk-...`
-- Model: `devai-core-0.1`
+- Model: `devai-core-0.2`
 
 ## Endpoints
 
@@ -43,6 +45,11 @@ private: it can create and revoke API keys.
 - `POST /v1/auth/logout` — revoke the bearer token.
 - `PUT /v1/auth/profile` — change password; nickname changes are rejected.
 - `POST /admin/accounts/owner` — create the owner account, admin token required.
+- `POST /v1/scan` — check `{url}`, `{text, filename}` or `{content_base64, filename}`; returns verdict, score, SHA-256 and findings.
+- `GET /admin/learning` — learning counters, queue and recent items, admin token required.
+- `POST /admin/learning/run` — run one crawl/learning cycle now, admin token required.
+- `POST /admin/learning/url` — open a URL and queue its links for learning, admin token required.
+- `GET /admin/scans?limit=30` — recent scan results, admin token required.
 
 ## Create a key
 
@@ -92,9 +99,62 @@ honeypot field, a cap of 8 open challenges per IP, and 3 keys per IP per day
 (300 per day globally). Challenges expire after 5 minutes and are consumed on
 first use. The client IP is hashed with the admin token before it is stored.
 
+## Autonomous learning
+
+A background thread runs every 90 seconds by default. Each cycle:
+
+1. seeds the queue with the project sites, GitHub repository and `t.me` bot;
+2. indexes Markdown documentation from the repository;
+3. fetches up to 3 queued pages, stores their text, and queues safe links
+   one or two levels deep;
+4. saves searchable chunks in SQLite and retrieves the best matches for each
+   chat request.
+
+Retrieval-augmented context is injected into the system prompt. This is
+continual learning in the product sense (new knowledge without retraining),
+not a change of model weights. Malicious pages are not learned. Website text is
+marked as untrusted data in the prompt.
+
+Useful environment variables:
+
+- `DEVAI_AUTOL_EARN=0` — disable the background learner.
+- `DEVAI_AUTOL_EARN_INTERVAL=90` — seconds between cycles.
+- `DEVAI_AUTOL_EARN_BATCH=3` — pages per cycle.
+- `DEVAI_AUTOL_EARN_DEPTH=2` — crawl depth.
+- `DEVAI_AUTOL_EARN_DOMAIN_LIMIT=25` — pages per domain.
+- `DEVAI_AUTOL_EARN_QUEUE=500` — queue cap.
+
+## Antivirus
+
+`server/devai_av.py` is a stdlib-only heuristic scanner. It checks:
+
+- PE/ELF executables, packed binaries and high entropy;
+- dangerous extensions, double extensions and RTL-override filenames;
+- ZIP/APK/JAR archives, nested executables, zip-slip paths and zip bombs;
+- Office macros (`vbaProject.bin`, `AutoOpen`, `Document_Open`);
+- PDF JavaScript, `OpenAction`, `Launch` and embedded files;
+- PowerShell encoded commands, download-and-execute, reverse shells,
+  credential dumping, ransomware notes, persistence and keyloggers;
+- HTML password forms posting to another domain, hidden iframes and obfuscated JS;
+- the EICAR test file.
+
+The scanner never executes uploads. A verdict is `clean`, `suspicious`,
+`malicious` or `unknown`, with a 0–100 score. It is a first line of defence,
+not a replacement for ClamAV or VirusTotal.
+
+### Links
+
+`server/devai_web.py` normalises `http(s)://`, `www.` and `t.me/` links, blocks
+private/loopback hosts, follows at most four redirects, re-checks every redirect,
+respects `robots.txt`, limits downloads to 1.5 MB and extracts readable text,
+titles, descriptions and links. Telegram launch pages are fetched through the
+public preview page because chat contents require the Telegram app.
+
 ## Limits
 
 - 60 requests/minute per key by default (`rpm` can be set up to 600).
 - 1024 output tokens per request.
 - One generation at a time per process; this is intentional for CPU inference.
 - Public signup: 3 keys per IP per day, 300 keys per day globally.
+- Scanned file: up to 8 MB (12 MB JSON request body).
+- Crawler: 1.5 MB per page, 3–20 pages per cycle, 25 pages per domain.
