@@ -1,15 +1,15 @@
 {
-  "tag": "v4.2.0",
-  "version": "4.2.0",
-  "name": "DevAI Studio 4.2.0",
-  "published_at": "2026-11-24T08:56:56Z",
-  "page_url": "https://github.com/Karishka-sr/devai-studio/releases/tag/v4.2.0",
-  "apk_url": "https://github.com/Karishka-sr/devai-studio/releases/download/v4.2.0/devai-studio-4.2.0.apk",
-  "apk_name": "devai-studio-4.2.0.apk",
-  "apk_size": 117759143,
-  "apk_sha256": "e4c91eb69c852bc6e2afc2c7e79734ae3377539988cdb33406ea2aab9706d114",
-  "languages_url": "https://github.com/Karishka-sr/devai-studio/releases/download/v4.2.0/devai-languages-4.2.0.zip",
-  "languages_name": "devai-languages-4.2.0.zip",
-  "body": "Этот релиз подготовлен AI-агентом (OpenHands) от имени Karishka-sr.\n\n# DevAI Studio 4.2.0 — 100 новых языков и обновлённые сайты\n\n## Что нового\n- В каталог ИИ добавлено 100 новых языковых пакетов. Всего теперь 175 языков: от ABAP, CUDA и COQ до Typst, WebAssembly и Zeek.\n- Новые языки автоматически попадают в подсказку ИИ, выбор языка, редактор и генерацию тестов.\n- `CodeLanguages.seed` теперь добавляет недостающие файлы при каждом запуске. Пользователи 4.1.0 получат новые языки без переустановки, а их собственные правки не перезаписываются.\n- Сайт DevAI Studio обновлён под 4.2.0: 175 языков, актуальная версия и отдельная кнопка «API-ключи DevAI».\n- Сайт API-ключей получил блок «Ключ в DevAI Studio»: где открыть провайдеры, как вставить ключ, лимиты и ссылки на APK.\n- В приложении ссылка «Получить ключ на сайте» теперь ведёт сразу на `api.html#key`.\n\n## Проверка\n- 175 JSON-файлов проверены: уникальные id, все обязательные поля, валидный JSON.\n- `:app:testDebugUnitTest` прошёл.\n- В APK лежит `languages.zip` со 175 записями.\n- APK подписан, versionCode 47, versionName 4.2.0.\n- Vexel-конструктор не изменялся, «Автор» на месте.\n\n## Файлы\n- `devai-studio-4.2.0.apk`\n- `devai-languages-4.2.0.zip`\n",
-  "generated_at": "2026-11-25T04:30:06Z"
+  "tag": "v4.3.0",
+  "version": "4.3.0",
+  "name": "DevAI Studio 4.3.0",
+  "published_at": "2026-11-25T04:29:55Z",
+  "page_url": "https://github.com/Karishka-sr/devai-studio/releases/tag/v4.3.0",
+  "apk_url": "https://github.com/Karishka-sr/devai-studio/releases/download/v4.3.0/devai-studio-4.3.0.apk",
+  "apk_name": "devai-studio-4.3.0.apk",
+  "apk_size": 115979394,
+  "apk_sha256": "e5a1ed42b8814b0f9555070e46b1155d77d445029d77407dd7027e154128bd35",
+  "languages_url": "",
+  "languages_name": "",
+  "body": "Этот релиз подготовлен AI-агентом (OpenHands) от имени Karishka-sr.\n\n# DevAI Studio 4.3.0 — новая подпись, новая иконка и пробные коды\n\n## Что нового\n- Приложение подписано новым release-ключом. Старую версию нужно удалить: Android не устанавливает APK с другой подписью поверх старой.\n- Обновлена адаптивная иконка: градиентный знак D, новая звезда и монохромный слой для тем Android 13+.\n- В Telegram-боте появилась команда `/trial <дней> [количество] [дней_жизни]` для бесплатных временных промокодов.\n- Промокод с произвольным сроком теперь активирует Premium ровно на этот срок. Например, код на 2 дня отключается через 2 дня, а не через 7.\n- Исправлена отправка счетов Telegram Stars и добавлена резервная кнопка открытия Mini App в браузере.\n\n## Проверка\n- `:app:assembleRelease` прошёл.\n- APK подписан, versionCode 48, versionName 4.3.0.\n- Подпись: SHA-256 `3b:f3:fe:c4:3f:cd:38:61:7f:9d:8a:59:68:9b:b1:c8:a3:e8:ae:d0:e7:1f:14:e4:05:9a:35:fa:0f:61:e4:bc`.\n- Пробный код на 2 дня проверен через сервер: активация возвращает `days: 2`.\n\n## Файлы\n- `devai-studio-4.3.0.apk`\n",
+  "generated_at": "2026-11-25T04:30:32Z"
 }
