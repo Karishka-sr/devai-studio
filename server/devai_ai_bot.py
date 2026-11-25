@@ -270,7 +270,7 @@ def ask_ai(api_key: str, prompt: str, max_tokens: int = 500, system: str = "") -
     data = api_post(
         "/v1/chat/completions",
         {
-            "model": "devai-core-0.2",
+            "model": "devai-core-0.5",
             "messages": [
                 {"role": "system", "content": system or "Ты DevAI. Отвечай кратко, по-русски и по делу."},
                 {"role": "user", "content": prompt[:4000]},
