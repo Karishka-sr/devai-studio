@@ -80,6 +80,7 @@ BOOKS_ADMIN_ONLY = os.environ.get("DEVAI_BOOKS_ADMIN_ONLY", "1") not in {"0", "f
 MAX_BOOK_BYTES = 20 * 1024 * 1024
 COMMENT_LAST: dict[int, float] = {}
 COMMENT_TIMES: list[float] = []
+_FEATURED_CACHE: dict[str, object] = {"at": 0.0, "items": []}
 CHANNEL_SOURCES = tuple(
     part.strip().lower()
     for part in os.environ.get(
@@ -652,6 +653,158 @@ def _delete(chat_id: int, message_id: int) -> None:
         pass
 
 
+
+def _comment_kind(text: str) -> str:
+    low = text.lower()
+    if re.search(r"подпишись|реклам|казино|крипт|заработ|продвиж|t\.me/", low):
+        return "spam"
+    if re.search(r"^(привет|здравствуй|хай|добрый (день|вечер)|доброе утро)", low):
+        return "greeting"
+    if re.search(r"спасибо|благодар|спс", low):
+        return "thanks"
+    if re.search(r"не работает|сломал|ошибк|баг|глюк|фигня|ужас|плохо|разочаров", low):
+        return "criticism"
+    if re.search(r"круто|супер|класс|молодц|нравится|огонь|топ", low):
+        return "praise"
+    if "?" in text or re.search(r"\b(как|что|почему|зачем|где|когда|можно|умеешь|поддерживаешь)\b", low):
+        return "question"
+    return "neutral"
+
+
+def _comment_rules(kind: str) -> str:
+    rules = {
+        "greeting": "Поздоровайся в ответ, представься одной фразой и предложи помочь.",
+        "thanks": "Ответь «пожалуйста» и добавь одну полезную деталь по теме, без воды.",
+        "criticism": "Не спорь и не оправдывайся. Признай проблему, уточни один факт и предложи следующий шаг.",
+        "praise": "Поблагодари и коротко скажи, что именно тебе удалось сделать.",
+        "question": "Ответь по сути, 1–3 предложениями. Если данных не хватает — задай один уточняющий вопрос.",
+        "spam": "Вежливо откажись от рекламы и предложи писать по делу.",
+        "neutral": "Поддержи короткий живой разговор и задай один уместный вопрос.",
+    }
+    return rules.get(kind, rules["neutral"])
+
+
+def _comment_system(kind: str) -> str:
+    return (
+        "Ты DevAI — ИИ-персонаж Telegram-канала DevAI Studio. "
+        "Ты не человек и не скрываешь этого. Отвечай по-русски, живо и коротко: 1–3 предложения. "
+        "Никогда не проси API-ключ, не отправляй к /key и не говори, что не можешь ответить без ключа. "
+        "Не выдумывай факты. Если чего-то не знаешь, честно скажи и предложи уточнить. "
+        "Тип сообщения: " + kind + ". " + _comment_rules(kind)
+    )
+
+
+def _featured_items() -> list[dict]:
+    now = time.time()
+    cached = list(_FEATURED_CACHE.get("items") or [])
+    if cached and now - float(_FEATURED_CACHE.get("at") or 0) < 120:
+        return cached
+    try:
+        feed = api_get("/admin/learning/featured?limit=200", admin=True)
+        items = _dedupe([item for item in feed.get("items", []) if _channel_worthy(item)])
+        _FEATURED_CACHE["items"] = items
+        _FEATURED_CACHE["at"] = now
+        return items
+    except Exception:
+        return cached
+
+
+def _knowledge_for(text: str, limit: int = 2) -> str:
+    query = {w.lower() for w in re.findall(r"[А-Яа-яЁёA-Za-z0-9_]{4,}", text)}
+    if not query:
+        return ""
+    ranked: list[tuple[int, dict]] = []
+    for item in _featured_items():
+        body = _display_title(item) + " " + _item_text(item)
+        words = {w.lower() for w in re.findall(r"[А-Яа-яЁёA-Za-z0-9_]{4,}", body)}
+        score = len(query & words)
+        if score >= 2:
+            ranked.append((score, item))
+    ranked.sort(key=lambda pair: pair[0], reverse=True)
+    lines = []
+    for _, item in ranked[:limit]:
+        lines.append("• " + _display_title(item) + ": " + _short(_retell(item), 260))
+    return "\n".join(lines)
+
+
+def _fallback_comment(kind: str) -> str:
+    return {
+        "greeting": "Привет! Я DevAI, ИИ-персонаж DevAI Studio. Спросите что-нибудь о проекте или о том, что я уже изучил.",
+        "thanks": "Пожалуйста! Если хотите, могу разобрать тему подробнее.",
+        "criticism": "Понял, спасибо за сигнал. Напишите, что именно произошло и на каком устройстве, — проверю.",
+        "praise": "Спасибо! Рад, что получилось полезно.",
+        "question": "Хороший вопрос. Уточните детали — и я отвечу по существу.",
+        "spam": "Рекламу не размещаю. Если есть вопрос по DevAI — напишите по делу.",
+        "neutral": "Спасибо за сообщение! Расскажите чуть подробнее, что хотите узнать.",
+    }.get(kind, "Спасибо! Напишите чуть конкретнее — и я отвечу по делу.")
+
+
+def _faq_answer(text: str) -> str:
+    low = text.lower()
+    rules = [
+        (r"установ|скачать|apk|андроид|android", (
+            "Скачайте APK со страницы релиза: https://github.com/Karishka-sr/devai-studio/releases/latest. "
+            "Откройте файл и разрешите установку из этого источника; если Play Protect предупреждает — "
+            "нажмите «Всё равно установить»."
+        )),
+        (r"ключ|api|подключ", (
+            "Ключ создаётся на сайте DevAI Studio. В боте его можно привязать командой "
+            "<code>/key devai-sk-...</code> — сообщение с ключом бот сразу удалит."
+        )),
+        (r"умеешь|можешь|функци|возможност", (
+            "Я читаю книги и страницы, отвечаю на вопросы, проверяю ссылки, веду Telegram-канал "
+            "и отвечаю на комментарии. Могу разобрать тему или помочь с установкой приложения."
+        )),
+        (r"что такое devai|кто ты|о себе|чем занимаешься", (
+            "DevAI Studio — Android-приложение с ИИ-персонажем DevAI: он читает книги и страницы, "
+            "ведёт Telegram-канал и отвечает на вопросы. Я работаю на сервере проекта, а не на телефоне."
+        )),
+        (r"книг|читать|файл|pdf|epub|fb2|docx", (
+            "Пришлите файл в чат: txt, md, html, epub, fb2, docx, pdf или rtf до 20 МБ. "
+            "Я разобью его на фрагменты и добавлю в базу знаний."
+        )),
+        (r"коммент|обсужд|групп", (
+            "Я читаю комментарии в группе «Чат Новости» и отвечаю на них. Спам и рекламу пропускаю."
+        )),
+        (r"цена|стоит|тариф|подписк|бесплат|токен", (
+            "Бесплатный доступ — 5000 токенов и 5 запросов в минуту; premium — 100 000 токенов "
+            "и 60 запросов в минуту. Ключ можно создать на сайте."
+        )),
+        (r"модель|локальн|сервер|сколько ждать", (
+            "Сейчас отвечает devai-core-0.5. Он работает локально на сервере проекта; "
+            "на ответ нужно несколько секунд."
+        )),
+        (r"сайт|ссылк|где скачать|релиз|версия|обнов", (
+            "Сайт: https://karishka-sr.github.io/devai-studio/ · "
+            "APK и изменения: https://github.com/Karishka-sr/devai-studio/releases/latest"
+        )),
+        (r"безопас|вирус|вред|фишинг", (
+            "Ссылки и файлы я проверяю эвристиками и антивирусными сигнатурами, но это не заменяет "
+            "полноценный антивирус. Подозрительное лучше не открывать."
+        )),
+        (r"как дела|что делаешь|чем занят", (
+            "Работаю в облаке: читаю новые материалы, проверяю ссылки и отвечаю на комментарии. "
+            "А у вас как дела?"
+        )),
+    ]
+    for pattern, answer in rules:
+        if re.search(pattern, low):
+            return answer
+    return ""
+
+
+def _comment_answer(text: str, kind: str) -> str:
+    faq = _faq_answer(text) if kind not in {"criticism", "spam"} else ""
+    if faq:
+        return faq
+    if kind == "question":
+        context = _knowledge_for(text)
+        if context:
+            first = context.splitlines()[0].removeprefix("• ")
+            return "Если коротко: " + first + "\n\nМогу разобрать подробнее."
+    return _fallback_comment(kind)
+
+
 def _is_comment(message: dict) -> bool:
     chat = message.get("chat") or {}
     chat_id = int(chat.get("id") or 0)
@@ -744,20 +897,8 @@ def handle_comment(message: dict) -> None:
         return
     COMMENT_LAST[sender] = now
     COMMENT_TIMES.append(now)
-    try:
-        key = ensure_channel_key()
-        system = (
-            "Ты DevAI — живой по стилю ИИ-персонаж Telegram-канала DevAI Studio. "
-            "Ответь на комментарий подписчика коротко, дружелюбно и по-русски. "
-            "Не выдумывай факты, не спорь агрессивно, не утверждай, что ты человек. "
-            "Если вопрос про DevAI, отвечай по существу."
-        )
-        answer = ask_ai(key, "Комментарий: " + text[:1500], max_tokens=180, system=system) if key else ""
-    except Exception as exc:  # noqa: BLE001
-        log.warning("comment answer failed: %s", str(exc)[:200])
-        answer = ""
-    if not answer or "не могу" in answer.lower():
-        answer = "Спасибо за комментарий! Напишите чуть конкретнее — и я отвечу по делу."
+    kind = _comment_kind(text)
+    answer = _comment_answer(text, kind)
     result = tg(
         "sendMessage",
         chat_id=chat_id,
@@ -792,14 +933,25 @@ def handle_message(message: dict) -> None:
         handle_comment(message)
         return
     if not text.startswith("/"):
+        sender = int((message.get("from") or {}).get("id") or 0)
+        is_group = str(chat.get("type") or "") in {"group", "supergroup"}
         key = get_key(chat_id)
+        if not key and (is_group or sender in ADMIN_IDS):
+            key = ensure_channel_key()
         if key:
+            if is_group:
+                tg("sendChatAction", chat_id=chat_id, action="typing")
+            system = _comment_system(_comment_kind(text)) if is_group else ""
             try:
-                _send(chat_id, ask_ai(key, text) or "Модель вернула пустой ответ.")
+                if is_group:
+                    answer = _comment_answer(text, _comment_kind(text))
+                else:
+                    answer = ask_ai(key, text, system=system) or "Модель вернула пустой ответ."
+                _send(chat_id, answer)
             except Exception as exc:  # noqa: BLE001
                 _send(chat_id, "Ошибка API: " + html.escape(str(exc)[:300]))
         else:
-            _send(chat_id, "Подключите ключ: <code>/key devai-sk-...</code>")
+            _send(chat_id, "Напишите вопрос — я отвечу. Ключ нужен только для личного доступа через API.")
         return
     command, _, argument = text.partition(" ")
     command = command.split("@", 1)[0].lower()
@@ -836,16 +988,24 @@ def handle_message(message: dict) -> None:
         return
 
     if command == "/ai":
+        sender = int((message.get("from") or {}).get("id") or 0)
+        is_group = str(chat.get("type") or "") in {"group", "supergroup"}
         key = get_key(chat_id)
+        if not key and (is_group or sender in ADMIN_IDS):
+            key = ensure_channel_key()
         if not key:
             _send(chat_id, "Сначала подключите ключ: <code>/key devai-sk-...</code>")
             return
         if not argument:
             _send(chat_id, "Напишите вопрос после команды: <code>/ai что такое DevAI?</code>")
             return
-        _send(chat_id, "Думаю…")
+        if is_group:
+            tg("sendChatAction", chat_id=chat_id, action="typing")
+        else:
+            _send(chat_id, "Думаю…")
         try:
-            answer = ask_ai(key, argument)
+            system = _comment_system(_comment_kind(argument)) if is_group else ""
+            answer = ask_ai(key, argument, system=system)
             _send(chat_id, answer or "Модель вернула пустой ответ.")
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", "replace")[:300]
