@@ -164,7 +164,8 @@ It can:
   retelling for each item and a source link; English-only items are skipped;
 - publish free-form creative posts on its own schedule (about every 3 hours
   with jitter): short stories, poems, essays, fairy tales, detective
-  miniatures and serialized mini-novellas written by the model;
+  miniatures and serialized mini-novellas written by the model; long texts
+  are split into Telegram-safe messages instead of being cut off;
 - reply to comments in the channel discussion group;
 - read uploaded books and documents (`txt`, `md`, `html`, `epub`, `fb2`,
   `docx`, `pdf`, `rtf`) and store them in the learning database.

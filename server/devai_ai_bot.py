@@ -434,13 +434,74 @@ def build_post(items: list[dict], api_key: str = "") -> str:
     return post
 
 
+TELEGRAM_TEXT_LIMIT = 3900
+
+
+def _tg_len(text: str) -> int:
+    return len(text.encode("utf-16-le")) // 2
+
+
+def _hard_split(text: str, limit: int) -> list[str]:
+    parts: list[str] = []
+    current = ""
+    for char in text:
+        if current and _tg_len(current + char) > limit:
+            parts.append(current)
+            current = ""
+        current += char
+    if current:
+        parts.append(current)
+    return parts
+
+
+def _split_for_telegram(text: str, limit: int = TELEGRAM_TEXT_LIMIT) -> list[str]:
+    if _tg_len(text) <= limit:
+        return [text]
+    chunks: list[str] = []
+    current = ""
+    for block in text.split("\n\n"):
+        candidate = block if not current else current + "\n\n" + block
+        if _tg_len(candidate) <= limit:
+            current = candidate
+            continue
+        if current:
+            chunks.append(current)
+            current = ""
+        if _tg_len(block) <= limit:
+            current = block
+            continue
+        for piece in re.split(r"(?<=[.!?…])\s+|\n", block):
+            candidate = piece if not current else current + " " + piece
+            if _tg_len(candidate) <= limit:
+                current = candidate
+            else:
+                if current:
+                    chunks.append(current)
+                    current = ""
+                if _tg_len(piece) > limit:
+                    chunks.extend(_hard_split(piece, limit))
+                else:
+                    current = piece
+    if current:
+        chunks.append(current)
+    return chunks or [text[:limit]]
+
+
 def publish_text(text: str) -> int:
-    result = tg("sendMessage", chat_id=CHANNEL, text=text, parse_mode="HTML", disable_web_page_preview=True)
-    if not result.get("ok") and "parse" in str(result.get("description", "")).lower():
-        result = tg("sendMessage", chat_id=CHANNEL, text=re.sub(r"<[^>]+>", "", text), disable_web_page_preview=True)
-    if not result.get("ok"):
-        raise RuntimeError(str(result.get("description") or "Telegram send failed")[:300])
-    return int((result.get("result") or {}).get("message_id") or 0)
+    message_id = 0
+    for part in _split_for_telegram(text):
+        result = tg("sendMessage", chat_id=CHANNEL, text=part, parse_mode="HTML", disable_web_page_preview=True)
+        if not result.get("ok") and "parse" in str(result.get("description", "")).lower():
+            result = tg(
+                "sendMessage",
+                chat_id=CHANNEL,
+                text=re.sub(r"<[^>]+>", "", part),
+                disable_web_page_preview=True,
+            )
+        if not result.get("ok"):
+            raise RuntimeError(str(result.get("description") or "Telegram send failed")[:300])
+        message_id = int((result.get("result") or {}).get("message_id") or message_id)
+    return message_id
 
 
 def publish_items(items: list[dict], api_key: str = "", first_item: int = 0, last_item: int = 0) -> bool:
@@ -708,9 +769,6 @@ def build_creative_post() -> str:
     elif fmt == "мини-повесть":
         label = "📖 <b>Мини-повесть «" + html.escape(_short(theme, 60)) + "»</b>"
     post = label + "\n\n" + html.escape(body)
-    if len(post) > 3900:
-        cut = post[:3850]
-        post = cut.rsplit("\n", 1)[0].rstrip(" ,.;:—-") + "…"
     post += "\n\n<i>DevAI · придумал сам</i>"
     return post
 
