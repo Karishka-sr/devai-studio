@@ -360,11 +360,14 @@ def register_account(
     with DB_LOCK, db() as conn:
         if conn.execute("SELECT 1 FROM accounts WHERE nickname_key = ?", (key,)).fetchone():
             raise AuthError(409, "Этот ник уже занят.")
-        conn.execute(
-            "INSERT INTO accounts(id, nickname, nickname_key, password_hash, role, created) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (account_id, nickname, key, hash_password(password), role, now),
-        )
+        try:
+            conn.execute(
+                "INSERT INTO accounts(id, nickname, nickname_key, password_hash, role, created) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (account_id, nickname, key, hash_password(password), role, now),
+            )
+        except sqlite3.IntegrityError as exc:
+            raise AuthError(409, "Этот ник уже занят.") from exc
         for site_id in SITES:
             conn.execute(
                 "INSERT OR IGNORE INTO site_memberships(account_id, site, created) VALUES (?, ?, ?)",
