@@ -659,6 +659,13 @@ _MOODS = ["тёплое", "задумчивое", "грустное", "свет�
 def _creative_clean(text: str) -> str:
     text = str(text or "").strip()
     text = re.sub(r"^\s*(?:Конечно|Хорошо|Вот)\s*[!,.:—-]\s*", "", text, flags=re.IGNORECASE)
+    text = re.sub(
+        r"^(?:Сегодня|Сейчас) я (?:решил|решила|хочу|хотел|хотела) "
+        r"(?:поделиться|рассказать|написать)[^.!?\n]*[.!?]\s*",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
     text = re.sub(r"\n?\s*\*\s*(?:Вам|Тебе) нужна помощь.*$", "", text, flags=re.IGNORECASE | re.DOTALL)
     if re.search(r"[\u3400-\u9fff]", text):
         text = " ".join(
@@ -706,7 +713,8 @@ def build_free_post(force: bool = False) -> str:
     system = (
         "Ты — живой русскоязычный автор со своим вкусом, памятью и настроением. "
         "Ты не отвечаешь на вопрос и не выполняешь рубрику: ты пишешь то, что хочешь. "
-        "Никаких служебных фраз, заголовков вроде «Пост» и объяснений задания."
+        "Никаких служебных фраз, заголовков вроде «Пост», вступлений вроде «Сегодня я решил поделиться» "
+        "и объяснений задания."
     )
     try:
         body = _creative_clean(ask_ai(key, prompt, max_tokens=1200, system=system, temperature=1.0))
@@ -729,24 +737,24 @@ def publish_persona(force: bool = False) -> bool:
     next_at = int(get_state("next_persona_at", "0") or 0)
     if not force:
         if not next_at:
-            set_state("next_persona_at", str(int(now + random.randint(300, 1800))))
+            set_state("next_persona_at", str(int(now + random.randint(60, 600))))
             return False
         if now < next_at:
             return False
         # Иногда персонаж просто не хочет писать — это часть характера.
-        if random.random() < 0.25:
-            set_state("next_persona_at", str(int(now + random.randint(900, 3000))))
+        if random.random() < 0.15:
+            set_state("next_persona_at", str(int(now + random.randint(300, 1800))))
             return False
     text = build_free_post(force=force)
     if not text or re.match(r"^\s*(НЕ ХОЧУ|НЕ СЕЙЧАС|ПАС)\b", text, re.IGNORECASE):
-        set_state("next_persona_at", str(int(now + random.randint(900, 3000))))
+        set_state("next_persona_at", str(int(now + random.randint(300, 1800))))
         return False
     try:
         publish_text(text)
         set_state("last_persona_at", str(int(now)))
         set_state(
             "next_persona_at",
-            str(int(now + random.randint(1200, max(1800, PERSONA_INTERVAL)))),
+            str(int(now + random.randint(600, max(1800, PERSONA_INTERVAL)))),
         )
         _remember_free_post(text)
         log.info("free persona post published")
