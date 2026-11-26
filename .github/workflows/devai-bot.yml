@@ -7,7 +7,7 @@ on:
 
 concurrency:
   group: devai-channel-bot
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -15,7 +15,7 @@ permissions:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 350
+    timeout-minutes: 355
     steps:
       - uses: actions/checkout@v4
 
@@ -96,7 +96,7 @@ jobs:
           fi
           python3 server/devai_ai_bot.py > /tmp/devai_bot.log 2>&1 &
           echo $! > /tmp/devai_bot.pid
-          for i in $(seq 1 300); do
+          for i in $(seq 1 340); do
             if ! kill -0 "$(cat /tmp/devai_bot.pid)" 2>/dev/null; then
               echo "Bot process exited"
               break
