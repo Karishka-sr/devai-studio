@@ -784,7 +784,7 @@ def publish_persona(force: bool = False) -> bool:
     if not force and now < next_at:
         return False
     # Не по расписанию, а "когда захочется": иногда откладываем на полчаса.
-    if not force and random.random() < 0.18:
+    if not force and last > 0 and random.random() < 0.18:
         set_state("next_persona_at", str(int(now + random.randint(600, 2400))))
         return False
     try:
