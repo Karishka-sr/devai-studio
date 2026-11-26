@@ -1,5 +1,12 @@
-const DEFAULT_API = "https://work-2-nizvyfgvcqicrkif.prod-runtime.all-hands.dev/v1";
-const STORAGE_KEY = "devai.api.base";
+const DEFAULT_API = (() => {
+  try {
+    const override = new URLSearchParams(location.search).get("api");
+    return override || "https://work-2-nizvyfgvcqicrkif.prod-runtime.all-hands.dev/v1";
+  } catch {
+    return "https://work-2-nizvyfgvcqicrkif.prod-runtime.all-hands.dev/v1";
+  }
+})();
+const STORAGE_KEY = "devai.api.base.v2";
 const MAX_CHALLENGE_ATTEMPTS = 2;
 
 const $ = (selector) => document.querySelector(selector);
@@ -19,6 +26,7 @@ const keyValue = $("#api-key");
 const resultName = $("#result-name");
 const serverState = $("#server-state");
 const statusText = $("#status-text");
+const endpointValue = $("#endpoint-value");
 
 let currentKey = "";
 let currentQuota = null;
@@ -70,7 +78,12 @@ function setStatus(element, text, kind = "") {
 }
 
 async function fetchJson(path, options = {}) {
-  const response = await fetch(apiBase() + path, options);
+  let response;
+  try {
+    response = await fetch(apiBase() + path, options);
+  } catch {
+    throw new Error(`Не удалось подключиться к ${apiBase()}. Сервер API не отвечает — проверьте адрес в блоке «Сервер».`);
+  }
   let data = null;
   try {
     data = await response.json();
@@ -110,9 +123,10 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function createKey(name) {
+async function createKey(name, onStage = () => {}) {
   let lastError = null;
   for (let attempt = 0; attempt < MAX_CHALLENGE_ATTEMPTS; attempt += 1) {
+    onStage("challenge");
     setStatus(formStatus, "Готовлю защитную задачу…", "muted");
     const challengeStarted = performance.now();
     const challenge = await fetchJson("/keys/challenge", {
@@ -121,6 +135,7 @@ async function createKey(name) {
       body: "{}",
     });
 
+    onStage("solving");
     setStatus(formStatus, "Решаю защитную задачу…", "muted");
     const solution = await solveChallenge(challenge.challenge, challenge.difficulty, (tries) => {
       setStatus(formStatus, `Решаю защитную задачу… ${tries.toLocaleString("ru-RU")}`, "muted");
@@ -133,6 +148,7 @@ async function createKey(name) {
       await sleep((minDelay - elapsed) * 1000);
     }
 
+    onStage("register");
     setStatus(formStatus, "Создаю ключ…", "muted");
     try {
       return await fetchJson("/keys/register", {
@@ -148,6 +164,7 @@ async function createKey(name) {
     } catch (error) {
       lastError = error;
       if (error.status !== 400 || attempt === MAX_CHALLENGE_ATTEMPTS - 1) throw error;
+      onStage("retry");
       setStatus(formStatus, "Задача устарела, пробую ещё раз…", "muted");
     }
   }
@@ -270,10 +287,12 @@ async function checkHealth() {
   try {
     const response = await fetch(`${origin}/health`, { cache: "no-store" });
     const data = await response.json();
-    if (!response.ok || !data.model_ready) throw new Error("not ready");
+    if (!response.ok) throw new Error("not ready");
     serverState.classList.add("is-online");
-    statusText.textContent = "онлайн";
-    serverState.title = `DevAI Core ${data.version || ""} · модель готова`;
+    statusText.textContent = data.model_ready ? "онлайн" : "API онлайн";
+    serverState.title = data.model_ready
+      ? `DevAI Core ${data.version || ""} · модель готова`
+      : `DevAI Core ${data.version || ""} · модель загружается`;
   } catch {
     serverState.classList.add("is-offline");
     statusText.textContent = "офлайн";
@@ -286,6 +305,7 @@ function updateSnippets() {
   document.querySelectorAll("[data-base]").forEach((node) => {
     node.textContent = base;
   });
+  if (endpointValue) endpointValue.textContent = base;
 }
 
 function setupTabs() {
@@ -320,8 +340,8 @@ function setupCopyButtons() {
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (busy || event.submitter?.id !== "generate") return;
-  if (websiteInput.value.trim() || navigator.webdriver) {
-    setStatus(formStatus, "Проверка не пройдена. Откройте страницу в обычном браузере.", "error");
+  if (websiteInput.value.trim()) {
+    setStatus(formStatus, "Проверка не пройдена. Обновите страницу и попробуйте снова.", "error");
     return;
   }
   if (!window.crypto?.subtle) {
@@ -334,11 +354,15 @@ form.addEventListener("submit", async (event) => {
   const originalLabel = label.textContent;
   label.textContent = "Создаю…";
   setStatus(formStatus, "", "");
+  const forge = window.DevAIKeyForge;
+  forge?.open();
   try {
-    const payload = await createKey(nameInput.value.trim());
+    const payload = await createKey(nameInput.value.trim(), (stageName) => forge?.stage(stageName));
     showKey(payload);
+    forge?.success(payload);
     setStatus(formStatus, "Готово. Ключ создан.", "");
   } catch (error) {
+    forge?.fail(error);
     setStatus(formStatus, error.message || "Не удалось создать ключ.", "error");
   } finally {
     busy = false;
@@ -409,6 +433,13 @@ $("#reset-base").addEventListener("click", () => {
   safeSet(STORAGE_KEY, DEFAULT_API);
   updateSnippets();
   checkHealth();
+});
+
+$("#edit-endpoint")?.addEventListener("click", () => {
+  const details = apiInput.closest("details");
+  if (details) details.open = true;
+  apiInput.focus();
+  apiInput.select();
 });
 
 function init() {

@@ -15,8 +15,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Unbounded:wght@500;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="motion.css">
+  <link rel="stylesheet" href="key-forge.css?v=20261126">
 </head>
-<body>
+<body class="api-page">
   <div class="grain" aria-hidden="true"></div>
 
   <header class="topbar">
@@ -96,6 +97,12 @@
 
       <div class="key-grid">
         <form class="panel form-panel" id="key-form" novalidate>
+          <div class="endpoint-badge" id="endpoint-badge">
+            <strong>Сервер</strong>
+            <code id="endpoint-value">https://work-2-nizvyfgvcqicrkif.prod-runtime.all-hands.dev/v1</code>
+            <button type="button" id="edit-endpoint">Изменить</button>
+          </div>
+
           <div class="telegram-gate">
             <div class="telegram-gate-head">
               <span class="telegram-gate-mark" aria-hidden="true">TG</span>
@@ -377,8 +384,69 @@ console.log(data.choices[<span class="n">0</span>].message.content);</code></pre
     </div>
   </footer>
 
+  <div class="key-theater" id="key-theater" hidden>
+    <div class="key-theater__grid" aria-hidden="true"></div>
+    <span class="key-theater__orb" aria-hidden="true"></span>
+    <span class="key-theater__orb" aria-hidden="true"></span>
+    <span class="key-theater__orb" aria-hidden="true"></span>
+    <section class="forge-window" role="dialog" aria-modal="true" aria-labelledby="forge-title">
+      <div class="forge-titlebar">
+        <span class="forge-lights" aria-hidden="true"><i></i><i></i><i></i></span>
+        <strong id="forge-title">DEVAI // KEY FORGE</strong>
+        <span id="forge-title-status">TRIAL KEY</span>
+        <button type="button" class="forge-close" id="forge-close" aria-label="Закрыть окно создания ключа">×</button>
+      </div>
+      <div class="forge-body">
+        <p class="forge-stage-label">LIVE KEY CEREMONY · DEVAI CORE</p>
+        <div class="forge-scene">
+          <div class="devai-bot" aria-hidden="true">
+            <div class="bot-antenna"></div>
+            <div class="bot-head"><span class="bot-mouth"></span></div>
+            <div class="bot-body"><span>DEVAI</span></div>
+            <div class="bot-arm" id="forge-arm"></div>
+            <div class="bot-shadow"></div>
+          </div>
+          <div class="forge-console">
+            <div class="console-head">
+              <span class="console-dot"></span>
+              <span>key_forge.exe</span>
+              <strong id="forge-phase">READY</strong>
+            </div>
+            <p class="forge-status" id="forge-status" aria-live="polite">DevAI готовит пробный ключ…</p>
+            <div class="forge-steps" aria-hidden="true">
+              <span class="forge-chip" data-forge-step="scan"><span>01</span> SCAN</span>
+              <span class="forge-chip" data-forge-step="solve"><span>02</span> PROOF</span>
+              <span class="forge-chip" data-forge-step="register"><span>03</span> REGISTER</span>
+              <span class="forge-chip" data-forge-step="key"><span>04</span> KEY</span>
+            </div>
+            <div class="forge-meter"><i id="forge-meter-fill"></i></div>
+            <div class="forge-meter-label"><span><strong id="forge-percent">0%</strong> forge progress</span><span>SHA-256</span></div>
+            <div class="forge-log" id="forge-log" aria-hidden="true"><p>boot sequence</p><p>secure channel ready</p></div>
+          </div>
+        </div>
+        <div class="forge-reveal" id="forge-reveal" hidden>
+          <div class="key-card">
+            <div class="key-card-top"><span>TRIAL KEY · 5 000 TOKENS</span><strong>STATUS: ACTIVE</strong></div>
+            <code id="forge-key"></code>
+            <div class="key-card-actions">
+              <button class="btn btn-primary btn-small" type="button" id="forge-copy">Копировать ключ</button>
+              <button class="btn btn-ghost btn-small" type="button" id="forge-download">Скачать .txt</button>
+              <button class="btn btn-ghost btn-small" type="button" id="forge-close-reveal">Готово</button>
+            </div>
+            <p class="forge-key-note">Ключ показывается один раз. DevAI сохранил только SHA-256 — если потеряете, создайте новый.</p>
+          </div>
+        </div>
+        <div class="forge-actions">
+          <button class="btn btn-ghost btn-small" type="button" id="forge-cancel">Отменить</button>
+        </div>
+      </div>
+    </section>
+    <div class="forge-confetti" id="forge-confetti" aria-hidden="true"></div>
+  </div>
+
   <noscript><div class="noscript">Для создания ключа нужен JavaScript. Включите его и обновите страницу.</div></noscript>
-  <script src="app.js" defer></script>
+  <script src="key-forge.js?v=20261126" defer></script>
+  <script src="app.js?v=20261126" defer></script>
   <script src="motion.js" defer></script>
   <script src="auth.js" defer></script>
 </body>
