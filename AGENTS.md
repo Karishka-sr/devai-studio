@@ -168,3 +168,9 @@
 - `server/devai_av.py` is a stdlib-only heuristic antivirus for PE/ELF, archives/APK/JAR, Office macros, PDF JS, PowerShell/download-and-execute, phishing HTML, EICAR, double extensions and RLE. `POST /v1/scan` accepts `url`, `text` or `content_base64`; max file 8 MB. It never executes uploads.
 - Android chat sends attachments as `Файл «name»:` followed by a fenced code block; `prepare_auto_context` scans those blocks and any `http(s)`/`t.me` link in the last user message. Binary files are currently rejected by `readAttachment` (64 KB text-only), so use `/v1/scan` for binaries.
 - Malicious pages are never learned; web text is labelled untrusted in the prompt.
+
+## Cloud channel bot (GitHub Actions)
+- `.github/workflows/devai-bot.yml` runs the real `server/devai_server.py` + `server/devai_ai_bot.py` on GitHub Actions every 6 hours, up to ~5h40 per run. It keeps posting after the local agent session is closed.
+- Required repository secrets: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_IDS`, `TELEGRAM_COMMENTS_CHAT`. The workflow downloads/caches Gemma 3 4B and writes the bot token/env files at runtime; never commit them.
+- The workflow is channel-only (no public API endpoint). For an always-on API and zero gaps, use `deploy/install-vps.sh` or `deploy/docker-compose.yml` on a VPS.
+- Do not run the local bot and the Actions bot at the same time: both poll the same Telegram token and would duplicate posts.
