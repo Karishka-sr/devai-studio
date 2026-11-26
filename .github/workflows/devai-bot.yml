@@ -1,0 +1,117 @@
+name: DevAI channel bot
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: devai-channel-bot
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache model
+        uses: actions/cache@v4
+        with:
+          path: server/models/google_gemma-3-4b-it-Q4_K_M.gguf
+          key: devai-gemma-3-4b-q4-k-m-v1
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --no-cache-dir --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu "llama-cpp-python>=0.3.37"
+          pip install --no-cache-dir pypdf
+
+      - name: Download model if missing
+        run: |
+          mkdir -p server/models
+          test -f server/models/google_gemma-3-4b-it-Q4_K_M.gguf || \
+            curl -L --retry 5 --retry-delay 5 \
+              -o server/models/google_gemma-3-4b-it-Q4_K_M.gguf \
+              "https://huggingface.co/bartowski/google_gemma-3-4b-it-GGUF/resolve/main/google_gemma-3-4b-it-Q4_K_M.gguf"
+
+      - name: Check bot token
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ]; then
+            echo "::error::Add repository secret TELEGRAM_BOT_TOKEN in Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+
+      - name: Prepare bot secrets
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_ADMIN_IDS: ${{ secrets.TELEGRAM_ADMIN_IDS }}
+          TELEGRAM_COMMENTS_CHAT: ${{ secrets.TELEGRAM_COMMENTS_CHAT }}
+        run: |
+          mkdir -p server/data
+          printf '%s' "$TELEGRAM_BOT_TOKEN" > server/data/devai_ai_bot_token
+          chmod 600 server/data/devai_ai_bot_token
+          cat > server/data/devai_ai_bot.env <<EOF
+          DEVAI_API_BASE=http://127.0.0.1:12001
+          TELEGRAM_CHANNEL=@devaiAI
+          TELEGRAM_ADMIN_IDS=$TELEGRAM_ADMIN_IDS
+          TELEGRAM_COMMENTS_CHAT=$TELEGRAM_COMMENTS_CHAT
+          DEVAI_CHANNEL_INTERVAL=1800
+          DEVAI_CHANNEL_AI=0
+          DEVAI_AUTOPOST=1
+          DEVAI_STATUS_INTERVAL=86400
+          DEVAI_PERSONA_ENABLED=1
+          DEVAI_PERSONA_INTERVAL=10800
+          DEVAI_COMMENTS_ENABLED=1
+          EOF
+          chmod 600 server/data/devai_ai_bot.env
+
+      - name: Run API and channel bot
+        run: |
+          python3 server/devai_server.py > /tmp/devai_server.log 2>&1 &
+          echo $! > /tmp/devai_server.pid
+          ready=0
+          for i in $(seq 1 120); do
+            if curl -fsS http://127.0.0.1:12001/health > /tmp/devai_health.json; then
+              ready=1
+              cat /tmp/devai_health.json
+              break
+            fi
+            sleep 2
+          done
+          if [ "$ready" != "1" ]; then
+            echo "API did not start"
+            tail -n 100 /tmp/devai_server.log
+            exit 1
+          fi
+          python3 server/devai_ai_bot.py > /tmp/devai_bot.log 2>&1 &
+          echo $! > /tmp/devai_bot.pid
+          for i in $(seq 1 300); do
+            if ! kill -0 "$(cat /tmp/devai_bot.pid)" 2>/dev/null; then
+              echo "Bot process exited"
+              break
+            fi
+            if ! kill -0 "$(cat /tmp/devai_server.pid)" 2>/dev/null; then
+              echo "API process exited"
+              break
+            fi
+            sleep 60
+          done
+
+      - name: Show logs
+        if: always()
+        run: |
+          tail -n 120 /tmp/devai_server.log || true
+          tail -n 120 /tmp/devai_bot.log || true
+          kill "$(cat /tmp/devai_bot.pid)" 2>/dev/null || true
+          kill "$(cat /tmp/devai_server.pid)" 2>/dev/null || true

@@ -1,0 +1,18 @@
+[Unit]
+Description=DevAI Core OpenAI-compatible API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=devai
+Group=devai
+WorkingDirectory=/opt/devai/app
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/devai/app/.venv/bin/python server/devai_server.py
+Restart=always
+RestartSec=5
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

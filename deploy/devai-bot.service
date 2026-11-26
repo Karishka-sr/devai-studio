@@ -1,0 +1,19 @@
+[Unit]
+Description=DevAI Telegram channel bot
+After=network-online.target devai-server.service
+Wants=network-online.target
+Requires=devai-server.service
+
+[Service]
+Type=simple
+User=devai
+Group=devai
+WorkingDirectory=/opt/devai/app
+Environment=PYTHONUNBUFFERED=1
+Environment=DEVAI_API_BASE=http://127.0.0.1:12001
+ExecStart=/opt/devai/app/.venv/bin/python server/devai_ai_bot.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

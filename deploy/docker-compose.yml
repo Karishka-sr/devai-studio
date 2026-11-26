@@ -1,0 +1,35 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: devai-core:local
+    command: ["python", "server/devai_server.py"]
+    volumes:
+      - ../server/models:/app/server/models:ro
+      - ../server/data:/app/server/data
+    ports:
+      - "12001:12001"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:12001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  bot:
+    image: devai-core:local
+    command: ["python", "server/devai_ai_bot.py"]
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      DEVAI_API_BASE: http://api:12001
+      TELEGRAM_CHANNEL: "@devaiAI"
+    env_file:
+      - path: ../server/data/devai_ai_bot.env
+        required: false
+    volumes:
+      - ../server/data:/app/server/data
+    restart: unless-stopped
