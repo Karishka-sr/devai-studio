@@ -25,6 +25,7 @@
   let currentKey = "";
   let opened = false;
   let finished = false;
+  let startedAt = 0;
 
   function later(fn, ms) {
     const id = window.setTimeout(fn, ms);
@@ -134,6 +135,7 @@
     clearTimers();
     opened = true;
     finished = false;
+    startedAt = performance.now();
     currentKey = "";
     reveal.hidden = true;
     keyNode.textContent = "";
@@ -178,22 +180,32 @@
     complete("scan");
     complete("solve");
     complete("register");
-    press("key");
-    complete("key");
-    phase.textContent = "ACTIVE";
-    status.textContent = "Готово. DevAI создал пробный ключ — заберите его ниже.";
-    setProgress(100);
-    addLog("trial key created");
-    addLog("sha-256 stored, plaintext shown once");
     currentKey = payload?.key || "";
     keyNode.textContent = currentKey || "Ключ не пришёл";
+    const wait = Math.max(700, 4200 - (performance.now() - startedAt));
+    phase.textContent = "SIGN";
+    status.textContent = "DevAI проверяет подпись, ставит печать и полирует ключ…";
+    setProgress(88);
+    addLog("verifying signature");
+    later(() => addLog("sealing trial key"), 480);
     later(() => {
+      if (!opened) return;
+      press("key");
+      complete("key");
+      phase.textContent = "ACTIVE";
+      status.textContent = "Готово. DevAI создал пробный ключ — заберите его ниже.";
+      setProgress(100);
+      addLog("trial key created");
+      addLog("sha-256 stored, plaintext shown once");
+    }, wait);
+    later(() => {
+      if (!opened) return;
       reveal.hidden = false;
       reveal.scrollIntoView({ behavior: "smooth", block: "nearest" });
       burst();
       cancel.textContent = "Закрыть";
       $("forge-copy").focus();
-    }, 520);
+    }, wait + 450);
   }
 
   function fail(error) {
