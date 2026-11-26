@@ -172,5 +172,6 @@
 ## Cloud channel bot (GitHub Actions)
 - `.github/workflows/devai-bot.yml` runs the real `server/devai_server.py` + `server/devai_ai_bot.py` on GitHub Actions every 6 hours, up to ~5h40 per run. It keeps posting after the local agent session is closed.
 - Required repository secrets: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_IDS`, `TELEGRAM_COMMENTS_CHAT`. The workflow downloads/caches Gemma 3 4B and writes the bot token/env files at runtime; never commit them.
+- `DEVAI_CHANNEL_FREEFORM=1` makes the persona choose when and what to post. It uses random idle windows, may skip a check, and writes a free-form text without a rubric label or footer. `DEVAI_CHANNEL_FREEFORM=0` restores the old status/learning digest loop.
 - The workflow is channel-only (no public API endpoint). For an always-on API and zero gaps, use `deploy/install-vps.sh` or `deploy/docker-compose.yml` on a VPS.
 - Do not run the local bot and the Actions bot at the same time: both poll the same Telegram token and would duplicate posts.

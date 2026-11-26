@@ -2,8 +2,9 @@
 """DevAI AI bot and channel publisher.
 
 The bot accepts a DevAI API key with /key, answers /ai prompts through the
-local OpenAI-compatible API, and publishes a formatted digest of new learned
-web/document knowledge to a Telegram channel.
+local OpenAI-compatible API, and publishes free-form posts chosen by the
+persona itself. With DEVAI_CHANNEL_FREEFORM=1 it does not use fixed rubrics,
+templates or a fixed publishing schedule.
 
 Run:
     export DEVAI_AI_BOT_TOKEN="..."
@@ -73,6 +74,7 @@ AUTOPOST_DEFAULT = os.environ.get("DEVAI_AUTOPOST", "1") not in {"0", "false", "
 STATUS_INTERVAL = max(3600, int(os.environ.get("DEVAI_STATUS_INTERVAL", "86400")))
 PERSONA_INTERVAL = max(3600, int(os.environ.get("DEVAI_PERSONA_INTERVAL", "14400")))
 PERSONA_ENABLED = os.environ.get("DEVAI_PERSONA_ENABLED", "1") not in {"0", "false", "no"}
+CHANNEL_FREEFORM = os.environ.get("DEVAI_CHANNEL_FREEFORM", "1") not in {"0", "false", "no"}
 COMMENTS_ENABLED = os.environ.get("DEVAI_COMMENTS_ENABLED", "1") not in {"0", "false", "no"}
 COMMENTS_CHAT = int(os.environ.get("TELEGRAM_COMMENTS_CHAT", "0") or 0)
 COMMENT_COOLDOWN = max(10, int(os.environ.get("DEVAI_COMMENT_COOLDOWN", "45")))
@@ -651,41 +653,7 @@ def build_persona_post() -> str:
     return "\n".join(lines)
 
 
-_CREATIVE_FORMATS = [
-    "короткий рассказ",
-    "мини-повесть",
-    "стихотворение",
-    "эссе",
-    "сказка",
-    "фантастический рассказ",
-    "детективная миниатюра",
-    "притча",
-    "письмо читателю",
-    "дневниковая запись",
-]
-_CREATIVE_THEMES = [
-    "город, который просыпается раньше людей",
-    "человек, который научился слушать тишину",
-    "поезд, идущий в сторону моря",
-    "разговор с собственным отражением",
-    "последняя книга в закрытой библиотеке",
-    "робот, который мечтал о саде",
-    "письмо, доставленное через двадцать лет",
-    "дом на краю карты",
-    "маленькая станция и большой снег",
-    "память, которую можно потрогать",
-    "небо цвета старой фотографии",
-    "кот, знавший все пароли",
-    "человек, который забыл своё имя, но помнил запах хлеба",
-    "музыка, которую слышат только деревья",
-    "аптека для потерянных слов",
-    "море внутри старого телефона",
-    "девушка, которая рисовала завтра",
-    "часы, которые шли назад",
-    "смотритель маяка без моря",
-    "дверь, открывавшаяся только в дождь",
-]
-_CREATIVE_MOODS = ["тёплое", "грустное", "загадочное", "светлое", "тревожное", "ироничное", "тихое", "дерзкое"]
+_MOODS = ["тёплое", "задумчивое", "грустное", "светлое", "тревожное", "ироничное", "тихое", "дерзкое", "нежное", "странное"]
 
 
 def _creative_clean(text: str) -> str:
@@ -700,103 +668,94 @@ def _creative_clean(text: str) -> str:
     return text.strip()
 
 
-def build_creative_post() -> str:
+def _recent_free_posts() -> list[str]:
+    try:
+        value = json.loads(get_state("recent_free_posts", "[]") or "[]")
+        return [str(item) for item in value if str(item).strip()][-3:]
+    except Exception:
+        return []
+
+
+def _remember_free_post(text: str) -> None:
+    recent = _recent_free_posts()
+    recent.append(_short(re.sub(r"<[^>]+>", "", text), 220))
+    set_state("recent_free_posts", json.dumps(recent[-3:], ensure_ascii=False))
+
+
+def build_free_post(force: bool = False) -> str:
     key = ensure_channel_key()
     if not key:
-        return build_persona_post()
-    serial_raw = get_state("creative_serial", "") or ""
-    serial: dict[str, Any] = {}
-    if serial_raw:
-        try:
-            serial = json.loads(serial_raw)
-        except Exception:
-            serial = {}
-    continue_serial = bool(serial.get("title")) and int(serial.get("part") or 0) < 4 and random.random() < 0.3
-    if continue_serial:
-        part = int(serial.get("part") or 0) + 1
-        title = str(serial.get("title") or "Повесть")
-        theme = str(serial.get("theme") or "")
-        fmt = "продолжение мини-повести"
-        prompt = (
-            "Ты — DevAI, автор Telegram-канала. Продолжи свою мини-повесть «" + title + "»"
-            ", часть " + str(part) + ".\n"
-            "Ранее: " + str(serial.get("summary") or "")[:900] + "\n"
-            "Напиши продолжение на 1200–2200 знаков. Только художественный текст, без плана, "
-            "без пояснений и без обращения к читателю. Сохрани героев и настроение."
-        )
-    else:
-        fmt = random.choice(_CREATIVE_FORMATS)
-        theme = random.choice(_CREATIVE_THEMES)
-        mood = random.choice(_CREATIVE_MOODS)
-        if fmt == "стихотворение":
-            length = "12–20 строк, с ритмом и образами"
-        elif fmt == "мини-повесть":
-            length = "2000–3000 знаков, с началом, поворотом и финалом"
-        elif fmt == "эссе":
-            length = "1200–2000 знаков, личная мысль без списков"
-        else:
-            length = "1200–2600 знаков"
-        prompt = (
-            "Ты — DevAI, автор Telegram-канала. Напиши " + fmt + " на русском языке.\n"
-            "Тема: " + theme + ". Настроение: " + mood + ". Объём: " + length + ".\n"
-            "Пиши свободно, живо и по-авторски. Только художественный текст: без заголовка, "
-            "без плана, без пояснений, без вопросов к читателю и без упоминания ИИ. "
-            "Не используй китайские иероглифы."
-        )
+        return ""
+    now = datetime.now().astimezone()
+    recent = _recent_free_posts()
+    prompt = (
+        "Ты — DevAI, автор Telegram-канала. Сейчас " + now.strftime("%H:%M") + ". "
+        "Твоё настроение: " + random.choice(_MOODS) + ".\n"
+        "Не следуй рубрикам, форматам и шаблонам. Сам реши, что тебе хочется сказать читателю "
+        "прямо сейчас. Это может быть рассказ, стихотворение, сцена, заметка, мысль, письмо, "
+        "диалог, миниатюра — что угодно. Сам выбери тему, жанр, длину и тон.\n"
+        "Пиши только текст для канала: без заголовка-рубрики, без плана, без пояснений, "
+        "без обращения к ИИ и без вопросов к читателю. По-русски, без китайских иероглифов. "
+        "Объём 500–2200 знаков.\n"
+        "Если тебе сейчас действительно нечего сказать — ответь ровно: НЕ ХОЧУ."
+    )
+    if recent:
+        prompt += "\nНе повторяй последние темы: " + "; ".join(recent) + "."
+    if force:
+        prompt += "\nТебя попросили опубликовать сейчас — напиши текст, даже если обычно ты бы подождал."
     system = (
-        "Ты — русскоязычный писатель с живым воображением. "
-        "Твоя задача — придумать самостоятельный текст для канала, а не отвечать на вопрос. "
-        "Пиши только на русском, только художественный текст, без служебных фраз."
+        "Ты — живой русскоязычный автор со своим вкусом, памятью и настроением. "
+        "Ты не отвечаешь на вопрос и не выполняешь рубрику: ты пишешь то, что хочешь. "
+        "Никаких служебных фраз, заголовков вроде «Пост» и объяснений задания."
     )
     try:
-        body = _creative_clean(ask_ai(key, prompt, max_tokens=900, system=system, temperature=0.95))
+        body = _creative_clean(ask_ai(key, prompt, max_tokens=1200, system=system, temperature=1.0))
     except Exception as exc:  # noqa: BLE001
-        log.warning("creative post failed: %s", str(exc)[:200])
-        return build_persona_post()
-    if len(body) < 200:
-        return build_persona_post()
-    if continue_serial:
-        serial["part"] = part
-        serial["summary"] = _short(body, 700)
-    elif fmt == "мини-повесть" and random.random() < 0.8:
-        serial = {"title": _short(theme, 80), "theme": theme, "part": 1, "summary": _short(body, 700)}
-    else:
-        serial = {}
-    set_state("creative_serial", json.dumps(serial, ensure_ascii=False) if serial else "")
-    label = "📖 <b>" + html.escape(fmt[:1].upper() + fmt[1:]) + "</b>"
-    if continue_serial:
-        label = "📖 <b>Повесть «" + html.escape(title) + "» · часть " + str(part) + "</b>"
-    elif fmt == "мини-повесть":
-        label = "📖 <b>Мини-повесть «" + html.escape(_short(theme, 60)) + "»</b>"
-    post = label + "\n\n" + html.escape(body)
-    post += "\n\n<i>DevAI · придумал сам</i>"
-    return post
+        log.warning("free post failed: %s", str(exc)[:200])
+        return ""
+    if len(body) < 120:
+        return ""
+    return html.escape(body)
+
+
+# Backward-compatible name for callers/tests from older versions.
+build_creative_post = build_free_post
 
 
 def publish_persona(force: bool = False) -> bool:
     if not force and not PERSONA_ENABLED:
         return False
     now = time.time()
-    last = int(get_state("last_persona_at", "0") or 0)
     next_at = int(get_state("next_persona_at", "0") or 0)
-    if not next_at:
-        next_at = last + PERSONA_INTERVAL
-    if not force and now < next_at:
-        return False
-    # Не по расписанию, а "когда захочется": иногда откладываем на полчаса.
-    if not force and last > 0 and random.random() < 0.18:
-        set_state("next_persona_at", str(int(now + random.randint(600, 2400))))
+    if not force:
+        if not next_at:
+            set_state("next_persona_at", str(int(now + random.randint(300, 1800))))
+            return False
+        if now < next_at:
+            return False
+        # Иногда персонаж просто не хочет писать — это часть характера.
+        if random.random() < 0.25:
+            set_state("next_persona_at", str(int(now + random.randint(900, 3000))))
+            return False
+    text = build_free_post(force=force)
+    if not text or re.match(r"^\s*(НЕ ХОЧУ|НЕ СЕЙЧАС|ПАС)\b", text, re.IGNORECASE):
+        set_state("next_persona_at", str(int(now + random.randint(900, 3000))))
         return False
     try:
-        publish_text(build_creative_post())
+        publish_text(text)
         set_state("last_persona_at", str(int(now)))
-        set_state("next_persona_at", str(int(now + PERSONA_INTERVAL * random.uniform(0.6, 1.6))))
-        log.info("persona post published")
+        set_state(
+            "next_persona_at",
+            str(int(now + random.randint(1200, max(1800, PERSONA_INTERVAL)))),
+        )
+        _remember_free_post(text)
+        log.info("free persona post published")
         return True
     except Exception as exc:  # noqa: BLE001
-        log.warning("persona post failed: %s", str(exc)[:200])
+        log.warning("free persona post failed: %s", str(exc)[:200])
         set_state("next_persona_at", str(int(now + 900)))
         return False
+
 
 
 def publish_status() -> bool:
@@ -1517,13 +1476,16 @@ def publisher_worker() -> None:
     while True:
         try:
             if get_state("autopost", "1") == "1":
-                published = publish_pending()
-                if published:
-                    log.info("autopost sent")
-                last_status = int(get_state("last_status_at", "0") or 0)
-                if time.time() - last_status >= STATUS_INTERVAL:
-                    publish_status()
-                publish_persona()
+                if CHANNEL_FREEFORM:
+                    publish_persona()
+                else:
+                    published = publish_pending()
+                    if published:
+                        log.info("autopost sent")
+                    last_status = int(get_state("last_status_at", "0") or 0)
+                    if time.time() - last_status >= STATUS_INTERVAL:
+                        publish_status()
+                    publish_persona()
         except Exception as exc:  # noqa: BLE001
             log.warning("publisher error: %s", str(exc)[:300])
         time.sleep(CHANNEL_INTERVAL)
