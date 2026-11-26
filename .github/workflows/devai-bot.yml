@@ -23,8 +23,9 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Cache model
-        uses: actions/cache@v4
+      - name: Restore model cache
+        id: model-cache
+        uses: actions/cache/restore@v4
         with:
           path: server/models/google_gemma-3-4b-it-Q4_K_M.gguf
           key: devai-gemma-3-4b-q4-k-m-v1
@@ -42,6 +43,13 @@ jobs:
             curl -L --retry 5 --retry-delay 5 \
               -o server/models/google_gemma-3-4b-it-Q4_K_M.gguf \
               "https://huggingface.co/bartowski/google_gemma-3-4b-it-GGUF/resolve/main/google_gemma-3-4b-it-Q4_K_M.gguf"
+
+      - name: Save model cache
+        if: steps.model-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: server/models/google_gemma-3-4b-it-Q4_K_M.gguf
+          key: devai-gemma-3-4b-q4-k-m-v1
 
       - name: Check bot token
         env:
