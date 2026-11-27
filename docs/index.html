@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DevAI Studio — ИИ-студия для Android</title>
-  <meta name="description" content="DevAI Studio — Android-приложение для кода и идей: ИИ-чат с интернет-поиском, Vexel — отдельное приложение и встроенный конструктор, локальные модели и 175 языков. Скачать APK.">
+  <meta name="description" content="DevAI Studio — Android-приложение, в котором ИИ-чат, редактор кода и конструктор экранов Vexel работают вместе. Опиши идею словами — получи ответ, экран или код. Есть локальные модели и 175 языков.">
   <meta name="theme-color" content="#080b09">
   <meta property="og:title" content="DevAI Studio — ИИ-студия для Android">
-  <meta property="og:description" content="Чат с ИИ, Vexel — отдельное приложение и встроенный конструктор, локальные модели и 175 языков. Скачать APK.">
+  <meta property="og:description" content="Android-студия с ИИ: спроси, собери экран в Vexel, напиши код на 175 языках или работай офлайн с локальной моделью. Скачать APK.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://karishka-sr.github.io/devai-studio/">
   <meta property="og:image" content="https://karishka-sr.github.io/devai-studio/devai-icon.png">
@@ -24,7 +24,7 @@
     "name": "DevAI Studio",
     "operatingSystem": "Android 12+",
     "applicationCategory": "DeveloperApplication",
-    "description": "Android-приложение для кода и идей: ИИ-чат с интернет-поиском, Vexel — отдельное приложение и встроенный конструктор, локальные модели и 175 языков.",
+    "description": "Android-приложение, в котором ИИ-чат, редактор кода и конструктор экранов Vexel работают вместе: от идеи до ответа, интерфейса или кода.",
     "softwareVersion": "4.2.0",
     "downloadUrl": "https://github.com/Karishka-sr/devai-studio/releases/latest",
     "datePublished": "2026-11-24",
@@ -33,7 +33,7 @@
   }
   </script>
   <link rel="stylesheet" href="motion.css">
-  <link rel="stylesheet" href="nebula.css?v=20261127">
+  <link rel="stylesheet" href="nebula.css?v=20261127c">
 </head>
 <body>
   <div class="grain" aria-hidden="true"></div>
@@ -44,6 +44,7 @@
       <span class="brand-name">DEVAI<span>/</span>STUDIO</span>
     </a>
     <nav class="site-nav" aria-label="Основная навигация">
+      <a href="#about">Что это</a>
       <a href="#features">Возможности</a>
       <a href="#why">Зачем</a>
       <a href="#release">Обновления</a>
@@ -68,7 +69,7 @@
         <div class="hero-copy">
           <p class="eyebrow"><i class="eyebrow-dot" aria-hidden="true"></i> ANDROID · AI-СТУДИЯ · <span data-version>v4.2.0</span></p>
           <h1>Код. Идеи.<br>Своя модель.<br><span class="outline">В кармане.</span></h1>
-          <p class="lede">DevAI Studio — Android-приложение для разработки и экспериментов: ИИ-чат с интернет-поиском, локальные модели и 175 языков. А Vexel — отдельное приложение-конструктор, которое также встроено в DevAI Studio.</p>
+          <p class="lede">DevAI Studio — Android-приложение, в котором ИИ-чат, редактор кода и конструктор экранов Vexel работают вместе. Опиши идею словами — получи ответ, готовый экран или код. Можно подключить облачную модель или работать локально, без интернета.</p>
           <div class="hero-actions">
             <a class="btn btn-lime" href="download.html" data-download-link>Скачать с сайта <span aria-hidden="true">↓</span></a>
             <a class="btn btn-ghost" href="https://github.com/Karishka-sr/devai-studio/releases/latest" data-github-link target="_blank" rel="noreferrer">Скачать с GitHub <span aria-hidden="true">↗</span></a>
@@ -120,10 +121,66 @@ fun LoginScreen() {
       </div>
     </div>
 
+    <section class="section section-about" id="about">
+      <div class="container">
+        <div class="about-head">
+          <div>
+            <span class="section-index">01 / ЧТО ЭТО ТАКОЕ</span>
+            <h2>DevAI Studio<br><span class="lime">карманная AI-студия.</span></h2>
+          </div>
+          <p class="section-lede">Это Android-приложение, в котором искусственный интеллект помогает пройти путь от идеи до результата. Задай вопрос словами — DevAI объяснит ошибку, найдёт информацию, соберёт экран или напишет код. Всё в одном приложении, на телефоне, без переключения между пятью сервисами.</p>
+        </div>
+
+        <p class="about-plain"><span>ПРОЩЕ ГОВОРЯ</span> Вы описываете, что хотите сделать, а DevAI помогает написать код, собрать экран и проверить результат — прямо на телефоне.</p>
+
+        <div class="about-equation" aria-label="DevAI Studio объединяет ИИ-чат, редактор кода, Vexel и локальные модели">
+          <span>ИИ-чат</span><b>+</b><span>редактор кода</span><b>+</b><span>Vexel</span><b>+</b><span>локальные модели</span><b>=</b><strong>DevAI Studio</strong>
+        </div>
+
+        <div class="about-grid">
+          <article class="about-card">
+            <span class="about-num">01</span>
+            <h3>Спроси</h3>
+            <p>Задай вопрос обычными словами: DevAI объяснит ошибку, найдёт актуальную информацию в интернете и покажет пример.</p>
+            <span class="about-tag">ЧАТ · ПОИСК · 175 ЯЗЫКОВ</span>
+          </article>
+          <article class="about-card">
+            <span class="about-num">02</span>
+            <h3>Собери</h3>
+            <p>Опиши экран — Vexel соберёт его из настоящих Material 3 виджетов, покажет превью и отдаст готовый Compose-код.</p>
+            <span class="about-tag">VEXEL · UI · COMPOSE</span>
+          </article>
+          <article class="about-card">
+            <span class="about-num">03</span>
+            <h3>Запусти</h3>
+            <p>Пиши и проверяй код на 175 языках, подключай плагины .devai, MCP и свои инструменты прямо в студии.</p>
+            <span class="about-tag">КОД · ПЛАГИНЫ · MCP</span>
+          </article>
+          <article class="about-card">
+            <span class="about-num">04</span>
+            <h3>Работай офлайн</h3>
+            <p>Скачай локальную модель — и студия продолжит работать без интернета и без отправки запросов в облако.</p>
+            <span class="about-tag">LOCAL · PRIVATE · OFFLINE</span>
+          </article>
+        </div>
+
+        <div class="about-bottom">
+          <div class="about-audience">
+            <span class="about-label">КОМУ ПОДОЙДЁТ</span>
+            <p><strong>Новичкам</strong> — чтобы учиться на понятных примерах. <strong>Разработчикам</strong> — чтобы быстро проверять идеи и собирать прототипы. <strong>В дороге</strong> — когда под рукой только телефон.</p>
+          </div>
+          <div class="about-cta">
+            <a class="btn btn-lime" href="download.html" data-download-link>Попробовать студию <span aria-hidden="true">↓</span></a>
+            <a class="btn btn-ghost" href="#features">Что внутри <span aria-hidden="true">→</span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="section" id="features">
       <div class="container">
         <div class="section-head">
-          <span class="section-index">01 / ВОЗМОЖНОСТИ</span>
+          <span class="section-index">02 / ВОЗМОЖНОСТИ</span>
           <h2>Одна студия.<br><span class="dim">Много режимов.</span></h2>
           <p class="section-lede">От быстрого вопроса до готового экрана. DevAI Studio собирает инструменты, которые обычно разбросаны по пяти приложениям.</p>
         </div>
@@ -191,7 +248,7 @@ fun LoginScreen() {
     <section class="section section-why" id="why">
       <div class="container why-grid">
         <div class="why-intro">
-          <span class="section-index">02 / ЗАЧЕМ</span>
+          <span class="section-index">03 / ЗАЧЕМ</span>
           <h2>Когда<br>Android Studio<br><span class="lime">слишком далеко.</span></h2>
           <p>Не замена IDE. Скорее карманный пульт для идей, которые нельзя отложить до возвращения за компьютер.</p>
         </div>
@@ -243,7 +300,7 @@ fun LoginScreen() {
     <section class="section" id="install">
       <div class="container">
         <div class="section-head">
-          <span class="section-index">03 / УСТАНОВКА</span>
+          <span class="section-index">04 / УСТАНОВКА</span>
           <h2>Три шага<br><span class="dim">до студии.</span></h2>
           <p class="section-lede">APK подписан. Обновления приходят через GitHub Releases, а приложение показывает окно, когда выходит новая версия.</p>
         </div>
@@ -257,8 +314,9 @@ fun LoginScreen() {
 
     <section class="section section-faq" id="faq">
       <div class="container faq-grid">
-        <div class="faq-intro"><span class="section-index">04 / ВОПРОСЫ</span><h2>Коротко<br><span class="dim">о главном.</span></h2></div>
+        <div class="faq-intro"><span class="section-index">05 / ВОПРОСЫ</span><h2>Коротко<br><span class="dim">о главном.</span></h2></div>
         <div class="faq-list">
+          <details><summary>Что такое DevAI Studio?</summary><p>Это Android-приложение, которое объединяет ИИ-чат, редактор кода и конструктор экранов Vexel. Опиши задачу словами — DevAI ответит, объяснит код, соберёт интерфейс или поможет довести идею до результата.</p></details>
           <details><summary>DevAI Studio бесплатный?</summary><p>APK можно скачать бесплатно. Для облачных провайдеров нужен свой API-ключ; локальные модели работают на устройстве без облака. Часть функций может быть в Premium.</p></details>
           <details><summary>Почему APK такой большой?</summary><p>Внутри обои, набор иконок, шрифты, код приложения и нативная библиотека LiteRT-LM для локальных моделей. Это цена автономности.</p></details>
           <details><summary>Куда уходят данные?</summary><p>Зависит от выбранного провайдера. Локальные модели не отправляют запросы наружу. Для облачных моделей действуют правила выбранного сервиса.</p></details>
@@ -297,6 +355,6 @@ fun LoginScreen() {
   <script src="site.js" defer></script>
   <script src="motion.js" defer></script>
   <script src="auth.js" defer></script>
-  <script src="nebula.js?v=20261127" defer></script>
+  <script src="nebula.js?v=20261127c" defer></script>
 </body>
 </html>

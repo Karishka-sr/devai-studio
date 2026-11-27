@@ -118,6 +118,9 @@
       ".terminal",
       ".hero-art",
       ".section-head",
+      ".about-card",
+      ".about-equation",
+      ".about-bottom",
       ".bento-card",
       ".feature-card",
       ".how-card",
@@ -160,7 +163,7 @@
 
   function makeSpotlights() {
     if (reduced) return;
-    const selector = ".bento-card, .feature-card, .how-card, .plan-card, .panel, .card, .download-card, .pg-rail, .pg-editor, .pg-side, .template, .checkout-card";
+    const selector = ".bento-card, .about-card, .feature-card, .how-card, .plan-card, .panel, .card, .download-card, .pg-rail, .pg-editor, .pg-side, .template, .checkout-card";
     document.querySelectorAll(selector).forEach((element) => {
       if (element.closest(".key-theater")) return;
       element.classList.add("dv-spot");
@@ -174,7 +177,7 @@
 
   function makeTilt() {
     if (!finePointer || reduced) return;
-    document.querySelectorAll(".bento-card, .plan-card, .download-card, .feature-card").forEach((element) => {
+    document.querySelectorAll(".bento-card, .about-card, .plan-card, .download-card, .feature-card").forEach((element) => {
       if (element.closest(".key-theater")) return;
       element.addEventListener("pointermove", (event) => {
         const rect = element.getBoundingClientRect();
