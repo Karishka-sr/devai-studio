@@ -167,8 +167,8 @@
 
     <string name="settings_appearance">Оформление</string>
     <string name="settings_theme_current">Стиль: %1$s</string>
-    <string name="theme_m3">Aurora — новый дизайн</string>
-    <string name="theme_expressive">Aurora Expressive</string>
+    <string name="theme_m3">Material 3 — новый дизайн</string>
+    <string name="theme_expressive">Material Expressive</string>
     <string name="theme_retro">Классика (2000–2020)</string>
 
     <string name="premium_title">DevAI Studio Premium</string>

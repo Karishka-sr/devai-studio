@@ -98,12 +98,12 @@ fun ToolsScreen() {
             icon = Icons.Default.Build,
         )
 
-        DevAICard(
+        DevAIBlurCard(
             accent = MaterialTheme.colorScheme.primary,
             contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
         ) {
             Text(
-                "3.1.0 — 50 языков кода",
+                "5.0.0 — Material 3 Expressive",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )

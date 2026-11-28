@@ -12,10 +12,10 @@
         <item name="colorSurface">@color/surface</item>
         <item name="colorSurfaceVariant">@color/surface_variant</item>
         <item name="colorOnSurface">@color/on_surface</item>
-        <item name="colorOnSurfaceVariant">#5B5870</item>
+        <item name="colorOnSurfaceVariant">#49454F</item>
         <item name="colorOnBackground">@color/on_surface</item>
-        <item name="colorOutline">#C9C4E4</item>
-        <item name="colorOutlineVariant">#E3DFF5</item>
+        <item name="colorOutline">#79747E</item>
+        <item name="colorOutlineVariant">#CAC4D0</item>
         <item name="android:colorBackground">@color/background</item>
         <item name="android:windowBackground">@color/background</item>
         <item name="shapeAppearanceCornerExtraSmall">@style/ShapeAppearance.DevAI.Aurora</item>
@@ -23,9 +23,9 @@
         <item name="shapeAppearanceCornerMedium">@style/ShapeAppearance.DevAI.Aurora</item>
         <item name="shapeAppearanceCornerLarge">@style/ShapeAppearance.DevAI.Aurora</item>
         <item name="shapeAppearanceCornerExtraLarge">@style/ShapeAppearance.DevAI.Aurora</item>
-        <item name="android:statusBarColor">@color/primary_dark</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:navigationBarColor">@color/background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowLightNavigationBar">true</item>
     </style>
 

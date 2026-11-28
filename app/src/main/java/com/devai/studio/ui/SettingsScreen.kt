@@ -1655,7 +1655,7 @@ private fun SettingsHome(
             },
         )
 
-        DevAICard(
+        DevAIBlurCard(
             onClick = onPremium,
             accent = MaterialTheme.colorScheme.primary,
             contentPadding = PaddingValues(18.dp),
@@ -1721,11 +1721,10 @@ private fun SettingsHome(
             )
         }
 
-        OutlinedTextField(
+        DevAIBlurSearchBar(
             value = query,
             onValueChange = onQueryChange,
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Поиск: температура, тема, модель…") },
+            placeholder = "Поиск: температура, тема, модель…",
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             trailingIcon = {
                 if (query.isNotEmpty()) {
@@ -1734,8 +1733,6 @@ private fun SettingsHome(
                     }
                 }
             },
-            singleLine = true,
-            shape = RoundedCornerShape(18.dp),
         )
 
         if (query.isBlank()) {
@@ -1855,7 +1852,7 @@ private fun SettingsGroup(
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
             title.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 6.dp),
@@ -1976,8 +1973,8 @@ private fun ThemeChooserRow(current: String, onChoose: (String) -> Unit) {
                     Text(
                         when (id) {
                             ThemeManager.EXPRESSIVE -> "Expressive"
-                            ThemeManager.RETRO -> "Классика"
-                            else -> "Aurora"
+                            ThemeManager.RETRO -> "Classic"
+                            else -> "Material 3"
                         },
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,

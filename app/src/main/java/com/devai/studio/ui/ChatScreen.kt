@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -58,11 +59,14 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -139,6 +143,7 @@ import com.devai.studio.data.StyleLayout
 import com.devai.studio.util.AiSupport
 import com.devai.studio.util.PremiumDialogs
 import com.devai.studio.util.TtsManager
+import com.qwenz.qwel.MainActivity as QwelActivity
 import dev.chrisbanes.haze.hazeSource
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CancellationException
@@ -195,6 +200,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
     var showAiActions by remember { mutableStateOf(false) }
     var showPromptLibrary by remember { mutableStateOf(false) }
     var showChatSearch by remember { mutableStateOf(false) }
+    var showMoreActions by remember { mutableStateOf(false) }
     var incognito by rememberSaveable { mutableStateOf(false) }
     var wallpaperId by remember { mutableStateOf(AppPrefs.chatWallpaper(context)) }
     var wallpaperDim by remember { mutableFloatStateOf(AppPrefs.chatWallpaperDim(context)) }
@@ -648,10 +654,39 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                 DevAIActionIcon(Icons.AutoMirrored.Filled.List, "Сессии") { openSessions() }
                 DevAIActionIcon(Icons.Default.Add, "Новый чат") { newChat() }
                 DevAIActionIcon(Icons.Default.Share, "Экспорт") { exportChat() }
-                DevAIActionIcon(Icons.Default.Refresh, "Заново", enabled = !streaming) { regenerate() }
-                DevAIActionIcon(Icons.Default.Person, "Персонажи") {
-                    requireFeature(PremiumFeature.CHARACTERS) {
-                        context.startActivity(Intent(context, CharactersActivity::class.java))
+                Box {
+                    DevAIActionIcon(Icons.Default.MoreVert, "Ещё") { showMoreActions = true }
+                    DropdownMenu(
+                        expanded = showMoreActions,
+                        onDismissRequest = { showMoreActions = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Заново") },
+                            leadingIcon = { Icon(Icons.Default.Refresh, contentDescription = null) },
+                            enabled = !streaming,
+                            onClick = {
+                                showMoreActions = false
+                                regenerate()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Персонажи") },
+                            leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                            onClick = {
+                                showMoreActions = false
+                                requireFeature(PremiumFeature.CHARACTERS) {
+                                    context.startActivity(Intent(context, CharactersActivity::class.java))
+                                }
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Vexel") },
+                            leadingIcon = { Icon(Icons.Default.Build, contentDescription = null) },
+                            onClick = {
+                                showMoreActions = false
+                                context.startActivity(Intent(context, QwelActivity::class.java))
+                            },
+                        )
                     }
                 }
             },
@@ -737,13 +772,18 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
             }
         }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        DevAIBlurPanel(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+            shape = CircleShape,
+            tint = MaterialTheme.colorScheme.surfaceContainerLow,
         ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
             FilterChip(
                 selected = searchEnabled || autoWeb,
                 onClick = {
@@ -816,6 +856,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                     label = { Text(attachment.name) },
                 )
             }
+            }
         }
 
         val dark = uiStyle.effectiveDark(MaterialTheme.colorScheme.background.luminance() < 0.35f)
@@ -838,7 +879,7 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
             layout == StyleLayout.CLAUDE -> MaterialTheme.colorScheme.surface.copy(alpha = 0.62f)
             layout == StyleLayout.MATERIAL_DESIGN -> MaterialTheme.colorScheme.surface
             layout == StyleLayout.MATERIAL_YOU -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
-            layout == StyleLayout.MATERIAL_EXPRESSIVE -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f)
+            layout == StyleLayout.MATERIAL_EXPRESSIVE -> MaterialTheme.colorScheme.surfaceContainerHigh
             else -> MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)
         }
         val composerBorder = when {
@@ -852,20 +893,24 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
             layout == StyleLayout.TERMINAL -> androidx.compose.foundation.BorderStroke(
                 1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
             )
-            layout == StyleLayout.CHATGPT || layout == StyleLayout.MATERIAL_DESIGN -> null
+            layout == StyleLayout.CHATGPT || layout == StyleLayout.MATERIAL_DESIGN ||
+                layout == StyleLayout.MATERIAL_EXPRESSIVE -> null
             else -> androidx.compose.foundation.BorderStroke(
                 1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)
             )
         }
+        val composerFrosted = haze != null &&
+            (glass || layout == StyleLayout.MATERIAL_EXPRESSIVE)
         Surface(
             shape = composerShape,
-            color = composerColor,
+            color = if (composerFrosted) Color.Transparent else composerColor,
             contentColor = MaterialTheme.colorScheme.onSurface,
             border = composerBorder,
             shadowElevation = when (layout) {
                 StyleLayout.CHATGPT -> 8.dp
                 StyleLayout.CLAUDE -> 0.dp
                 StyleLayout.MATERIAL_DESIGN -> 4.dp
+                StyleLayout.MATERIAL_EXPRESSIVE -> 0.dp
                 StyleLayout.TERMINAL -> 0.dp
                 else -> 8.dp
             },
@@ -880,7 +925,19 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                     },
                     vertical = 8.dp,
                 )
-                .then(if (glass) Modifier.glassPanel(haze, uiStyle, composerShape, dark) else Modifier),
+                .then(
+                    if (haze != null && (glass || layout == StyleLayout.MATERIAL_EXPRESSIVE)) {
+                        Modifier.devaiFrosted(
+                            haze,
+                            composerShape,
+                            MaterialTheme.colorScheme.surfaceContainerHigh,
+                        )
+                    } else if (glass) {
+                        Modifier.glassPanel(haze, uiStyle, composerShape, dark)
+                    } else {
+                        Modifier
+                    }
+                ),
         ) {
             Box {
             Row(
@@ -934,50 +991,29 @@ fun ChatScreen(mode: ChatMode = ChatMode.CHAT) {
                 )
                 Spacer(Modifier.width(6.dp))
                 val canSend = streaming || input.isNotBlank() || attachments.isNotEmpty()
-                val sendShape = when (layout) {
-                    StyleLayout.MATERIAL_EXPRESSIVE -> RoundedCornerShape(20.dp)
-                    StyleLayout.TERMINAL -> RoundedCornerShape(0.dp)
-                    StyleLayout.MATERIAL_DESIGN -> RoundedCornerShape(8.dp)
-                    else -> CircleShape
+                val sendShape = if (layout == StyleLayout.TERMINAL) {
+                    RoundedCornerShape(0.dp)
+                } else {
+                    CircleShape
                 }
                 val sendSize = if (layout == StyleLayout.MATERIAL_EXPRESSIVE) 52.dp else 48.dp
-                val sendBrush = if (!canSend) {
-                    Brush.linearGradient(
-                        listOf(
-                            MaterialTheme.colorScheme.surfaceVariant,
-                            MaterialTheme.colorScheme.surfaceVariant,
-                        )
-                    )
-                } else when (layout) {
-                    StyleLayout.CHATGPT -> Brush.linearGradient(
-                        listOf(MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.onSurface)
-                    )
-                    StyleLayout.MATERIAL_DESIGN -> Brush.linearGradient(
-                        listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary)
-                    )
-                    StyleLayout.TERMINAL -> Brush.linearGradient(
-                        listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary)
-                    )
-                    StyleLayout.MATERIAL_EXPRESSIVE -> Brush.linearGradient(
-                        listOf(MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.primary)
-                    )
-                    else -> Brush.linearGradient(
-                        listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .size(sendSize)
-                        .clip(sendShape)
-                        .background(sendBrush)
-                        .clickable(enabled = canSend) { if (streaming) stop() else send() },
-                    contentAlignment = Alignment.Center,
+                FilledIconButton(
+                    onClick = { if (streaming) stop() else send() },
+                    enabled = canSend,
+                    modifier = Modifier.size(sendSize),
+                    shape = sendShape,
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = if (streaming) MaterialTheme.colorScheme.errorContainer
+                        else MaterialTheme.colorScheme.primary,
+                        contentColor = if (streaming) MaterialTheme.colorScheme.onErrorContainer
+                        else MaterialTheme.colorScheme.onPrimary,
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    ),
                 ) {
                     Icon(
                         imageVector = if (streaming) Icons.Default.Close else Icons.AutoMirrored.Filled.Send,
                         contentDescription = if (streaming) "Стоп" else "Отправить",
-                        tint = if (canSend) MaterialTheme.colorScheme.onPrimary
-                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                         modifier = Modifier.size(21.dp),
                     )
                 }
@@ -1266,26 +1302,19 @@ private fun EmptyChat(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Box(
-            modifier = Modifier
-                .size(96.dp)
-                .clip(CircleShape)
-                .background(
-                    Brush.linearGradient(
-                        listOf(
-                            MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.tertiary,
-                        )
-                    )
-                ),
-            contentAlignment = Alignment.Center,
+        Surface(
+            modifier = Modifier.size(96.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         ) {
-            Icon(
-                Icons.Default.Face,
-                contentDescription = null,
-                modifier = Modifier.size(44.dp),
-                tint = MaterialTheme.colorScheme.onPrimary,
-            )
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    Icons.Default.Face,
+                    contentDescription = null,
+                    modifier = Modifier.size(44.dp),
+                )
+            }
         }
         Spacer(Modifier.height(18.dp))
         Text(
@@ -1330,30 +1359,17 @@ private fun EmptyChat(
                     "Придумай идею",
                 )
             }).forEach { text ->
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    border = androidx.compose.foundation.BorderStroke(
-                        1.dp,
-                        MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                    ),
-                    modifier = Modifier.clickable { onSuggestion(text) },
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
+                AssistChip(
+                    onClick = { onSuggestion(text) },
+                    leadingIcon = {
                         Icon(
                             Icons.Default.Create,
                             contentDescription = null,
                             modifier = Modifier.size(15.dp),
-                            tint = MaterialTheme.colorScheme.primary,
                         )
-                        Spacer(Modifier.width(6.dp))
-                        Text(text, style = MaterialTheme.typography.labelMedium)
-                    }
-                }
+                    },
+                    label = { Text(text, maxLines = 1) },
+                )
             }
         }
     }
@@ -1800,20 +1816,20 @@ private fun MaterialMessage(
     val shape = when (layout) {
         StyleLayout.MATERIAL_DESIGN -> RoundedCornerShape(4.dp)
         StyleLayout.MATERIAL_YOU -> RoundedCornerShape(24.dp)
-        else -> RoundedCornerShape(28.dp)
+        else -> MaterialTheme.shapes.extraLarge
     }
     val container = when {
         isUser && layout == StyleLayout.MATERIAL_DESIGN -> MaterialTheme.colorScheme.primary
         isUser && layout == StyleLayout.MATERIAL_YOU -> MaterialTheme.colorScheme.primaryContainer
-        isUser -> MaterialTheme.colorScheme.tertiaryContainer
+        isUser -> MaterialTheme.colorScheme.primaryContainer
         layout == StyleLayout.MATERIAL_DESIGN -> MaterialTheme.colorScheme.surface
         layout == StyleLayout.MATERIAL_YOU -> MaterialTheme.colorScheme.surfaceVariant
-        else -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f)
+        else -> MaterialTheme.colorScheme.surfaceContainerHigh
     }
     val contentColor = when {
         isUser && layout == StyleLayout.MATERIAL_DESIGN -> MaterialTheme.colorScheme.onPrimary
         isUser && layout == StyleLayout.MATERIAL_YOU -> MaterialTheme.colorScheme.onPrimaryContainer
-        isUser -> MaterialTheme.colorScheme.onTertiaryContainer
+        isUser -> MaterialTheme.colorScheme.onPrimaryContainer
         else -> MaterialTheme.colorScheme.onSurface
     }
     Row(

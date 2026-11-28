@@ -8,26 +8,23 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,84 +32,85 @@ import androidx.compose.ui.unit.sp
 import com.devai.studio.R
 import kotlinx.coroutines.delay
 
-private val SplashTop = Color(0xFF3B2466)
-private val SplashMiddle = Color(0xFF120B22)
-private val SplashBottom = Color(0xFF07040D)
-private val SplashAccent = Color(0xFFB9A7FF)
-
 @Composable
 fun SplashScreen(onFinished: () -> Unit) {
     LaunchedEffect(Unit) {
-        delay(1600)
+        delay(1400)
         onFinished()
     }
 
-    val pulse = rememberInfiniteTransition(label = "splash").animateFloat(
-        initialValue = 0.96f,
-        targetValue = 1.04f,
+    val pulse by rememberInfiniteTransition(label = "splash").animateFloat(
+        initialValue = 0.97f,
+        targetValue = 1.03f,
         animationSpec = infiniteRepeatable(
             animation = tween(900, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse,
         ),
         label = "pulse",
     )
+    val scheme = MaterialTheme.colorScheme
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(SplashTop, SplashMiddle, SplashBottom))),
+            .background(scheme.background),
         contentAlignment = Alignment.Center,
     ) {
+        DevAIBlurredGlow(
+            color = scheme.primary,
+            modifier = Modifier.align(Alignment.Center).scale(1.8f),
+            size = 160.dp,
+            blur = 64.dp,
+        )
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                modifier = Modifier
-                    .size(132.dp)
-                    .scale(pulse.value)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.08f))
-                    .border(1.dp, Color.White.copy(alpha = 0.18f), CircleShape),
-                contentAlignment = Alignment.Center,
+            Surface(
+                modifier = Modifier.size(112.dp).scale(pulse),
+                shape = RoundedCornerShape(32.dp),
+                color = scheme.primaryContainer,
+                contentColor = scheme.onPrimaryContainer,
+                tonalElevation = 2.dp,
             ) {
-                Image(
-                    painter = painterResource(R.drawable.ic_launcher_foreground),
-                    contentDescription = null,
-                    modifier = Modifier.size(96.dp),
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    Image(
+                        painter = painterResource(R.drawable.ic_launcher_foreground),
+                        contentDescription = null,
+                        modifier = Modifier.size(84.dp),
+                    )
+                }
             }
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.size(24.dp))
             Text(
                 text = "DevAI",
-                color = Color.White,
-                fontSize = 42.sp,
+                color = scheme.onBackground,
+                style = MaterialTheme.typography.displayMedium,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = (-1).sp,
             )
             Text(
                 text = "STUDIO",
-                color = SplashAccent,
-                fontSize = 13.sp,
+                color = scheme.primary,
+                style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 7.sp,
             )
-            Spacer(Modifier.height(36.dp))
+            Spacer(Modifier.size(32.dp))
             CircularProgressIndicator(
                 modifier = Modifier.size(26.dp),
-                color = SplashAccent,
+                color = scheme.primary,
                 strokeWidth = 2.5.dp,
-                trackColor = Color.White.copy(alpha = 0.12f),
+                trackColor = scheme.surfaceContainerHighest,
             )
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.size(12.dp))
             Text(
-                text = "Загрузка…",
-                color = Color.White.copy(alpha = 0.65f),
-                fontSize = 13.sp,
+                text = "Material 3 · загрузка",
+                color = scheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
             )
         }
         Text(
-            text = "DevAI Studio",
-            color = Color.White.copy(alpha = 0.3f),
-            fontSize = 11.sp,
-            letterSpacing = 2.sp,
+            text = "DevAI Studio 5.0",
+            color = scheme.onSurfaceVariant.copy(alpha = 0.55f),
+            style = MaterialTheme.typography.labelSmall,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 28.dp),

@@ -82,21 +82,26 @@ object UiStyleCatalog {
 
     private fun classic() = UiStyle(
         id = CLASSIC_ID,
-        name = "Классика DevAI",
-        maker = "DevAI Studio",
-        description = "Фирменная Aurora-тема и выбор старого раздела «Вид».",
+        name = "DevAI Material 3",
+        maker = "DevAI Studio · Material 3 Expressive",
+        description = "Новый базовый интерфейс: крупная типографика, тональные карточки, плавные формы и честный Material 3.",
         light = light(
-            0xFF5B4BE8, 0xFFF8F7FF, 0xFFFFFFFF,
-            onBackground = 0xFF141322, onSurfaceVariant = 0xFF5B5870, outline = 0xFFE3DFF5,
-            secondary = 0xFF0B7A6B, tertiary = 0xFFC2415A, surfaceVariant = 0xFFEEEBFF,
+            0xFF6750A4, 0xFFFEF7FF, 0xFFFFFBFE,
+            onBackground = 0xFF1D1B20, onSurfaceVariant = 0xFF49454F, outline = 0xFFCAC4D0,
+            secondary = 0xFF006A6A, tertiary = 0xFF7D5260, surfaceVariant = 0xFFE7E0EC,
+            userBubble = 0xFFEADDFF, onUserBubble = 0xFF21005D,
+            aiBubble = 0xFFF3EDF7, onAiBubble = 0xFF1D1B20,
         ),
         dark = dark(
-            0xFFC9C1FF, 0xFF0B0B14, 0xFF141422,
-            onBackground = 0xFFF1EFFF, onSurfaceVariant = 0xFFB9B4D0, outline = 0xFF2A2840,
-            secondary = 0xFF6FE7D4, tertiary = 0xFFFFB3C0, surfaceVariant = 0xFF1E1D30,
+            0xFFD0BCFF, 0xFF141218, 0xFF1D1B20,
+            onBackground = 0xFFE6E0E9, onSurfaceVariant = 0xFFCAC4D0, outline = 0xFF938F99,
+            secondary = 0xFF8FD8D8, tertiary = 0xFFEFB8C8, surfaceVariant = 0xFF49454F,
+            userBubble = 0xFFD0BCFF, onUserBubble = 0xFF381E72,
+            aiBubble = 0xFF2B2930, onAiBubble = 0xFFE6E0E9,
         ),
-        corner = 24, bubble = StyleBubble.ROUNDED, background = StyleBackground.AURORA,
-        nav = StyleNav.FLOATING_PILL, font = StyleFont.SANS,
+        corner = 28, bubble = StyleBubble.ROUNDED, background = StyleBackground.MESH,
+        nav = StyleNav.SEGMENTED, font = StyleFont.SANS,
+        layout = StyleLayout.MATERIAL_EXPRESSIVE,
     )
 
     private fun chatgpt() = UiStyle(

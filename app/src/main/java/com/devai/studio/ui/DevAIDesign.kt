@@ -1,16 +1,9 @@
 package com.devai.studio.ui
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -32,40 +25,45 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.devai.studio.R
 import dev.chrisbanes.haze.hazeSource
 
+/** Material 3 tokens used by decorative effects and the legacy style previews. */
 object DevAIPalette {
-    val Indigo = Color(0xFF5B4BE8)
-    val IndigoDeep = Color(0xFF35258F)
-    val Mint = Color(0xFF0B7A6B)
-    val Coral = Color(0xFFC2415A)
-    val Amber = Color(0xFFF59E0B)
-    val Ink = Color(0xFF141322)
-    val Paper = Color(0xFFF8F7FF)
-    val Card = Color(0xFFFFFFFF)
-    val Line = Color(0xFFE3DFF5)
+    val Primary = Color(0xFF6750A4)
+    val PrimaryContainer = Color(0xFFEADDFF)
+    val Secondary = Color(0xFF006A6A)
+    val SecondaryContainer = Color(0xFFCCE8E8)
+    val Tertiary = Color(0xFF7D5260)
+    val TertiaryContainer = Color(0xFFFFD8E4)
+    val Ink = Color(0xFF1D1B20)
+    val Paper = Color(0xFFFEF7FF)
+    val Card = Color(0xFFFFFBFE)
+    val Line = Color(0xFFCAC4D0)
 }
 
 @Composable
@@ -74,170 +72,63 @@ fun DevAIBackground(
     content: @Composable BoxScope.() -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val style = LocalUiStyle.current
-    val dark = style.effectiveDark(scheme.background.luminance() < 0.35f)
-    val density = androidx.compose.ui.platform.LocalDensity.current
-    val step = with(density) { 28.dp.toPx() }
     val haze = LocalHazeState.current
-    val liquid = style.isLiquidGlass
-    val phase by rememberInfiniteTransition(label = "liquid-background").animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(9000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "liquid-phase",
-    )
-    val drift = if (liquid) phase else 0f
     CompositionLocalProvider(LocalContentColor provides scheme.onBackground) {
-        Box(modifier.fillMaxSize()) {
         Box(
-            modifier = Modifier
+            modifier
                 .fillMaxSize()
-                .then(if (style.isGlass && haze != null) Modifier.hazeSource(haze, zIndex = 0f) else Modifier)
-                .background(
-                    when (style.background) {
-                        com.devai.studio.data.StyleBackground.AURORA ->
-                            Brush.verticalGradient(listOf(scheme.background, if (dark) scheme.surface else scheme.background, scheme.background))
-                        com.devai.studio.data.StyleBackground.MESH ->
-                            Brush.linearGradient(listOf(scheme.background, scheme.surfaceVariant, scheme.background))
-                        com.devai.studio.data.StyleBackground.GLASS ->
-                            Brush.verticalGradient(listOf(scheme.background, scheme.surface.copy(alpha = 0.92f), scheme.background))
-                        else -> Brush.verticalGradient(listOf(scheme.background, scheme.background))
-                    }
-                ),
+                .background(scheme.background)
+                .then(if (haze != null) Modifier.hazeSource(haze, zIndex = 0f) else Modifier),
         ) {
             Canvas(Modifier.fillMaxSize()) {
-                when (style.background) {
-                    com.devai.studio.data.StyleBackground.AURORA -> {
-                        drawCircle(
-                            brush = Brush.radialGradient(
-                                listOf(scheme.primary.copy(alpha = if (dark) 0.18f else 0.12f), Color.Transparent),
-                                center = Offset(size.width * 0.92f, size.height * 0.03f),
-                                radius = size.width * 0.75f,
-                            ),
-                            radius = size.width * 0.75f,
-                            center = Offset(size.width * 0.92f, size.height * 0.03f),
-                        )
-                        drawCircle(
-                            brush = Brush.radialGradient(
-                                listOf(scheme.tertiary.copy(alpha = if (dark) 0.12f else 0.08f), Color.Transparent),
-                                center = Offset(size.width * 0.05f, size.height * 0.85f),
-                                radius = size.width * 0.7f,
-                            ),
-                            radius = size.width * 0.7f,
-                            center = Offset(size.width * 0.05f, size.height * 0.85f),
-                        )
-                    }
-                    com.devai.studio.data.StyleBackground.GRID -> {
-                        var x = 0f
-                        while (x < size.width) {
-                            drawLine(scheme.outline.copy(alpha = 0.22f), Offset(x, 0f), Offset(x, size.height), 1f)
-                            x += step
-                        }
-                        var y = 0f
-                        while (y < size.height) {
-                            drawLine(scheme.outline.copy(alpha = 0.22f), Offset(0f, y), Offset(size.width, y), 1f)
-                            y += step
-                        }
-                    }
-                    com.devai.studio.data.StyleBackground.DOTS -> {
-                        val dot = with(density) { 1.4.dp.toPx() }
-                        var y = step / 2
-                        while (y < size.height) {
-                            var x = step / 2
-                            while (x < size.width) {
-                                drawCircle(scheme.outline.copy(alpha = 0.35f), dot, Offset(x, y))
-                                x += step
-                            }
-                            y += step
-                        }
-                    }
-                    com.devai.studio.data.StyleBackground.PAPER -> {
-                        var y = step
-                        while (y < size.height) {
-                            drawLine(scheme.outline.copy(alpha = 0.18f), Offset(0f, y), Offset(size.width, y), 1f)
-                            y += step
-                        }
-                    }
-                    com.devai.studio.data.StyleBackground.TERMINAL -> {
-                        var y = 0f
-                        while (y < size.height) {
-                            drawRect(Color.Black.copy(alpha = 0.16f), Offset(0f, y), androidx.compose.ui.geometry.Size(size.width, 1f))
-                            y += with(density) { 5.dp.toPx() }
-                        }
-                    }
-                    com.devai.studio.data.StyleBackground.MESH, com.devai.studio.data.StyleBackground.GLASS -> {
-                        drawCircle(
-                            brush = Brush.radialGradient(
-                                listOf(scheme.primary.copy(alpha = if (dark) 0.16f else 0.10f), Color.Transparent),
-                                center = Offset(size.width * (0.12f + drift * 0.10f), size.height * 0.12f),
-                                radius = size.width * (0.8f + drift * 0.12f),
-                            ),
-                            radius = size.width * (0.8f + drift * 0.12f),
-                            center = Offset(size.width * (0.12f + drift * 0.10f), size.height * 0.12f),
-                        )
-                        drawCircle(
-                            brush = Brush.radialGradient(
-                                listOf(scheme.tertiary.copy(alpha = if (dark) 0.12f else 0.08f), Color.Transparent),
-                                center = Offset(size.width * (0.88f - drift * 0.10f), size.height * 0.82f),
-                                radius = size.width * (0.75f + drift * 0.10f),
-                            ),
-                            radius = size.width * (0.75f + drift * 0.10f),
-                            center = Offset(size.width * (0.88f - drift * 0.10f), size.height * 0.82f),
-                        )
-                    }
-                    com.devai.studio.data.StyleBackground.NEON -> {
-                        drawCircle(
-                            brush = Brush.radialGradient(
-                                listOf(scheme.secondary.copy(alpha = 0.18f), Color.Transparent),
-                                center = Offset(size.width * 0.2f, size.height * 0.25f),
-                                radius = size.width * 0.9f,
-                            ),
-                            radius = size.width * 0.9f,
-                            center = Offset(size.width * 0.2f, size.height * 0.25f),
-                        )
-                        drawCircle(
-                            brush = Brush.radialGradient(
-                                listOf(scheme.tertiary.copy(alpha = 0.12f), Color.Transparent),
-                                center = Offset(size.width * 0.85f, size.height * 0.7f),
-                                radius = size.width * 0.8f,
-                            ),
-                            radius = size.width * 0.8f,
-                            center = Offset(size.width * 0.85f, size.height * 0.7f),
-                        )
-                    }
-                    com.devai.studio.data.StyleBackground.SOLID -> Unit
-                }
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        listOf(scheme.primary.copy(alpha = 0.12f), Color.Transparent),
+                        center = Offset(size.width * 0.92f, size.height * 0.04f),
+                        radius = size.width * 0.78f,
+                    ),
+                    radius = size.width * 0.78f,
+                    center = Offset(size.width * 0.92f, size.height * 0.04f),
+                )
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        listOf(scheme.tertiary.copy(alpha = 0.09f), Color.Transparent),
+                        center = Offset(size.width * 0.04f, size.height * 0.92f),
+                        radius = size.width * 0.72f,
+                    ),
+                    radius = size.width * 0.72f,
+                    center = Offset(size.width * 0.04f, size.height * 0.92f),
+                )
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        listOf(scheme.secondary.copy(alpha = 0.07f), Color.Transparent),
+                        center = Offset(size.width * 0.1f, size.height * 0.18f),
+                        radius = size.width * 0.52f,
+                    ),
+                    radius = size.width * 0.52f,
+                    center = Offset(size.width * 0.1f, size.height * 0.18f),
+                )
             }
-        }
-        content()
+            content()
         }
     }
 }
 
 @Composable
 fun DevAILogo(size: Dp = 42.dp) {
-    Box(
-        modifier = Modifier
-            .size(size)
-            .clip(RoundedCornerShape(size * 0.34f))
-            .background(
-                Brush.linearGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.primary,
-                        MaterialTheme.colorScheme.tertiary,
-                    )
-                )
-            ),
-        contentAlignment = Alignment.Center,
+    Surface(
+        modifier = Modifier.size(size),
+        shape = RoundedCornerShape(size * 0.3f),
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
     ) {
-        Image(
-            painter = painterResource(R.drawable.ic_launcher_foreground),
-            contentDescription = null,
-            modifier = Modifier.size(size * 0.78f),
-        )
+        Box(contentAlignment = Alignment.Center) {
+            Image(
+                painter = painterResource(R.drawable.ic_launcher_foreground),
+                contentDescription = null,
+                modifier = Modifier.size(size * 0.76f),
+            )
+        }
     }
 }
 
@@ -248,119 +139,68 @@ fun DevAITopBar(
     onBack: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
-    val style = LocalUiStyle.current
-    val layout = style.layout
-    val terminal = layout == com.devai.studio.data.StyleLayout.TERMINAL
-    val material = style.isMaterial
-    val minimal = layout == com.devai.studio.data.StyleLayout.CHATGPT ||
-        layout == com.devai.studio.data.StyleLayout.CLAUDE ||
-        layout == com.devai.studio.data.StyleLayout.GEMINI
-    val container = when {
-        terminal -> Color.Black.copy(alpha = 0.42f)
-        layout == com.devai.studio.data.StyleLayout.MATERIAL_DESIGN -> MaterialTheme.colorScheme.primary
-        layout == com.devai.studio.data.StyleLayout.MATERIAL_YOU -> MaterialTheme.colorScheme.surface
-        layout == com.devai.studio.data.StyleLayout.MATERIAL_EXPRESSIVE -> MaterialTheme.colorScheme.surfaceVariant
-        else -> Color.Transparent
-    }
-    val titleColor = when {
-        terminal -> MaterialTheme.colorScheme.primary
-        layout == com.devai.studio.data.StyleLayout.MATERIAL_DESIGN -> MaterialTheme.colorScheme.onPrimary
-        else -> MaterialTheme.colorScheme.onSurface
-    }
-    val subtitleColor = when {
-        terminal -> MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-        layout == com.devai.studio.data.StyleLayout.MATERIAL_DESIGN ->
-            MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.78f)
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
     val haze = LocalHazeState.current
-    val dark = style.effectiveDark(MaterialTheme.colorScheme.background.luminance() < 0.35f)
-    Row(
+    val shape = RoundedCornerShape(0.dp)
+    val surface = MaterialTheme.colorScheme.surface
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .background(container)
             .then(
-                if (style.isGlass && haze != null) {
-                    Modifier.glassPanel(haze, style, RoundedCornerShape(0.dp), dark)
-                } else {
-                    Modifier
-                }
-            )
-            .padding(
-                start = if (material) 8.dp else 16.dp,
-                end = 8.dp,
-                top = if (material) 2.dp else 10.dp,
-                bottom = if (material) 2.dp else 6.dp,
+                if (haze != null) Modifier.devaiFrosted(haze, shape, surface)
+                else Modifier.background(surface)
             ),
-        verticalAlignment = Alignment.CenterVertically,
+        shape = shape,
+        color = if (haze != null) Color.Transparent else surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
-        if (onBack != null) {
-            if (minimal || terminal) {
-                IconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 6.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (onBack != null) {
+                FilledTonalIconButton(
+                    onClick = onBack,
+                    modifier = Modifier.size(40.dp),
+                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    ),
+                ) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Назад",
-                        tint = titleColor,
                         modifier = Modifier.size(20.dp),
                     )
                 }
+                Spacer(Modifier.width(8.dp))
             } else {
-                Surface(
-                    shape = CircleShape,
-                    color = if (layout == com.devai.studio.data.StyleLayout.MATERIAL_DESIGN)
-                        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f)
-                    else MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                    contentColor = titleColor,
-                    border = if (layout == com.devai.studio.data.StyleLayout.MATERIAL_DESIGN) null else
-                        BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)),
-                ) {
-                    IconButton(onClick = onBack, modifier = Modifier.size(42.dp)) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Назад",
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
+                DevAILogo(38.dp)
+                Spacer(Modifier.width(12.dp))
+            }
+            Column(Modifier.weight(1f)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (!subtitle.isNullOrBlank()) {
+                    Text(
+                        subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
-        } else if (minimal || terminal) {
-            Text(
-                if (terminal) ">_" else title.take(1),
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.titleLarge,
-                fontFamily = if (terminal) androidx.compose.ui.text.font.FontFamily.Monospace else null,
-                fontWeight = FontWeight.Black,
-                modifier = Modifier.padding(horizontal = 8.dp),
-            )
-        } else {
-            DevAILogo(if (material) 38.dp else 42.dp)
+            Spacer(Modifier.width(6.dp))
+            actions()
         }
-        Spacer(Modifier.width(if (minimal) 4.dp else 12.dp))
-        Column(Modifier.weight(1f)) {
-            Text(
-                title,
-                style = when (layout) {
-                    com.devai.studio.data.StyleLayout.MATERIAL_EXPRESSIVE -> MaterialTheme.typography.headlineSmall
-                    com.devai.studio.data.StyleLayout.CLAUDE -> MaterialTheme.typography.titleLarge.copy(
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
-                    )
-                    else -> MaterialTheme.typography.titleLarge
-                },
-                fontWeight = FontWeight.Bold,
-                color = titleColor,
-                maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-            )
-            if (!subtitle.isNullOrBlank()) {
-                Text(
-                    subtitle,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = subtitleColor,
-                    maxLines = 1,
-                )
-            }
-        }
-        actions()
     }
 }
 
@@ -371,37 +211,16 @@ fun DevAIActionIcon(
     enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
-    val style = LocalUiStyle.current
-    val flat = style.layout == com.devai.studio.data.StyleLayout.CHATGPT ||
-        style.layout == com.devai.studio.data.StyleLayout.CLAUDE ||
-        style.layout == com.devai.studio.data.StyleLayout.GEMINI ||
-        style.layout == com.devai.studio.data.StyleLayout.TERMINAL
-    if (flat) {
-        IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(38.dp)) {
-            Icon(
-                icon,
-                contentDescription = description,
-                modifier = Modifier.size(19.dp),
-                tint = if (enabled) MaterialTheme.colorScheme.onSurface
-                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-            )
-        }
-    } else {
-        Surface(
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.62f),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.14f)),
-        ) {
-            IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(40.dp)) {
-                Icon(
-                    icon,
-                    contentDescription = description,
-                    modifier = Modifier.size(19.dp),
-                    tint = if (enabled) MaterialTheme.colorScheme.onSurface
-                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                )
-            }
-        }
+    IconButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.size(40.dp),
+        colors = IconButtonDefaults.iconButtonColors(
+            contentColor = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
+        ),
+    ) {
+        Icon(icon, contentDescription = description, modifier = Modifier.size(20.dp))
     }
 }
 
@@ -413,55 +232,52 @@ fun DevAICard(
     accent: Color? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val style = LocalUiStyle.current
-    val dark = style.effectiveDark(MaterialTheme.colorScheme.background.luminance() < 0.35f)
-    val shape = style.cardShape()
-    val haze = LocalHazeState.current
-    val glass = style.isGlass
-    Box {
-        Surface(
-            modifier = modifier
-                .fillMaxWidth()
-                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-                .then(if (glass) Modifier.glassPanel(haze, style, shape, dark) else Modifier),
-            shape = shape,
-            color = when {
-                glass && haze != null -> Color.Transparent
-                glass -> MaterialTheme.colorScheme.surface.copy(alpha = 0.66f)
-                style.layout == com.devai.studio.data.StyleLayout.MATERIAL_DESIGN ->
-                    MaterialTheme.colorScheme.surface
-                else -> MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
-            },
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            border = if (glass) {
-                BorderStroke(1.dp, style.glassBorder(dark))
-            } else {
-                BorderStroke(
-                    1.dp,
-                    (accent ?: MaterialTheme.colorScheme.outline).copy(alpha = if (accent != null) 0.35f else 0.16f),
-                )
-            },
-            shadowElevation = if (style.layout == com.devai.studio.data.StyleLayout.MATERIAL_DESIGN) 3.dp else 0.dp,
+    val shape = MaterialTheme.shapes.large
+    val body: @Composable ColumnScope.() -> Unit = {
+        Column(
+            modifier = Modifier.padding(contentPadding),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Box {
-                if (accent != null) {
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(3.dp)
-                            .background(Brush.horizontalGradient(listOf(accent, accent.copy(alpha = 0.15f))))
-                    )
-                }
-                Column(
-                    modifier = Modifier.padding(contentPadding),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    content = content,
+            if (accent != null) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(3.dp)
+                        .clip(CircleShape)
+                        .background(accent.copy(alpha = 0.72f)),
                 )
             }
+            content()
         }
-        if (style.isLiquidGlass) {
-            LiquidSheen(Modifier.matchParentSize(), shape, strength = 0.12f)
-        }
+    }
+    val colors = CardDefaults.cardColors(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+    )
+    val elevation = CardDefaults.cardElevation(defaultElevation = if (accent != null) 2.dp else 0.dp)
+    val border = BorderStroke(
+        1.dp,
+        (accent ?: MaterialTheme.colorScheme.outline).copy(alpha = if (accent != null) 0.24f else 0.14f),
+    )
+    if (onClick != null) {
+        Card(
+            onClick = onClick,
+            modifier = modifier.fillMaxWidth(),
+            shape = shape,
+            colors = colors,
+            elevation = elevation,
+            border = border,
+            content = body,
+        )
+    } else {
+        Card(
+            modifier = modifier.fillMaxWidth(),
+            shape = shape,
+            colors = colors,
+            elevation = elevation,
+            border = border,
+            content = body,
+        )
     }
 }
 
@@ -472,18 +288,15 @@ fun DevAIIconTile(
     tint: Color = MaterialTheme.colorScheme.primary,
     size: Dp = 44.dp,
 ) {
-    Box(
-        modifier = modifier
-            .size(size)
-            .clip(if (LocalUiStyle.current.corner == 0) RoundedCornerShape(0.dp) else RoundedCornerShape(size * 0.32f))
-            .background(
-                Brush.linearGradient(
-                    listOf(tint.copy(alpha = 0.18f), tint.copy(alpha = 0.06f))
-                )
-            ),
-        contentAlignment = Alignment.Center,
+    Surface(
+        modifier = modifier.size(size),
+        shape = RoundedCornerShape(size * 0.3f),
+        color = tint.copy(alpha = 0.14f),
+        contentColor = tint,
     ) {
-        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(size * 0.5f))
+        Box(contentAlignment = Alignment.Center) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(size * 0.48f))
+        }
     }
 }
 
@@ -495,31 +308,22 @@ fun DevAIGradientButton(
     enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
-    val shape = LocalUiStyle.current.pillShape()
-    val brush = Brush.horizontalGradient(
-        listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
-    )
     Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier
-            .clip(shape)
-            .background(if (enabled) brush else Brush.horizontalGradient(listOf(
-                MaterialTheme.colorScheme.surfaceVariant,
-                MaterialTheme.colorScheme.surfaceVariant,
-            ))),
-        shape = shape,
+        modifier = modifier,
+        shape = CircleShape,
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
+            containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
-            disabledContainerColor = Color.Transparent,
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
             disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         ),
-        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
     ) {
         if (icon != null) {
             Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(7.dp))
+            Spacer(Modifier.width(8.dp))
         }
         Text(text, fontWeight = FontWeight.SemiBold)
     }
@@ -536,14 +340,14 @@ fun DevAISectionTitle(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
-            DevAIIconTile(icon, size = 34.dp)
+            DevAIIconTile(icon, size = 36.dp)
             Spacer(Modifier.width(10.dp))
         }
         Column(Modifier.weight(1f)) {
             Text(
                 title,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
             )
             if (!subtitle.isNullOrBlank()) {
                 Text(
@@ -560,8 +364,9 @@ fun DevAISectionTitle(
 fun DevAIStatusPill(text: String, accent: Color = MaterialTheme.colorScheme.primary) {
     Surface(
         shape = CircleShape,
-        color = accent.copy(alpha = 0.12f),
-        border = BorderStroke(1.dp, accent.copy(alpha = 0.25f)),
+        color = accent.copy(alpha = 0.13f),
+        contentColor = accent,
+        border = BorderStroke(1.dp, accent.copy(alpha = 0.22f)),
     ) {
         Text(
             text,
@@ -570,5 +375,53 @@ fun DevAIStatusPill(text: String, accent: Color = MaterialTheme.colorScheme.prim
             fontWeight = FontWeight.SemiBold,
             color = accent,
         )
+    }
+}
+
+@Composable
+fun DevAIHairline(modifier: Modifier = Modifier) {
+    Box(
+        modifier
+            .fillMaxWidth()
+            .height(1.dp)
+            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)),
+    )
+}
+
+@Composable
+fun DevAIEmptyState(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    action: (@Composable () -> Unit)? = null,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        ) {
+            Box(Modifier.size(72.dp), contentAlignment = Alignment.Center) {
+                Icon(icon, contentDescription = null, modifier = Modifier.size(32.dp))
+            }
+        }
+        Spacer(Modifier.height(16.dp))
+        Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+        Spacer(Modifier.height(6.dp))
+        Text(
+            subtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        )
+        if (action != null) {
+            Spacer(Modifier.height(16.dp))
+            action()
+        }
     }
 }

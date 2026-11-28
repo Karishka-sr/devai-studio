@@ -1,6 +1,7 @@
 package com.devai.studio
 
 import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.Crossfade
@@ -19,6 +20,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeManager.apply(this)
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         ThemeManager.applyDynamicIfAvailable(this)
         CodeLanguages.load(this)

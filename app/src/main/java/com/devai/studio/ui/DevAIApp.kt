@@ -1,6 +1,11 @@
 package com.devai.studio.ui
 
 import android.content.Intent
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,11 +22,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -73,49 +83,65 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
 private val AuroraLight = lightColorScheme(
-    primary = Color(0xFF5B4BE8),
+    primary = Color(0xFF6750A4),
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFE7E3FF),
-    onPrimaryContainer = Color(0xFF1B1450),
-    secondary = Color(0xFF0B7A6B),
+    primaryContainer = Color(0xFFEADDFF),
+    onPrimaryContainer = Color(0xFF21005D),
+    secondary = Color(0xFF006A6A),
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFC9F7EF),
-    onSecondaryContainer = Color(0xFF00382F),
-    tertiary = Color(0xFFC2415A),
+    secondaryContainer = Color(0xFFCCE8E8),
+    onSecondaryContainer = Color(0xFF002020),
+    tertiary = Color(0xFF7D5260),
     onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFFFD9DF),
-    onTertiaryContainer = Color(0xFF4A0018),
-    background = Color(0xFFF8F7FF),
-    onBackground = Color(0xFF141322),
-    surface = Color(0xFFFFFFFF),
-    onSurface = Color(0xFF141322),
-    surfaceVariant = Color(0xFFEEEBFF),
-    onSurfaceVariant = Color(0xFF5B5870),
-    outline = Color(0xFFC9C4E4),
-    outlineVariant = Color(0xFFE3DFF5),
+    tertiaryContainer = Color(0xFFFFD8E4),
+    onTertiaryContainer = Color(0xFF31111D),
+    background = Color(0xFFFEF7FF),
+    onBackground = Color(0xFF1D1B20),
+    surface = Color(0xFFFFFBFE),
+    onSurface = Color(0xFF1D1B20),
+    surfaceVariant = Color(0xFFE7E0EC),
+    onSurfaceVariant = Color(0xFF49454F),
+    outline = Color(0xFF79747E),
+    outlineVariant = Color(0xFFCAC4D0),
+    surfaceContainerLowest = Color(0xFFFFFFFF),
+    surfaceContainerLow = Color(0xFFF7F2FA),
+    surfaceContainer = Color(0xFFF3EDF7),
+    surfaceContainerHigh = Color(0xFFECE6F0),
+    surfaceContainerHighest = Color(0xFFE6E0E9),
+    inverseSurface = Color(0xFF322F35),
+    inverseOnSurface = Color(0xFFF5EFF7),
+    inversePrimary = Color(0xFFD0BCFF),
 )
 
 private val AuroraDark = darkColorScheme(
-    primary = Color(0xFFC9C1FF),
-    onPrimary = Color(0xFF241A66),
-    primaryContainer = Color(0xFF3B2FA0),
-    onPrimaryContainer = Color(0xFFE7E3FF),
-    secondary = Color(0xFF6FE7D4),
-    onSecondary = Color(0xFF00382F),
-    secondaryContainer = Color(0xFF0B5F54),
-    onSecondaryContainer = Color(0xFFC9F7EF),
-    tertiary = Color(0xFFFFB3C0),
-    onTertiary = Color(0xFF4A0018),
-    tertiaryContainer = Color(0xFF7A2038),
-    onTertiaryContainer = Color(0xFFFFD9DF),
-    background = Color(0xFF0B0B14),
-    onBackground = Color(0xFFF1EFFF),
-    surface = Color(0xFF141422),
-    onSurface = Color(0xFFF1EFFF),
-    surfaceVariant = Color(0xFF1E1D30),
-    onSurfaceVariant = Color(0xFFB9B4D0),
-    outline = Color(0xFF4A4763),
-    outlineVariant = Color(0xFF2A2840),
+    primary = Color(0xFFD0BCFF),
+    onPrimary = Color(0xFF381E72),
+    primaryContainer = Color(0xFF4F378B),
+    onPrimaryContainer = Color(0xFFEADDFF),
+    secondary = Color(0xFF8FD8D8),
+    onSecondary = Color(0xFF003737),
+    secondaryContainer = Color(0xFF005050),
+    onSecondaryContainer = Color(0xFFCCE8E8),
+    tertiary = Color(0xFFEFB8C8),
+    onTertiary = Color(0xFF492532),
+    tertiaryContainer = Color(0xFF633B48),
+    onTertiaryContainer = Color(0xFFFFD8E4),
+    background = Color(0xFF141218),
+    onBackground = Color(0xFFE6E0E9),
+    surface = Color(0xFF1D1B20),
+    onSurface = Color(0xFFE6E0E9),
+    surfaceVariant = Color(0xFF49454F),
+    onSurfaceVariant = Color(0xFFCAC4D0),
+    outline = Color(0xFF938F99),
+    outlineVariant = Color(0xFF49454F),
+    surfaceContainerLowest = Color(0xFF0F0D13),
+    surfaceContainerLow = Color(0xFF1D1B20),
+    surfaceContainer = Color(0xFF211F26),
+    surfaceContainerHigh = Color(0xFF2B2930),
+    surfaceContainerHighest = Color(0xFF36343B),
+    inverseSurface = Color(0xFFE6E0E9),
+    inverseOnSurface = Color(0xFF322F35),
+    inversePrimary = Color(0xFF6750A4),
 )
 
 private val ExpressiveLight = lightColorScheme(
@@ -218,10 +244,10 @@ private val DevAITypography = Typography().let { base ->
 }
 
 private val DevAIShapes = androidx.compose.material3.Shapes(
-    extraSmall = RoundedCornerShape(10.dp),
-    small = RoundedCornerShape(14.dp),
-    medium = RoundedCornerShape(20.dp),
-    large = RoundedCornerShape(26.dp),
+    extraSmall = RoundedCornerShape(8.dp),
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(24.dp),
     extraLarge = RoundedCornerShape(32.dp),
 )
 
@@ -234,6 +260,7 @@ object DevAIThemeState {
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DevAITheme(content: @Composable () -> Unit) {
     val context = LocalContext.current
@@ -289,12 +316,21 @@ fun DevAITheme(content: @Composable () -> Unit) {
     val shapes = if (classic) DevAIShapes else style.shapes()
     val typography = if (classic) DevAITypography else style.typography(DevAITypography)
     CompositionLocalProvider(LocalUiStyle provides style) {
-        MaterialTheme(
-            colorScheme = scheme,
-            typography = typography,
-            shapes = shapes,
-            content = content,
-        )
+        if (style.layout == StyleLayout.MATERIAL_EXPRESSIVE) {
+            MaterialExpressiveTheme(
+                colorScheme = scheme,
+                typography = typography,
+                shapes = shapes,
+                content = content,
+            )
+        } else {
+            MaterialTheme(
+                colorScheme = scheme,
+                typography = typography,
+                shapes = shapes,
+                content = content,
+            )
+        }
     }
 }
 
@@ -338,9 +374,30 @@ fun DevAIApp() {
                     },
                 )
             },
+            floatingActionButton = {
+                if (tab != "chat") {
+                    ExtendedFloatingActionButton(
+                        onClick = {
+                            context.startActivity(Intent(context, QwelActivity::class.java))
+                        },
+                        icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                        text = { Text("Vexel", fontWeight = FontWeight.SemiBold) },
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    )
+                }
+            },
+            floatingActionButtonPosition = FabPosition.End,
         ) { padding ->
-            Box(Modifier.fillMaxSize().padding(padding)) {
-                when (tab) {
+            AnimatedContent(
+                targetState = tab,
+                modifier = Modifier.fillMaxSize().padding(padding),
+                transitionSpec = {
+                    fadeIn(tween(220)) togetherWith fadeOut(tween(140))
+                },
+                label = "main-tabs",
+            ) { current ->
+                when (current) {
                     "providers" -> ProvidersScreen()
                     "settings" -> SettingsScreen()
                     "tools" -> ToolsScreen()
@@ -500,23 +557,26 @@ private fun MaterialBottomBar(
     onBuilder: () -> Unit,
 ) {
     val style = LocalUiStyle.current
-    val container = when (style.layout) {
-        com.devai.studio.data.StyleLayout.MATERIAL_DESIGN -> MaterialTheme.colorScheme.surface
-        com.devai.studio.data.StyleLayout.MATERIAL_EXPRESSIVE -> MaterialTheme.colorScheme.surfaceVariant
-        else -> MaterialTheme.colorScheme.surface
+    val haze = LocalHazeState.current
+    val container = if (style.layout == StyleLayout.MATERIAL_EXPRESSIVE) {
+        MaterialTheme.colorScheme.surfaceContainer
+    } else {
+        MaterialTheme.colorScheme.surface
     }
     NavigationBar(
-        containerColor = container,
-        tonalElevation = if (style.layout == com.devai.studio.data.StyleLayout.MATERIAL_DESIGN) 4.dp else 0.dp,
+        modifier = Modifier.fillMaxWidth().then(
+            if (haze != null) Modifier.devaiFrosted(haze, RoundedCornerShape(0.dp), container) else Modifier
+        ),
+        containerColor = if (haze != null) Color.Transparent else container,
+        tonalElevation = 0.dp,
     ) {
-        MaterialNavItem("Режимы", Icons.AutoMirrored.Filled.List, tab == "chat" || tab == "modes") { onTab("modes") }
+        MaterialNavItem("Чат", Icons.Default.Face, tab == "chat") { onTab("chat") }
+        MaterialNavItem("Режимы", Icons.AutoMirrored.Filled.List, tab == "modes") { onTab("modes") }
         MaterialNavItem("ИИ", Icons.Default.Person, tab == "providers") { onTab("providers") }
-        MaterialNavItem("Vexel", Icons.Default.Add, false, onBuilder)
         MaterialNavItem("Ещё", Icons.Default.Build, tab == "tools") { onTab("tools") }
         MaterialNavItem("Настройки", Icons.Default.Settings, tab == "settings") { onTab("settings") }
     }
 }
-
 @Composable
 private fun androidx.compose.foundation.layout.RowScope.MaterialNavItem(
     label: String,

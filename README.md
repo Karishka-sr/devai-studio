@@ -6,7 +6,7 @@
 
 **Android-студия для разработки с ИИ.** Чат с ведущими моделями, генерация Android-проектов, рабочее пространство с файлами и офлайн-модели, которые работают без интернета.
 
-[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v3.6.4** · Android 12+ · arm64-v8a
+[Скачать APK](https://github.com/Karishka-sr/devai-studio/releases) · **v5.0.0** · Android 12+ · arm64-v8a
 [Сайт](https://karishka-sr.github.io/devai-studio/) · **DevAI Studio** · описание и APK
 [API](https://karishka-sr.github.io/devai-studio/api.html) · **DevAI Core API** · ключ за 10 секунд
 [Скачать PC-версию](https://github.com/Karishka-sr/devai-studio-pc/releases/latest) · **Windows 7/10/11 · 3.2.0** · JRE 8 внутри
@@ -16,7 +16,7 @@
     <img src="https://img.shields.io/badge/Telegram-@NeonBeatt-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram @NeonBeatt">
   </a>
   <a href="https://github.com/Karishka-sr/devai-studio/releases">
-    <img src="https://img.shields.io/badge/Download_APK-v3.6.4-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
+    <img src="https://img.shields.io/badge/Download_APK-v5.0.0-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download APK">
   </a>
   <a href="https://karishka-sr.github.io/devai-studio/">
     <img src="https://img.shields.io/badge/Site-DevAI_Studio-0A66C2?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Сайт DevAI Studio">
@@ -37,6 +37,14 @@
 - Модуль в этом репозитории: `desktop/`.
 
 ## Возможности
+
+### 🎨 Material 3 Expressive и blur
+- Новый базовый интерфейс на Material 3: крупные заголовки, тональные карточки, пилюли, нижняя навигация и FAB.
+- `MaterialExpressiveTheme`, динамические цвета Android 12+, выразительная типографика и формы.
+- Frosted-стекло на Haze: верхние панели, навигация, composer, карточки профиля и быстрые действия в чате.
+- `Modifier.blur` для декоративных подсветок, мягких теней и splash-экрана.
+- Готовые blur-компоненты: `DevAIBlurCard`, `DevAIBlurPanel`, `DevAIBlurredGlow`, `DevAIBlurBadge`, `DevAIBlurDialog`, `DevAIBlurSearchBar`, `devaiFrosted`.
+- Blur не ломает fallback: на старых/слабых устройствах остаётся тональная поверхность Material 3.
 
 ### 🌐 75 языков программирования
 - Выбор основного языка: Kotlin, Java, Python, JavaScript, TypeScript, Dart, Swift, C, C++, C#, Go, PHP, Ruby, SQL, Bash, HTML/CSS, Haxe, Vala, Ballerina, Racket, GLSL, GDScript и ещё десятки.
