@@ -5,6 +5,7 @@
   const API = `https://api.github.com/repos/${REPO}/releases/latest`;
   const LOCAL_DATA = "data/latest.json";
   const STALE_MS = 12 * 60 * 60 * 1000;
+  const CLOSED = true;
 
   const all = (selector) => Array.from(document.querySelectorAll(selector));
   const one = (selector) => document.querySelector(selector);
@@ -174,9 +175,11 @@
     const github = one("#download-github");
     if (github) github.href = page;
 
-    document.title = document.body.dataset.page === "download"
-      ? `Скачать DevAI Studio ${version}`
-      : `DevAI Studio ${version} — ИИ-студия для Android`;
+    document.title = CLOSED
+      ? "DevAI Studio закрыт — архив проекта"
+      : document.body.dataset.page === "download"
+        ? `Скачать DevAI Studio ${version}`
+        : `DevAI Studio ${version} — ИИ-студия для Android`;
 
     const ldNode = one('script[type="application/ld+json"]');
     if (ldNode) {
@@ -196,6 +199,11 @@
 
   async function startDownloadPage(release) {
     const state = one("#download-state");
+    if (CLOSED) {
+      if (state) state.textContent = "Проект закрыт. Автоматическая загрузка отключена. Последний APK доступен вручную только как архив.";
+      return;
+    }
+
     if (!release || !release.apk_url) {
       if (state) state.textContent = "Не удалось получить ссылку на APK. Открой страницу релиза на GitHub.";
       return;
